@@ -1,0 +1,161 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  displayName   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+
+  // Relations
+  subscriptions Subscription[]
+  comments      Comment[]
+  rsvps         RSVP[]
+  notificationPreferences NotificationPreference?
+  communityRoles CommunityRole[]
+}
+
+model TentativeUser {
+  id        String    @id @default(cuid())
+  email     String    @unique
+  createdAt DateTime  @default(now())
+  expiresAt DateTime  // Auto-deleted if no action within 30 days
+}
+
+model Community {
+  id              String    @id @default(cuid())
+  name            String
+  description     String?
+  location        String
+  latitude        Float
+  longitude       Float
+  tags            String[]  // ["running", "toronto", "nonprofit"]
+  website         String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  events          Event[]
+  subscriptions   Subscription[]
+  members         CommunityRole[]
+  comments        Comment[]
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  startsAt    DateTime
+  endsAt      DateTime
+  location    String?
+  icalUrl     String?   // Generated .ics file URL
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  rsvps       RSVP[]
+  comments    Comment[]
+}
+
+model RSVP {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  eventId   String
+  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  status    RSVPStatus  // GOING, INTERESTED, NOT_GOING
+  createdAt DateTime  @default(now())
+
+  @@unique([userId, eventId])
+}
+
+model Comment {
+  id          String    @id @default(cuid())
+  content     String
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  eventId     String?   // Optional: comment on event instead of community
+  event       Event?    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  status      CommentStatus  // PENDING, APPROVED, REJECTED
+}
+
+model Subscription {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  type        SubType[] // [EVENTS, ANNOUNCEMENTS, BOTH]
+  createdAt   DateTime  @default(now())
+
+  @@unique([userId, communityId])
+}
+
+model NotificationPreference {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel         String    // "email" (extensible for future channels)
+  frequency       Frequency  // REALTIME, DAILY, WEEKLY
+  preferredTime   String?   // "09:00" for daily digests
+  unsubscribedAt  DateTime? // Soft-delete: null = active
+  createdAt       DateTime  @default(now())
+}
+
+model CommunityRole {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id])
+  role        Role      // MEMBER, MODERATOR, ORGANIZER
+  grantedAt   DateTime  @default(now())
+
+  @@unique([userId, communityId])
+}
+
+enum RSVPStatus {
+  GOING
+  INTERESTED
+  NOT_GOING
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SubType {
+  EVENTS
+  ANNOUNCEMENTS
+  BOTH
+}
+
+enum Frequency {
+  REALTIME
+  DAILY
+  WEEKLY
+}
+
+enum Role {
+  MEMBER
+  MODERATOR
+  ORGANIZER
+}
