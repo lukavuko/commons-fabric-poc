@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -9,125 +6,76 @@ datasource db {
   provider = "postgresql"
 }
 
-model User {
-  id            String    @id @default(cuid())
-  email         String    @unique
-  displayName   String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  lastLoginAt   DateTime?
+// -------------------------------------------------------
+// Enums
+// -------------------------------------------------------
 
-  // Relations
-  subscriptions Subscription[]
-  comments      Comment[]
-  rsvps         RSVP[]
-  notificationPreferences NotificationPreference?
-  communityRoles CommunityRole[]
+enum RoleEntityType {
+  HUB
+  COMMUNITY
 }
 
-model TentativeUser {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  createdAt DateTime  @default(now())
-  expiresAt DateTime  // Auto-deleted if no action within 30 days
+enum CommentEntityType {
+  ANNOUNCEMENT
+  EVENT
 }
 
-model Community {
-  id              String    @id @default(cuid())
-  name            String
-  description     String?
-  location        String
-  latitude        Float
-  longitude       Float
-  tags            String[]  // ["running", "toronto", "nonprofit"]
-  website         String?
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-
-  // Relations
-  events          Event[]
-  subscriptions   Subscription[]
-  members         CommunityRole[]
-  comments        Comment[]
+enum HubType {
+  REGISTERED
+  AGGLOMERATE
 }
 
-model Event {
-  id          String    @id @default(cuid())
-  communityId String
-  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  title       String
-  description String?
-  startsAt    DateTime
-  endsAt      DateTime
-  location    String?
-  icalUrl     String?   // Generated .ics file URL
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relations
-  rsvps       RSVP[]
-  comments    Comment[]
+enum ReleaseStatus {
+  DRAFT
+  PENDING
+  HIDDEN
+  PUBLIC
+  ARCHIVED
 }
 
-model RSVP {
-  id        String    @id @default(cuid())
-  userId    String
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  eventId   String
-  event     Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  status    RSVPStatus  // GOING, INTERESTED, NOT_GOING
-  createdAt DateTime  @default(now())
-
-  @@unique([userId, eventId])
+enum EventType {
+  SOCIAL
+  INFORMATIONAL
 }
 
-model Comment {
-  id          String    @id @default(cuid())
-  content     String
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  communityId String
-  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  eventId     String?   // Optional: comment on event instead of community
-  event       Event?    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  status      CommentStatus  // PENDING, APPROVED, REJECTED
+enum RecurrenceSchedule {
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  ANNUAL
 }
 
-model Subscription {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  communityId String
-  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  type        SubType[] // [EVENTS, ANNOUNCEMENTS, BOTH]
-  createdAt   DateTime  @default(now())
-
-  @@unique([userId, communityId])
+enum Day {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
 }
 
-model NotificationPreference {
-  id              String    @id @default(cuid())
-  userId          String    @unique
-  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  channel         String    // "email" (extensible for future channels)
-  frequency       Frequency  // REALTIME, DAILY, WEEKLY
-  preferredTime   String?   // "09:00" for daily digests
-  unsubscribedAt  DateTime? // Soft-delete: null = active
-  createdAt       DateTime  @default(now())
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+  LOCKED
 }
 
-model CommunityRole {
-  id          String    @id @default(cuid())
-  userId      String
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  communityId String
-  community   Community @relation(fields: [communityId], references: [id])
-  role        Role      // MEMBER, MODERATOR, ORGANIZER
-  grantedAt   DateTime  @default(now())
+enum CommunicationFrequency {
+  NEVER
+  REALTIME
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
 
-  @@unique([userId, communityId])
+enum CommunicationMethod {
+  EMAIL
+  SMS
 }
 
 enum RSVPStatus {
@@ -136,26 +84,258 @@ enum RSVPStatus {
   NOT_GOING
 }
 
-enum CommentStatus {
-  PENDING
-  APPROVED
-  REJECTED
+// -------------------------------------------------------
+// Users & RBAC
+// -------------------------------------------------------
+
+model User {
+  id              String    @id @default(cuid())
+  username        String    @unique
+  email           String    @unique
+  phone           String?
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  firstname       String?
+  lastname        String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  lastloginAt     DateTime?
+  settings        Json?
+
+  userRoles             UserRole[]
+  createdRoles          Role[]
+  createdHubs           Hub[]
+  createdCommunities    Community[]
+  createdEvents         Event[]
+  authoredAnnouncements Announcement[]
+  comments              Comment[]
+  subscriptions         Subscription[]
+  userEvents            UserEvent[]
+
+  @@index([email])
+  @@index([username])
+  @@index([lastloginAt], map: "lastlogin_index")
 }
 
-enum SubType {
-  EVENTS
-  ANNOUNCEMENTS
-  BOTH
+model UserRole {
+  userId     String
+  user       User           @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  entityType RoleEntityType
+  entityId   String         // polymorphic — no FK; references hub.id or community.id
+  roleId     Int
+  role       Role           @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  // DB-level CHECK: entity_type IN ('HUB', 'COMMUNITY') — add in migration
+  @@id([userId, entityId])
+  @@index([entityType, entityId], map: "idx_user_role_entity")
 }
 
-enum Frequency {
-  REALTIME
-  DAILY
-  WEEKLY
+model Role {
+  id          Int             @id @default(autoincrement())
+  name        String
+  description String?         @db.Text
+  isDefault   Boolean
+  entityId    String?         // NULL for default roles; cuid of hub/community for custom roles
+  entityType  RoleEntityType?
+  creatorId   String?
+  creator     User?           @relation(fields: [creatorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+
+  // DB-level CHECK: is_default = (entity_id IS NULL) — add in migration
+  userRoles       UserRole[]
+  rolePermissions RolePermission[]
 }
 
-enum Role {
-  MEMBER
-  MODERATOR
-  ORGANIZER
+model RolePermission {
+  roleId       Int
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  permissionId Int
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model Permission {
+  id          Int    @id @default(autoincrement())
+  name        String
+  description String?
+
+  rolePermissions RolePermission[]
+}
+
+// -------------------------------------------------------
+// Hubs & Communities
+// -------------------------------------------------------
+
+model Hub {
+  id          String   @id @default(cuid())
+  type        HubType
+  name        String
+  description String   @db.Text
+  creatorId   String?
+  creator     User?    @relation(fields: [creatorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  address     String?
+  latitude    Float?
+  longitude   Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // DB-level CHECK: latitude BETWEEN -90 AND 90 — add in migration
+  // DB-level CHECK: longitude BETWEEN -180 AND 180 — add in migration
+  hubCommunities HubCommunity[]
+}
+
+model HubCommunity {
+  hubId       String
+  hub         Hub       @relation(fields: [hubId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  communityId String
+  community   Community @relation(fields: [communityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@id([hubId, communityId])
+}
+
+model Community {
+  id                 String   @id @default(cuid())
+  name               String
+  website            String?
+  description        String   @db.Text
+  tags               String[]
+  contactFirstname   String
+  contactLastname    String
+  contactEmail       String
+  contactNumber      String?
+  address            String
+  city               String
+  province           String
+  postalCode         String?
+  country            String
+  settings           Json?
+  creatorId          String?
+  creator            User?    @relation(fields: [creatorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  verifiedEmail      Boolean  @default(false)
+  verifiedExternally Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  hubCommunities HubCommunity[]
+  events         Event[]
+  announcements  Announcement[]
+  comments       Comment[]
+  subscriptions  Subscription[]
+
+  @@index([city, province], map: "idx_community_location")
+}
+
+// -------------------------------------------------------
+// Community / Public Facing
+// -------------------------------------------------------
+
+model Event {
+  id             String              @id @default(cuid())
+  communityId    String
+  community      Community           @relation(fields: [communityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  creatorId      String?
+  creator        User?               @relation(fields: [creatorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  announcementId String?
+  announcement   Announcement?       @relation(fields: [announcementId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  releaseStatus  ReleaseStatus
+  eventType      EventType?
+  title          String
+  subtitle       String?
+  description    String?             @db.Text
+  links          String[]
+  tags           String[]
+  location       String?
+  startsAt       DateTime?
+  endsAt         DateTime?
+  icalUrl        String?
+  recurring      RecurrenceSchedule?
+  recurringDow   Day[]
+  createdAt      DateTime            @default(now())
+  releasedAt     DateTime?
+  updatedAt      DateTime            @updatedAt
+
+  // DB-level CHECK: ends_at IS NULL OR ends_at > starts_at — add in migration
+  userEvents UserEvent[]
+
+  @@index([communityId, releaseStatus, startsAt], map: "idx_event_community_feed")
+  @@index([recurring], map: "idx_event_recurring")
+}
+
+model Announcement {
+  id            String        @id @default(cuid())
+  communityId   String
+  community     Community     @relation(fields: [communityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  authorId      String?
+  author        User?         @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  releaseStatus ReleaseStatus
+  title         String
+  subtitle      String?
+  description   String?       @db.Text
+  tags          String[]
+  createdAt     DateTime      @default(now())
+  releasedAt    DateTime?
+  updatedAt     DateTime      @updatedAt
+  likes         Int?
+  views         Int?
+
+  events Event[]
+
+  @@index([communityId, releaseStatus, releasedAt], map: "idx_announcement_community_feed")
+}
+
+model Comment {
+  id               Int               @id @default(autoincrement())
+  communityId      String
+  community        Community         @relation(fields: [communityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  authorId         String?
+  author           User?             @relation(fields: [authorId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  commentStatus    CommentStatus
+  content          String            @db.Text
+  ts               DateTime          @default(now())
+  tsEdited         DateTime?
+  parentEntityType CommentEntityType
+  parentEntityId   String            // polymorphic — no FK; references announcement.id or event.id
+  parentCommentId  Int?
+  parentComment    Comment?          @relation("CommentThread", fields: [parentCommentId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  childComments    Comment[]         @relation("CommentThread")
+
+  // DB-level CHECK: parent_entity_type IN ('ANNOUNCEMENT', 'EVENT') — add in migration
+  @@index([parentEntityType, parentEntityId], map: "idx_comments_parent")
+  @@index([parentCommentId], map: "idx_comments_thread")
+}
+
+// -------------------------------------------------------
+// User Facing
+// -------------------------------------------------------
+
+model Subscription {
+  id                        Int                     @id @default(autoincrement())
+  userId                    String
+  user                      User                    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  communityId               String
+  community                 Community               @relation(fields: [communityId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  isActive                  Boolean
+  tsSubscribed              DateTime                @default(now())
+  tsUnsubscribed            DateTime?
+  calendarFreq              CommunicationFrequency?
+  calendarPreferredTime     String?                 // stored as "HH:MM"
+  calendarChannels          CommunicationMethod[]
+  announcementFreq          CommunicationFrequency?
+  announcementPreferredTime String?                 // stored as "HH:MM"
+  announcementChannels      CommunicationMethod[]
+
+  // DB-level CHECK: is_active OR ts_unsubscribed IS NOT NULL — add in migration
+  @@unique([userId, communityId])
+  @@index([communityId, isActive], map: "idx_subscription_community")
+}
+
+model UserEvent {
+  id         Int        @id @default(autoincrement())
+  userId     String
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  eventId    String
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  rsvpStatus RSVPStatus
+
+  @@index([eventId, rsvpStatus], map: "idx_user_events_event")
 }

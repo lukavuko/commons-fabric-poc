@@ -1,0 +1,377 @@
+// Use DBML to define your database structure
+// Docs: https://dbml.dbdiagram.io/docs
+// Relationship settings and names are not supported for inline form ref.
+// eg. Ref: a.id - b.id [delete: cascade, update: no action]
+//
+// The rule of thumb: if the ID will appear in a URL, JWT, or API response
+// that a browser or third party sees, use CUID. If it's only ever used in
+// a server-side JOIN, integer is fine.
+
+Table user {
+  id cuid [pk]
+  username varchar [unique, not null]
+  email varchar [unique, not null]
+  phone varchar
+  email_verified_at timestamp
+  phone_verified_at timestamp
+
+  // name display may be required for certain communities
+  firstname varchar
+  lastname varchar
+
+  // meta
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  lastlogin_at timestamp
+
+  settings jsonb // all settings in a flexible json format
+
+  indexes {
+    id [pk]
+    email
+    username
+    lastlogin_at [name: 'lastlogin_index', note: 'Date']
+  }
+}
+
+// Role Based Access Controls
+// =======================================================
+// Polymorphic many-to-many table for controlling user RBACs.
+// Each role is provisioned over a specific entity (ie. a community, a hub).
+// Community stewards have the ability to define specific role permissions
+// if they wish to create a non-default (custom) role type.
+Table user_role {
+  user_id cuid [not null, ref: > user.id]
+  entity_type RoleEntityType [not null]
+  entity_id cuid [not null] // cant do fk to multiple tables
+  role_id integer [not null, ref: > role.id]
+
+  indexes {
+    (user_id, entity_id) [pk, unique]  // can only have 1 role per entity
+    (entity_type, entity_id) [name: 'idx_user_role_entity']
+  }
+
+  checks {
+    `entity_type IN ('HUB', 'COMMUNITY')` [name: 'chk_role_entity_type']
+  }
+}
+
+Enum RoleEntityType {
+  HUB
+  COMMUNITY
+}
+
+Enum CommentEntityType {
+  ANNOUNCEMENT
+  EVENT
+}
+
+Table role {
+  id integer [pk]
+  name varchar // ADMIN > STEWARD > MODERATOR > MEMBER
+  description text
+  is_default bool // for default permission sets
+  entity_id cuid // NULL for default roles, otherwise applies to a specific community/hub
+  entity_type RoleEntityType
+  creator_id cuid [ref: > user.id] // user that created the custom role
+
+  checks {
+    `is_default = (entity_id IS NULL)` [name: 'chk_role_default_entity']
+  }
+}
+
+Table role_permissions {
+  role_id integer [not null, ref: > role.id]
+  permission_id integer [not null, ref: > permission.id]
+}
+
+// set of universal app API actions that can be done
+Table permission {
+  id integer [pk]
+  name varchar
+  description varchar
+}
+
+
+
+
+// Communities & Hubs
+// =======================================================
+
+Table hub {
+  id cuid [pk]
+  type HubType
+  name varchar [not null]
+  description text [not null]
+  creator_id cuid [default: NULL, ref: > user.id]
+  address varchar // if provided
+  latitude "double precision" // if agglomerated (average)
+  longitude "double precision" // if agglomerated (average)
+
+  // meta
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  checks {
+    `latitude BETWEEN -90 AND 90` [name: 'chk_hub_lat']
+    `longitude BETWEEN -180 AND 180` [name: 'chk_hub_lng']
+  }
+}
+
+Enum HubType {
+  REGISTERED // hub registered by a known hub steward
+  AGGLOMERATE // hub created based on community agglomeration
+}
+
+Table hub_communities {
+  hub_id cuid [ref: > hub.id]
+  community_id cuid [ref: > community.id]
+}
+
+// Community information
+Table community {
+  id cuid [pk]
+  name varchar [not null]
+  website varchar
+  description text [not null]
+  tags text[]
+
+  // logistic
+  contact_firstname varchar [not null]
+  contact_lastname varchar [not null]
+  contact_email varchar [not null]
+  contact_number varchar // +1 000 000 0000
+  address varchar [not null]
+  city varchar [not null]
+  province varchar [not null]
+  postal_code varchar
+  country varchar [not null]
+
+  // settings
+  settings jsonb // all settings in a flexible json format
+
+  // metadata
+  creator_id cuid [ref: > user.id]
+  verified_email bool [default: `False`]
+  verified_externally bool [default: `False`]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (city, province) [name: 'idx_community_location']
+  }
+}
+
+
+
+
+// Community/Public facing data
+// =======================================================
+
+// calendar
+Table event {
+  id cuid [pk]
+  community_id cuid [not null, ref: > community.id]
+  creator_id cuid [not null, ref: > user.id]
+  announcement_id cuid [ref: > announcement.id] // if related to an announcement
+
+  release_status ReleaseStatus
+  event_type EventType
+  title varchar [not null]
+  subtitle varchar
+  description text // where key information is linked and rendered
+  links text[]
+  tags text[]
+
+  location varchar
+  starts_at datetime
+  ends_at datetime
+  icalUrl varchar  // Generated .ics file URL
+
+  recurring RecurrenceSchedule
+  recurring_dow Day[] // day(s) of week
+
+  // meta
+  created_at timestamp [default: `now()`]
+  released_at timestamp
+  updated_at timestamp [default: `now()`]
+
+  indexes {
+    (community_id, release_status, starts_at) [name: 'idx_event_community_feed']
+    (recurring) [name: 'idx_event_recurring']
+  }
+
+  checks {
+    `ends_at IS NULL OR ends_at > starts_at` [name: 'chk_event_dates']
+  }
+}
+
+Enum ReleaseStatus {
+  DRAFT
+  PENDING
+  HIDDEN
+  PUBLIC
+  ARCHIVED
+}
+Enum EventType {
+  SOCIAL
+  INFORMATIONAL
+}
+Enum RecurrenceSchedule {
+  DAILY  // repeats everyday, same time
+  WEEKLY  // repeats every week on recurrence_dow
+  BIWEEKLY // repeats every 2 weeks on recurrence dow
+  MONTHLY // repeats every month on a specific day (ie. first tuesday)
+  ANNUAL // repeats every year on the same date_start
+}
+Enum Day {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+  SUN
+}
+
+Table announcement {
+  id cuid [pk]
+  community_id cuid [ref: > community.id]
+  author_id cuid [ref: > user.id]
+  release_status ReleaseStatus
+
+  title varchar [not null]
+  subtitle varchar
+  description text // where key information is linked and rendered
+  tags text[]
+
+  // meta
+  created_at timestamp [default: `now()`]
+  released_at timestamp
+  updated_at timestamp [default: `now()`]
+
+  // analytics
+  likes integer
+  views integer
+
+  indexes {
+    (community_id, release_status, released_at) [name: 'idx_announcement_community_feed']
+  }
+}
+
+Table comments {
+  id integer [pk]
+  community_id cuid [ref: > community.id]
+  author_id cuid [ref: > user.id]
+  comment_status CommentStatus
+  content text
+  ts timestamp [default: `now()`]
+  ts_edited timestamp
+
+  // what do these comments apply to? Announcement/Event
+  parent_entity_type CommentEntityType
+  parent_entity_id cuid [not null]
+  parent_comment_id integer [ref: - comments.id]
+
+  indexes {
+    (parent_entity_type, parent_entity_id) [name: 'idx_comments_parent']
+    (parent_comment_id) [name: 'idx_comments_thread']
+  }
+
+  checks {
+    `parent_entity_type IN ('ANNOUNCEMENT', 'EVENT')` [name: 'chk_comment_entity_type']
+  }
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  HIDDEN
+  LOCKED
+}
+
+
+
+// User facing data
+// =======================================================
+
+// what communities users subscribe to, how they'd like to be notified,
+// and any persisting filters they've placed on particular community feeds
+Table subscription {
+  id integer [pk]
+  user_id cuid [ref: > user.id]
+  community_id cuid [ref: > community.id]
+
+  is_active bool
+  ts_subscribed timestamp [default: `now()`]
+  ts_unsubscribed timestamp
+
+  // communication preferences
+  calendar_freq CommunicationFrequency
+  calendar_preferred_time time
+  calendar_channels CommunicationMethod[]
+
+  announcement_freq CommunicationFrequency
+  announcement_preferred_time time
+  announcement_channels CommunicationMethod[]
+
+  indexes {
+    (user_id, community_id) [unique]
+    (community_id, is_active) [name: 'idx_subscription_community']
+  }
+
+  checks {
+    `is_active OR ts_unsubscribed IS NOT NULL` [name: 'chk_unsub_timestamp']
+  }
+}
+
+Enum CommunicationFrequency {
+  NEVER // essentially turned OFF
+  REALTIME
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+Enum CommunicationMethod {
+  EMAIL
+  SMS
+  // WHATSAPP / SIGNAL / MESSENGER / DISCORD / TELEGRAM
+  // PUSH_NOTIFICATION // only if an app is develoepd
+}
+
+
+Table user_events {
+  id integer [pk]
+  user_id cuid [ref: > user.id]
+  event_id cuid [ref: > event.id]
+  rsvp_status RSVPStatus
+
+  indexes {
+    (event_id, rsvp_status) [name: 'idx_user_events_event']
+  }
+}
+
+enum RSVPStatus {
+  GOING
+  INTERESTED
+  NOT_GOING
+}
+
+
+// Default Records
+// =======================================================
+
+
+// Dummy Records
+// =======================================================
+
+
+// Records users(id, username, role) {
+//   0, 'Alice', 'admin'
+//   1, 'Bob', 'moderator'
+//   2, 'Candice', 'moderator'
+//   3, 'David', 'member'
+// }

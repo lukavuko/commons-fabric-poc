@@ -1,0 +1,34 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:internet-atlas.net)",
+      "mcp__puppeteer__puppeteer_navigate",
+      "mcp__puppeteer__puppeteer_evaluate",
+      "mcp__puppeteer__puppeteer_screenshot",
+      "WebFetch(domain:commonsfabric.ca)",
+      "Bash(pdftotext:*)",
+      "WebSearch",
+      "WebFetch(domain:firstmonday.org)",
+      "WebFetch(domain:rosalux.nyc)",
+      "WebFetch(domain:papers.ssrn.com)",
+      "WebFetch(domain:compdemocracy.org)",
+      "WebFetch(domain:journals.sagepub.com)",
+      "WebFetch(domain:www.colorado.edu)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:www.graphql-js.org)",
+      "Bash(__NEW_LINE_2b9d3236c29f611d__ sed -n '768,790p' \"/c/Users/lukav/OneDrive/Documents/commons-fabric-project/cfp-poc/ARCHITECTURE.md\")",
+      "Bash(__NEW_LINE_1f6ee186452e569e__ sed -n '768,790p' \"/c/Users/lukav/OneDrive/Documents/commons-fabric-project/cfp-poc/ARCHITECTURE.md\")",
+      "Bash(npx create-next-app:*)",
+      "Bash(npx prisma init)",
+      "Bash(__NEW_LINE_e52a00c2ca8444d4__ cd /c/Users/lukav/OneDrive/Documents/commons-fabric-project/cfp-poc)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx tsc:*)",
+      "Bash(__NEW_LINE_bbcabe4cc510cdf4__ echo \"\")",
+      "Bash(npm run build:*)",
+      "Bash(npm install *)",
+      "Bash(npm run *)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs"
+    ]
+  }
+}
