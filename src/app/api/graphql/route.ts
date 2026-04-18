@@ -3,13 +3,13 @@ import { ApolloServer } from '@apollo/server';
 import { NextRequest } from 'next/server';
 import { typeDefs } from '@/graphql/schema';
 import { resolvers } from '@/graphql/resolvers';
+import { buildContext } from '@/graphql/context';
 
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
+const server = new ApolloServer({ typeDefs, resolvers });
+
+const handler = startServerAndCreateNextHandler(server, {
+  context: (req: NextRequest) => buildContext(req),
 });
-
-const handler = startServerAndCreateNextHandler(server);
 
 export async function GET(request: NextRequest) {
   return handler(request);

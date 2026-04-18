@@ -1,8 +1,18 @@
+import { Query } from './query';
+import { Mutation } from './mutation';
+import { DateTime, Community, Event, Announcement, Comment, UserSubscription, UserEvent, UserRole, Hub, User } from './fields';
+
 export const resolvers = {
-  Query: {
-    _empty: () => 'GraphQL server is running',
-  },
-  Mutation: {
-    _empty: () => 'Mutations available',
-  },
+  DateTime,
+  Query,
+  Mutation,
+  Community,
+  Event,
+  Announcement,
+  Comment,
+  UserSubscription,
+  UserEvent,
+  UserRole,
+  Hub,
+  User,
 };
