@@ -29,7 +29,8 @@ A federated community engagement platform enabling geographic discovery, event a
 npm run prisma:migrate
 ```
 
-5. Build and Start Development Server: `npm run build` followed by  `npm run dev` 
+5. Build and Start Development Server: `npm run build` followed by  `npm run dev`
+
 6. The application will be available at:
    - Frontend: http://localhost:3000
    - GraphQL Playground: http://localhost:3000/api/graphql

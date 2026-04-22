@@ -1,6 +1,6 @@
 # Commons Fabric Project - Technical Architecture Document
 
-**Version**: 1.0
+**Version**: 1.1
 **Date**: April 2026
 **Timeline**: 4-week PoC development
 **Budget**: <$200 USD (free tier services)
@@ -14,36 +14,33 @@
 
 ## 1. Executive Summary
 
-The Commons Fabric Project PoC is a federated community engagement platform enabling geographic discovery, event aggregation, and lightweight community governance. The architecture prioritizes rapid iteration, maintainability, and eventual open-sourcing.
+The Commons Fabric PoC is a federated community engagement platform enabling geographic discovery, event aggregation, and lightweight community governance. The architecture prioritizes rapid iteration, maintainability, and eventual open-sourcing.
 
 **Key Design Principles:**
+
 - Monolithic frontend/backend initially (separation of services after PoC validation)
 - Schema-first database design with programmatic migrations
 - GraphQL for flexible, self-documenting APIs
 - Zero personal data persistence (privacy-by-default)
 - Infrastructure as Code for reproducibility
 
----
 
-## 2. Technology Stack
+
+## 2. Tech Stack
 
 | Layer | Technology | Version | Rationale |
 |-------|-----------|---------|-----------|
-| **Frontend** | [Next.js](https://nextjs.org/) | 14+ | React with SSR, API routes, optimized for PoC speed |
-| **Backend** | [Apollo Server](https://www.apollographql.com/docs/apollo-server/) | 4+ | GraphQL with full control over resolvers for custom logic |
-| **Database** | [PostgreSQL](https://www.postgresql.org/) | 14+ | Relational model suits hierarchical communities/events |
-| **ORM/Migrations** | [Prisma](https://www.prisma.io/docs/) | 5+ | Schema-as-code, auto migrations, TypeScript generation |
-| **Authentication** | [Supabase Auth](https://supabase.com/docs/guides/auth) | Built-in | Email/password + OAuth (Google, GitHub) |
-| **Hosting (Frontend)** | [Vercel](https://vercel.com/docs) | - | Native Next.js deployment, zero-config |
+| **Frontend** | React + Vite |  | CSR, Wide Adoption, Vite eliminates some overhear, many component library options (shadcn/ui, MUI, Mantine, Ant Design for example) |
+| **Hosting (Frontend)** | [Vercel](https://vercel.com/docs) | - | Native Next.js deployment, zero-config, free, published with Github Actions |
+| **Database** | [PostgreSQL](https://www.postgresql.org/) | 14+ | For communities with consequential impact, <u>integrity</u> must be at the core of our DB when handling governance, announcements, and reliability. Relational models also suit <u>scalability</u> and <u>complexity of function</u> for future feature development. |
+| **ORM/Migrations** | [Prisma](https://www.prisma.io/docs/) | 5+ | Maintains our relational model using schema-as-code, enables auto migrations, TypeScript generation, query building, and type safety |
+| **API Layer** | [Apollo](https://www.apollographql.com/docs/apollo-server/) ([Node.js environment](https://nodejs.org/en)) | 4+ | GraphQL is a single endpoint (rather than developing each [REST endpoint](https://blog.postman.com/graphql-vs-rest/) individually), prevents over & under fetching, auto-generates documentation, no versioning required, better accommodation for highly variable client requests, multiple data sources, and limited bandwidth (lightweight app) |
 | **Hosting (Database)** | [Supabase](https://supabase.com/docs) | Managed | PostgreSQL + Auth + real-time (Canadian region available) |
-| **Email** | [Sendgrid](https://docs.sendgrid.com/) | v3 API | Transactional email, extensible for future channels |
-| **Logging** | [Pino](https://getpino.io/) + [Supabase Logs](https://supabase.com/docs/guides/platform/logs) | - | Structured logging, built-in dashboard |
-| **Background Jobs** | [Node.js Worker Threads](https://nodejs.org/api/worker_threads.html) or [Bull](https://github.com/OptimalBits/bull) | - | Schedule notifications, batch processing (local initially) |
-| **Type Safety** | [TypeScript](https://www.typescriptlang.org/) | 5+ | All code (frontend, backend, DB schema) |
+| **Authentication** | [Supabase Auth](https://supabase.com/docs/guides/auth) | Built-in | Email/password + OAuth (Google, GitHub). Allows us to delay user auth management until later. Ideally, it would be best to host our own services for this if we get funding. |
+| **Email** | [Sendgrid](https://docs.sendgrid.com/) | v3 API | Transactional email with generous free tier; extensible for future channels |
+| **Background Jobs** | ? | - | Scheduled tasks for email digests, scheduled notifications, agent web scraping tasks, batch jobs |
 
 
-
----
 
 ## 3. System Architecture
 
@@ -52,70 +49,55 @@ The Commons Fabric Project PoC is a federated community engagement platform enab
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                      User Browser (Client)                      │
-│                   (Next.js Frontend React)                       │
+│                 React SPA (built with Vite, CSR)                │
+│              Apollo Client — manages GraphQL requests           │
 └─────────────────────────────────────────────────────────────────┘
-                              ↕ (GraphQL over HTTP)
+                              ↕ (GraphQL over HTTPS)
 ┌─────────────────────────────────────────────────────────────────┐
-│                   Next.js Server (Backend)                       │
+│                    Node.js Server (Backend)                     │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │ API Routes (/api/graphql)                                │  │
-│  │  └─ Apollo Server (GraphQL Resolvers)                    │  │
-│  │     ├─ Auth verification (JWT)                           │  │
-│  │     ├─ Data fetching (Prisma ORM)                        │  │
-│  │     └─ Business logic (comments, RSVPs, matching)        │  │
+│  │ GraphQL Endpoint: /graphql                               │  │
+│  │  └─ Apollo Server — parses GraphQL, routes to resolvers  │  │
+│  │     ├─ Auth verification (JWT from Supabase)             │  │
+│  │     ├─ Data access via Prisma ORM                        │  │
+│  │     └─ Business logic (comments, RSVPs)                  │  │
 │  └──────────────────────────────────────────────────────────┘  │
 │  ┌──────────────────────────────────────────────────────────┐  │
-│  │ Background Jobs                                          │  │
-│  │  ├─ Email notifications (Sendgrid)                       │  │
-│  │  ├─ Community matching algorithm                         │  │
+│  │ Scheduled Jobs                                           │  │
+│  │  ├─ Email digests (Sendgrid)                             │  │
 │  │  └─ Unverified user cleanup                              │  │
 │  └──────────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────────┘
                               ↕ (SQL via Prisma)
 ┌─────────────────────────────────────────────────────────────────┐
-│  PostgreSQL Database (Supabase Instance)                        │
-│  ├─ Communities & metadata                                      │
-│  ├─ Events, RSVPs, comments                                     │
-│  ├─ Users & authentication (Supabase Auth)                      │
-│  ├─ Subscriptions & preferences                                 │
-│  └─ Tentative users (auto-expiring)                             │
+│  PostgreSQL Database (Supabase)                                 │
+│  ├─ Communities, hubs, events, announcements                    │
+│  ├─ Users, subscriptions, RSVPs, comments                       │
+│  └─ Auth managed by Supabase Auth                               │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
 ### 3.2 Component Responsibilities
 
-**Frontend (Next.js React)**
-- Browse communities (map view, search gallery)
-- Subscribe/unsubscribe from communities
-- View aggregated event calendar and announcements
-- Submit RSVPs and comments (authenticated)
-- Set notification preferences
-- Organizer dashboard (community settings, moderation)
+**Frontend — React SPA built with Vite**
+React components make up the user-facing interface. The app is built as a client-side-rendered single-page application using Vite, then deployed as static assets. Data is fetched via **Apollo Client**, a GraphQL client library that runs in the browser. Apollo Client sends queries and mutations to the backend, caches responses, and keeps the UI in sync. Client-side routing is handled within the SPA (e.g. React Router).
 
-**Backend (Apollo GraphQL)**
-- Query resolution (communities, events, comments, users)
-- Mutation handling (create RSVP, post comment, update settings)
-- Authentication/authorization logic
-- Community matching algorithm execution
-- Data validation and business rules
+**Backend — Node.js server running Apollo Server**
+The backend is a standalone Node.js service that runs **Apollo Server**, a GraphQL library for Node. It exposes a single `/graphql` endpoint. When a request arrives, Apollo Server parses the GraphQL query, validates it against the schema, and calls the appropriate **resolver** functions. Resolvers contain the business logic and data access layer — they call **Prisma** (the ORM) to read from or write to the PostgreSQL database, and verify the user's identity via JWT before performing any protected operation.
 
-**Database (PostgreSQL)**
-- Persistent data store for all entities
-- Relationship integrity (foreign keys, constraints)
-- Supabase Auth integration (users table)
-- Audit trail for moderation actions
+**Database — PostgreSQL via Supabase**
+Supabase hosts the PostgreSQL database. Prisma defines the schema as code (`schema.prisma`) and generates versioned SQL migrations. Supabase Auth manages user identity and issues JWTs that the backend verifies.
 
-**Background Jobs (Node.js)**
-- Email digest sending (daily/weekly summaries)
-- Real-time event notifications
-- Community matching computation
-- Unverified user cleanup (>30 days)
+**Scheduled Jobs**
+Recurring tasks — email digest dispatch via Sendgrid, cleanup of unverified user records, and future batch work — run on a scheduler co-located with the backend service. The specific mechanism is still to be decided (see the Background Jobs row of the Tech Stack table).
 
 ---
 
 ## 4. Database Schema
 
-The full schema is defined in [`prisma/schema.prisma`](prisma/schema.prisma). Prisma handles SQL generation and TypeScript type generation — the schema file is the source of truth.
+The full schema is defined in [`prisma/schema.prisma`](prisma/schema.prisma). Prisma handles SQL generation and TypeScript type generation — the schema file is the source of truth for all database structure.
+
+For a visual representation of the entity relationships, open [`prisma/schema.dbml`](prisma/schema.dbml) in [dbdiagram.io](https://dbdiagram.io).
 
 **Core models:** `User`, `Hub`, `HubCommunity`, `Community`, `Event`, `Announcement`, `Comment`, `Subscription`, `UserEvent`, `UserRole`, `Role`, `RolePermission`, `Permission`
 
@@ -125,7 +107,7 @@ The full schema is defined in [`prisma/schema.prisma`](prisma/schema.prisma). Pr
 - `onDelete: Cascade` on personal/junction data; `onDelete: SetNull` on community content to preserve history when a user is deleted
 - 6 CHECK constraints must be added manually to the initial migration SQL (not generated by Prisma) — see `claude.log` for the full list
 
-### Migrations
+**Migrations:**
 
 - **Development**: `npm run prisma:migrate` — generates SQL and applies interactively
 - **Production**: `prisma migrate deploy` — applies versioned migrations without prompts
@@ -138,667 +120,212 @@ The full schema is defined in [`prisma/schema.prisma`](prisma/schema.prisma). Pr
 
 ## 5. GraphQL API Design
 
-### 5.1 Core Queries
+The GraphQL schema defines the contract between the frontend (Apollo Client) and the backend (Apollo Server). The schema describes what data can be queried, what mutations can be performed, and what types are returned.
 
-```graphql
-type Query {
-  # User queries
-  me: User                              # Current authenticated user
-  user(id: ID!): User
+**Core query domains:**
+- **User** — current authenticated user profile and preferences
+- **Communities** — browse, filter, and search communities; geographic proximity queries
+- **Events** — community events with date range filters; aggregated personal feed
+- **Announcements** — community announcements feed
+- **Comments** — threaded comments on events and announcements
+- **Subscriptions** — user-to-community subscription records and notification preferences
 
-  # Community queries
-  communities(
-    filter: CommunityFilter
-    pagination: Pagination
-  ): [Community!]!
+**Core mutation domains:**
+- **Auth** — sign up, sign in, sign out (delegated to Supabase Auth)
+- **Community management** — create/update communities (organizer-only)
+- **Member management** — add/remove members and assign roles
+- **Events** — create, update, delete events
+- **RSVPs** — RSVP to events, cancel RSVPs
+- **Subscriptions** — subscribe/unsubscribe, update notification preferences
+- **Comments** — post and moderate comments
 
-  community(id: ID!): Community
-  searchCommunities(query: String!, limit: Int = 10): [Community!]!
+The schema is defined in [`src/graphql/schema.ts`](src/graphql/schema.ts) and resolvers live under [`src/graphql/resolvers/`](src/graphql/resolvers/).
 
-  # Geographic/discovery
-  communitiesByLocation(
-    latitude: Float!
-    longitude: Float!
-    radiusKm: Int = 50
-  ): [Community!]!
-
-  # Events
-  events(
-    communityId: ID
-    fromDate: DateTime
-    toDate: DateTime
-  ): [Event!]!
-
-  myFeed(limit: Int = 20): Feed!        # Aggregated for user subscriptions
-
-  # Comments
-  communityComments(communityId: ID!): [Comment!]!
-  eventComments(eventId: ID!): [Comment!]!
-}
-
-type Mutation {
-  # Auth
-  signUp(email: String!, password: String!): AuthPayload!
-  signIn(email: String!, password: String!): AuthPayload!
-  signOut: Boolean!
-
-  # Community management (organizer only)
-  createCommunity(input: CreateCommunityInput!): Community!
-  updateCommunity(id: ID!, input: UpdateCommunityInput!): Community!
-  addCommunityMember(communityId: ID!, userId: ID!, role: Role!): CommunityRole!
-  removeCommunityMember(communityId: ID!, userId: ID!): Boolean!
-
-  # Events
-  createEvent(communityId: ID!, input: CreateEventInput!): Event!
-  updateEvent(id: ID!, input: UpdateEventInput!): Event!
-  deleteEvent(id: ID!): Boolean!
-
-  # Subscriptions
-  subscribeToCommunity(communityId: ID!, types: [SubType!]!): Subscription!
-  unsubscribeFromCommunity(communityId: ID!): Boolean!
-  updateSubscriptionType(subscriptionId: ID!, types: [SubType!]!): Subscription!
-
-  # RSVPs
-  rsvpToEvent(eventId: ID!, status: RSVPStatus!): RSVP!
-  cancelRSVP(eventId: ID!): Boolean!
-
-  # Comments
-  postComment(input: PostCommentInput!): Comment!
-
-  # Preferences
-  updateNotificationPreference(input: NotificationPreferenceInput!): NotificationPreference!
-  unsubscribeFromNotifications: Boolean!
-}
-
-type User {
-  id: ID!
-  email: String!
-  displayName: String
-  subscriptions: [Subscription!]!
-  notificationPreference: NotificationPreference
-  createdAt: DateTime!
-}
-
-type Community {
-  id: ID!
-  name: String!
-  description: String
-  location: String!
-  latitude: Float!
-  longitude: Float!
-  tags: [String!]!
-  website: String
-  events(upcoming: Boolean = true): [Event!]!
-  subscribers: [User!]!
-  subscriberCount: Int!
-  comments: [Comment!]!
-  members: [CommunityRole!]!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
-type Event {
-  id: ID!
-  community: Community!
-  title: String!
-  description: String
-  startsAt: DateTime!
-  endsAt: DateTime!
-  location: String
-  rsvpCount: Int!
-  rsvps(status: RSVPStatus): [RSVP!]!
-  icalUrl: String!                    # .ics download link
-  comments: [Comment!]!
-  createdAt: DateTime!
-}
-
-type Feed {
-  announcements: [Community!]!        # Latest from subscribed communities
-  upcomingEvents: [Event!]!
-  recentComments: [Comment!]!
-}
-
-type AuthPayload {
-  user: User!
-  token: String!                      # JWT
-}
-```
-
-### 5.2 Security Rules (Apollo Context)
-
-All resolvers verify JWT token and attach user context:
-
-```typescript
-// Pseudocode: Apollo context middleware
-const context = async ({ req }) => {
-  const token = req.headers.authorization?.replace("Bearer ", "");
-  const user = token ? verifyJWT(token) : null;
-
-  return { user }; // All resolvers can access req.context.user
-};
-
-// Example resolver with auth check
-const createEvent = async (_, { input }, { user }) => {
-  if (!user) throw new Error("Unauthenticated");
-
-  const community = await prisma.community.findUnique({
-    where: { id: input.communityId },
-    include: { members: true }
-  });
-
-  const isOrganizer = community.members.some(m =>
-    m.userId === user.id && m.role === "ORGANIZER"
-  );
-
-  if (!isOrganizer) throw new Error("Not authorized");
-
-  return prisma.event.create({ data: input });
-};
-```
-
-**Reference**: [Apollo Server Authorization](https://www.apollographql.com/docs/apollo-server/security/authentication/)
+The live interactive API documentation is available at the backend's `/graphql` endpoint when running the development server (Apollo Sandbox).
 
 ---
 
-## 6. Authentication & Authorization (RBAC)
+## 6. Authentication & Authorization
 
-### 6.1 User Flows
+Authentication is handled by **Supabase Auth**, which supports email/password login and OAuth providers (Google, GitHub). Upon sign-in, Supabase issues a JWT that the frontend sends with every GraphQL request via the `Authorization: Bearer <token>` header.
 
-**Unidentified User:**
-- Browse communities and events (no auth required)
-- Access public API endpoints
+**Apollo Server** validates this token on every protected request. The decoded token is attached to the GraphQL context, making user identity available to all resolvers without repeated database lookups.
 
-**Email-Only Subscriber:**
-- Subscribe via email (no account created)
-- Receive digests/notifications
-- Cannot comment or RSVP
+Authorization is enforced at the resolver level. Each resolver that requires a specific permission checks the requesting user's role before proceeding. Role-based access is stored in the `user_role` table, which links users to roles scoped per entity (community or hub). Roles map to permissions via the `role_permissions` and `permission` tables, which define the full set of actions the application supports.
 
-**Registered User (Email + Password):**
-- Create account → verify email
-- Unverified users stored in `tentative_user` table
-- Auto-deleted if unverified >30 days
-- Once verified → moved to `users` table
-- Can subscribe, comment, RSVP
-
-**OAuth User (Google/GitHub):**
-- Sign in directly via Supabase Auth
-- Account created automatically
-- Email verified by OAuth provider
-
-### 6.2 Role-Based Access Control (RBAC)
-
-Three tiers per community:
-
-| Role | Permissions |
-|------|-------------|
-| **MEMBER** | View community, events, comments; RSVP; comment; subscribe to updates |
-| **MODERATOR** | Above + approve/reject comments; manage event RSVPs |
-| **ORGANIZER** | Above + create/edit events; manage members; set community info |
-
-Stored in `CommunityRole` join table. Organizers assign roles via dashboard mutation.
-
-### 6.3 JWT Token Structure
-
-```json
-{
-  "sub": "user-uuid",
-  "email": "user@example.com",
-  "iat": 1234567890,
-  "exp": 1234571490,
-  "metadata": {
-    "communities": ["community-id-1", "community-id-2"]
-  }
-}
-```
-
-Issued by Supabase Auth. Apollo resolvers verify signature and validate expiration.
-
-**Reference**: [Supabase Auth Documentation](https://supabase.com/docs/guides/auth/overview)
+The specifics of role tiers, permission definitions, and their governance (how organizers can define custom roles) are still being deliberated and will be documented separately once finalized.
 
 ---
 
-## 7. Notification System Architecture
+## 7. Notification System
 
-### 7.1 Email Notification Flow
+### Email Notification Flow
+
+Users set a notification preference per subscription — choosing a frequency (real-time, daily, weekly) and a preferred delivery time. A scheduled backend job runs at fixed intervals, queries users whose digest is due, generates an email digest from their subscribed community feed, and sends it via Sendgrid.
 
 ```
-User sets NotificationPreference (channel=email, frequency=DAILY, time=09:00)
+User sets preference: channel=EMAIL, frequency=DAILY, time=09:00
                     ↓
-[Daily Cron Job @ 09:00 UTC]
+[Scheduled job triggers daily at 09:00]
                     ↓
-Query: Get users with DAILY preference, subscribed communities, new events/announcements
+Query users with DAILY preference + active subscriptions
                     ↓
-Generate email digest template
+Generate digest from new events and announcements
                     ↓
-Send via Sendgrid API
-                    ↓
-Log result in notification_logs table
+Send via Sendgrid API → Log result
 ```
 
-### 7.2 Implementation (Node.js Background Job)
+### Extensibility
 
-```typescript
-// /api/cron/send-digests.ts (triggered by Vercel Crons)
-import { Sendgrid } from '@sendgrid/mail';
-import { prisma } from '@/lib/prisma';
-
-export default async function handler(req) {
-  // Verify cron secret
-  if (req.headers['authorization'] !== `Bearer ${process.env.CRON_SECRET}`) {
-    return { status: 401 };
-  }
-
-  const users = await prisma.notificationPreference.findMany({
-    where: {
-      frequency: 'DAILY',
-      unsubscribedAt: null,
-      user: {
-        subscriptions: { some: {} } // Has subscriptions
-      }
-    },
-    include: { user: true }
-  });
-
-  for (const pref of users) {
-    const feed = await generateUserFeed(pref.user.id);
-    await sendgrid.send({
-      to: pref.user.email,
-      from: process.env.SENDGRID_FROM_EMAIL,
-      subject: `Your Commons Fabric Digest`,
-      html: renderDigestTemplate(feed)
-    });
-  }
-
-  return { status: 200, sent: users.length };
-}
-```
-
-### 7.3 Extensibility for Future Channels
-
-Each notification channel inherits from a base interface:
-
-```typescript
-interface NotificationChannel {
-  name: string;
-  send(recipient: string, message: string): Promise<void>;
-  validate(recipient: string): boolean;
-}
-
-class EmailChannel implements NotificationChannel {
-  async send(email: string, message: string) {
-    return sendgrid.send({ to: email, html: message });
-  }
-}
-
-class WhatsAppChannel implements NotificationChannel {
-  async send(phoneNumber: string, message: string) {
-    // Twilio integration (future)
-  }
-}
-
-const channels = {
-  email: new EmailChannel(),
-  whatsapp: new WhatsAppChannel(), // Added later
-};
-```
-
-**Reference**: [Sendgrid Node.js Documentation](https://github.com/sendgrid/sendgrid-nodejs)
+The notification layer is designed around a channel interface so that future channels (SMS, WhatsApp, etc.) can be added by implementing the same contract without modifying existing logic. For the PoC, only email is implemented.
 
 ---
 
 ## 8. Calendar Integration
 
-### 8.1 iCal Export (.ics Files)
+### .ics Download
 
-Each event generates a downloadable .ics file:
+Each event exposes a downloadable `.ics` file conforming to the iCalendar standard (RFC 5545). Users can save this file and import it into any calendar application — Google Calendar, Outlook, or Apple Calendar.
 
-```typescript
-// /api/ics/[communityId]/[eventId].ics
-import { icalendarFromEvent } from '@/lib/ical';
+A dedicated backend route at `/ics/:eventId` generates the `.ics` response with the appropriate `Content-Type: text/calendar` header.
 
-export default async function handler(req, res) {
-  const event = await prisma.event.findUnique({
-    where: { id: req.query.eventId },
-    include: { community: true }
-  });
+### Calendar Sync (Future)
 
-  const ics = icalendarFromEvent(event);
-  res.setHeader('Content-Type', 'text/calendar');
-  res.setHeader('Content-Disposition', `attachment; filename="${event.id}.ics"`);
-  res.send(ics);
-}
-```
-
-Supports import into Google Calendar, Outlook, Apple Calendar via standard iCalendar format (RFC 5545).
-
-### 8.2 Calendar Sync (Future Enhancement)
-
-Once user authenticates with Google Calendar API:
-- Authorize read/write access to user's calendar
-- Store refresh token securely in database
-- Sync subscribed events bidirectionally
-
-For PoC, implement .ics download only.
+Full two-way calendar sync via the Google Calendar API or Microsoft Graph API is deferred to a post-PoC phase. For the PoC, deep links to Google Calendar and Outlook's event-creation flows provide a lightweight "Add to calendar" experience that requires no OAuth or token storage.
 
 ---
 
-## 9. Community Matching Algorithm (Research Phase)
+## 9. Security
 
-### 9.1 PoC Scope (Not Implemented)
+Security considerations span three layers of the application and are deliberately kept simple for the PoC.
 
-This is deferred to post-PoC iteration. Placeholder architecture:
+**Frontend.** The React SPA never handles raw credentials or stores sensitive data in local storage. Auth tokens are managed by the Supabase client SDK, which stores them in memory or secure cookies. Because the frontend and backend are deployed as separate services, the backend must explicitly allow the frontend's origin via CORS — this should be configured tightly (single allowed origin in production, not a wildcard).
 
-**Input:**
-- 30 communities with tags, location (lat/long), size
+**Backend.** Every GraphQL resolver that modifies or reads protected data verifies the JWT from the request context before proceeding. Apollo Server is configured to strip stack traces from error responses in production. Input validation occurs at the resolver level before any database write. The `/graphql` endpoint is the single surface area for all data access.
 
-**Algorithm:**
-1. Geographic clustering: K-means on coordinates
-2. Tag similarity: Cosine similarity on normalized tag vectors
-3. Weighting: `match_score = 0.6 * geographic + 0.4 * tag_similarity`
+**Database.** Prisma enforces schema-level constraints (types, nullability, relations). CHECK constraints in migrations enforce domain rules that Prisma cannot express (e.g., polymorphic type enums). Supabase supports Row-Level Security (RLS) policies for multi-tenant data isolation — this is planned as a future hardening step once the permission model is finalized. Database credentials are stored exclusively in environment variables, never in the repository.
 
-**Output:**
-- Hierarchical groupings at map zoom levels (country → province → city)
-- Stored in `adjacency_list` table for query efficiency
-
-**Research areas to explore:**
-- [PostGIS](https://postgis.net/) for geographic queries
-- [pg_trgm](https://www.postgresql.org/docs/current/pgtrgm.html) for text similarity
-- Batch computation (daily Cron) vs on-demand frontend clustering
-
-Implement basic proximity search first; defer complex matching to Phase 2.
+The full permission model — which actions each role can perform, how organizers define custom roles, and how RLS policies map to those roles — is still being deliberated and will be defined before any community-facing launch.
 
 ---
 
-## 10. Deployment & Infrastructure
+## 10. Cost Breakdown (PoC, 4 Weeks)
 
-### 10.1 Architecture Diagram (Deployment)
+| Service | Tier | Monthly Cost | Notes |
+|---------|------|--------------|-------|
+| Vercel | Free | $0 | Static frontend hosting |
+| Supabase | Free | $0 | PostgreSQL + Auth (5 GB limit) |
+| Sendgrid | Free | $0 | 100 emails/day |
+| GitHub | Free | $0 | Version control |
+| **Total** | | **$0** | Well under $200 budget |
 
-```
-GitHub Repository
-    ↓ (push to main)
-Vercel CI/CD Pipeline
-    ├─ Lint / Type Check
-    ├─ Build Next.js
-    ├─ Run tests
-    └─ Deploy
-         ↓
-Vercel Edge (Frontend + API Routes)
-    ↓ (GraphQL queries via Prisma)
-Supabase PostgreSQL (Canada region)
-    ├─ Automatic backups
-    ├─ Connection pooling (PgBouncer)
-    └─ Real-time subscriptions
-
-Background Jobs (Vercel Crons / Bull Workers)
-    ↓ (API calls)
-Sendgrid (Email delivery)
-```
-
-### 10.2 Service Configuration
-
-**Vercel (Frontend + Backend)**
-- Automatic deployments on git push
-- Environment variables injected from `.env.local`
-- Zero-config Next.js optimization
-- Cost: Free tier covers PoC
-
-**Supabase (Database + Auth)**
-- PostgreSQL 14 with Canadian region option
-- Managed backups (daily, 7-day retention)
-- Connection pooling enabled
-- Row-level security (RLS) for multi-tenancy (future)
-- Cost: Free tier ($0 for PoC)
-
-**Sendgrid (Email)**
-- 100 emails/day free tier
-- Production account ($20/month) if needed
-- API key stored in Vercel secrets
-- Cost: Free for PoC, $20/month post-launch
-
-### 10.3 Environment Setup
-
-```bash
-# .env.local (local development)
-DATABASE_URL=postgresql://user:pass@localhost/cfp_dev
-SUPABASE_URL=https://xxx.supabase.co
-SUPABASE_ANON_KEY=xxx
-SUPABASE_SERVICE_KEY=xxx
-SENDGRID_API_KEY=xxx
-JWT_SECRET=xxx
-CRON_SECRET=xxx
-```
-
-All secrets stored in Vercel project settings (never in git).
+**Production estimate (post-PoC):**
+- Vercel Pro: $20/month
+- Supabase Pro: $25/month
+- Sendgrid Essentials: $20/month
+- **Total: ~$65/month**
 
 ---
 
 ## 11. Development Workflow
 
-### 11.1 Local Development Setup
+**Local setup**
 
 ```bash
-# Clone and setup
 git clone <repo>
 cd cfp-poc
 npm install
-
-# Initialize Prisma (one-time)
 npx prisma generate
 npx prisma migrate dev --name init
-
-# Start dev server
-npm run dev  # Runs Next.js on localhost:3000
-
-# Access GraphQL playground
-open http://localhost:3000/api/graphql
+npm run dev   # starts frontend (Vite) and backend (Apollo Server)
 ```
 
-### 11.2 Database Migrations
+**Adding a database field**
+
+Edit `prisma/schema.prisma`, then run `npx prisma migrate dev --name <description>`. Prisma generates the SQL migration, applies it, and regenerates TypeScript types automatically.
+
+**GraphQL development**
+
+Edit `src/graphql/schema.ts` for type definitions and add or update resolver functions under `src/graphql/resolvers/`. The Apollo Sandbox available at the backend's `/graphql` endpoint reflects schema changes live during development.
+
+**Generating TypeScript types**
 
 ```bash
-# Add a new field to Community model
-# 1. Edit prisma/schema.prisma
-model Community {
-  // ... existing fields ...
-  phoneNumber String?  // NEW
-}
-
-# 2. Generate migration
-npx prisma migrate dev --name add_phone_to_community
-
-# 3. Prisma generates SQL, applies it, updates schema.prisma
-
-# 4. TypeScript types auto-updated (no manual work)
+npm run codegen   # generates types from GraphQL schema
 ```
 
-### 11.3 GraphQL Development
+**Testing**
 
 ```bash
-# Generate TypeScript types from schema
-npm run codegen
-
-# Test queries in Apollo Studio Sandbox
-open http://localhost:3000/api/graphql
+npm run test              # Unit tests (Jest)
+npm run test:integration  # Integration tests
+npm run test:e2e          # End-to-end tests (Playwright)
 ```
 
-### 11.4 Testing Strategy
+**Deployment**
 
-```bash
-# Unit tests (Jest)
-npm run test
-
-# Integration tests (API routes)
-npm run test:integration
-
-# E2E tests (Playwright)
-npm run test:e2e
-```
+Pushing to `main` triggers an automatic Vercel deployment. Environment variables are managed through the Vercel project dashboard — never committed to the repository.
 
 ---
 
-## 12. Scalability & Future Services
+## 12. Feature Roadmap
 
-### 12.1 Current Architecture (Monolithic)
-
-```
-Single Next.js Instance
-├─ Frontend (React)
-├─ GraphQL API (Apollo)
-├─ Background Jobs (Crons)
-└─ Database (Prisma)
-```
-
-Sufficient for:
-- 100-1000 concurrent users
-- Event-driven workloads (not real-time streaming)
-- 4-week PoC validation
-
-### 12.2 Post-PoC Services Architecture
-
-Once PoC validates demand, extract services:
-
-```
-Monorepo Structure:
-├─ frontend/         (Next.js)
-├─ api/              (Next.js API routes + Apollo)
-├─ services/
-│  ├─ notifications/ (Python + Celery for email/WhatsApp/Signal)
-│  ├─ matching/      (Go + gRPC for community algorithm)
-│  ├─ analytics/     (Python + Pandas for dashboards)
-│  └─ moderation/    (Node.js + AI for comment filtering)
-└─ infrastructure/   (Terraform for AWS/GCP deployment)
-```
-
-Each service:
-- Separate Git repo (after PoC)
-- Own database (for appropriate services)
-- gRPC or REST APIs for inter-service communication
-- Docker containers for local dev + cloud deployment
-
-### 12.3 From PoC to Production
-
-**Week 5-8:**
-- Swap Supabase for AWS RDS (cost optimization)
-- Move background jobs to AWS Lambda/ECS
-- Add CloudFront CDN for frontend
-- Implement monitoring (CloudWatch, Datadog)
-
-**Week 9+:**
-- Extract services as demand scales
-- Add Kafka for event streaming (real-time features)
-- Implement caching layer (Redis via AWS ElastiCache)
-- Multi-region replication for Canada-only requirement
-
-**Open-Sourcing Readiness:**
-- All infrastructure as Terraform code (included in repo)
-- Schema + migrations + seed data (reproducible DB setup)
-- Deployment guide for self-hosting communities
-- Security audit before release
+| Feature | Status | Notes |
+|---------|--------|-------|
+| React + Vite + Prisma + Apollo Server setup | ✅ Done | |
+| Database schema + migrations | ✅ Done | |
+| GraphQL resolvers (basic) | ✅ Done | |
+| User authentication (email + OAuth) | ⬜ Todo | Supabase Auth |
+| Community CRUD (organizer) | ⬜ Todo | |
+| Event creation and display | ⬜ Todo | |
+| RSVP mutations | ⬜ Todo | |
+| Community browser (map + search) | ⬜ Todo | |
+| Event calendar view | ⬜ Todo | |
+| Subscriptions + notification preferences | ⬜ Todo | |
+| Comment system | ⬜ Todo | Creation + moderation status |
+| Email digest job | ⬜ Todo | Sendgrid + scheduled backend job |
+| Organizer dashboard | ⬜ Todo | Member management, community settings |
+| .ics calendar export | ⬜ Todo | Per-event download |
+| "Add to calendar" deep links | ⬜ Todo | Google + Outlook |
+| Tag filtering + search | ⬜ Todo | |
+| Responsive mobile design | ⬜ Todo | |
+| Unverified user cleanup job | ⬜ Todo | Scheduled backend job, 30-day TTL |
+| Row-Level Security (RLS) policies | ⬜ Deferred | Post-PoC hardening |
+| Full calendar sync (Google/Outlook API) | ⬜ Deferred | Post-PoC |
+| Additional notification channels | ⬜ Deferred | SMS, WhatsApp, etc. |
 
 ---
 
-## 13. Cost Breakdown (PoC, 4 Weeks)
+## 13. Known Risks
 
-| Service | Tier | Monthly Cost | Notes |
-|---------|------|--------------|-------|
-| Vercel | Free | $0 | Covers frontend + backend |
-| Supabase | Free | $0 | PostgreSQL + Auth (5 GB limit) |
-| Sendgrid | Free | $0 | 100 emails/day |
-| GitHub | Free | $0 | Public repo (switch to private later) |
-| **Total** | | **$0** | Well under $200 budget |
+**GraphQL N+1 queries.** Without care, nested GraphQL resolvers can trigger one database query per resolved item in a list. This is mitigated by using Prisma's `include` option to eager-load relations and by batching with a DataLoader-style pattern where needed. This should be monitored early.
 
-**Production (estimated):**
-- Vercel Pro: $20/month
-- Supabase Pro: $25/month (500 GB)
-- Sendgrid: $20/month (100k emails)
-- AWS (optional): $50-100/month
-- **Total: ~$115-165/month**
+**Supabase free tier limits.** The free Supabase plan imposes a 5 GB storage cap and pauses the project after 7 days of inactivity. For the PoC this is acceptable, but the project will need to be upgraded or migrated before any sustained community use.
+
+**Email deliverability.** Sendgrid's free tier allows 100 emails per day, which is sufficient for testing but constrains notification volume. SPF and DKIM records should be configured for the sending domain before any real community pilot to avoid messages being marked as spam.
+
+**Data residency.** Supabase's Canadian region is available but not all features (such as real-time subscriptions) are guaranteed to be available in all regions. This should be verified before launch if Canadian data residency is a hard requirement.
+
+**Permission model completeness.** The RBAC model is not yet fully defined. Until it is, access control logic in resolvers may need to be revised, and RLS policies cannot be finalized. Avoid building features that rely on fine-grained permissions until the model is locked.
 
 ---
 
-## 14. Implementation Roadmap (4 Weeks)
+## 14. In a Distant Future
 
-### Week 1: Foundation
-- [ ] Set up Vercel + Supabase projects
-- [ ] Initialize Next.js monorepo with TypeScript
-- [ ] Configure Prisma, Apollo Server, Supabase Auth
-- [ ] Implement database schema
-- [ ] GraphQL setup (queries only)
+### Community Matching Algorithm
 
-### Week 2: Core Features
-- [ ] User authentication (email + OAuth)
-- [ ] Community CRUD (organizer actions)
-- [ ] Event creation/display
-- [ ] RSVP mutations
-- [ ] Basic frontend (community browser, event view)
+This feature is deferred until after the PoC is validated. The intent is to surface geographic and thematic groupings of communities on the map — so that as a user zooms out, related communities aggregate visually into implied "community hubs."
 
-### Week 3: User Engagement
-- [ ] Subscriptions (communities + preferences)
-- [ ] Comment system (creation + moderation status)
-- [ ] Notification preferences (frequency, time)
-- [ ] Email digest job (Sendgrid integration)
-- [ ] Organizer dashboard UI
+**Proposed approach:**
+- Geographic clustering using K-means on community coordinates
+- Tag similarity using cosine similarity on normalized tag vectors
+- A weighted score: `match_score = 0.6 × geographic + 0.4 × tag_similarity`
+- Hierarchical groupings stored in an adjacency list table for efficient querying
 
-### Week 4: Polish & Launch
-- [ ] Calendar export (.ics files)
-- [ ] Search + tag filtering
-- [ ] Responsive design (mobile)
-- [ ] Error handling + logging
-- [ ] Performance optimization
-- [ ] Deployment + go-live
+**Research areas to explore before implementation:**
+- [PostGIS](https://postgis.net/) for geographic queries directly in PostgreSQL
+- [pg_trgm](https://www.postgresql.org/docs/current/pgtrgm.html) for text similarity within Postgres
+- Pre-computed batch jobs (daily Cron) versus on-demand frontend clustering
+- Whether "implied communities" (auto-generated hubs) should be persisted or computed on the fly
 
----
-
-## 15. Risk Mitigation
-
-| Risk | Impact | Mitigation |
-|------|--------|-----------|
-| Supabase API changes | High | Pin versions, monitor releases |
-| Email deliverability | Medium | Set up SPF/DKIM, monitor bounce rates |
-| GraphQL N+1 queries | Medium | Use Prisma `include` + Apollo caching |
-| Unverified user cleanup job fails | Low | Add alerting, manual cleanup script |
-| Data residency (Canada) | Medium | Verify Supabase region before launch |
-
----
-
-## 16. References & Documentation
-
-**Core Technologies:**
-- [Next.js 14 Docs](https://nextjs.org/docs)
-- [Apollo Server 4 Docs](https://www.apollographql.com/docs/apollo-server/)
-- [Prisma ORM Docs](https://www.prisma.io/docs/)
-- [PostgreSQL 14 Docs](https://www.postgresql.org/docs/14/)
-- [Supabase Docs](https://supabase.com/docs)
-
-**Deployment:**
-- [Vercel Deployment Docs](https://vercel.com/docs)
-- [Supabase Hosting](https://supabase.com/docs/guides/hosting/overview)
-
-**Authentication:**
-- [Supabase Auth](https://supabase.com/docs/guides/auth/overview)
-- [JWT Best Practices](https://tools.ietf.org/html/rfc7519)
-
-**Notifications:**
-- [Sendgrid Node.js Library](https://github.com/sendgrid/sendgrid-nodejs)
-- [iCalendar Format (RFC 5545)](https://tools.ietf.org/html/rfc5545)
-
-**Observability:**
-- [Pino Logger](https://getpino.io/)
-- [Vercel Analytics](https://vercel.com/analytics)
-
----
-
-## 17. Approval & Sign-Off
-
-**Architecture Status:** ✅ Ready for Implementation
-
-**Next Step:** Proceed to repository initialization and Week 1 development.
-
-For questions or clarifications, refer to this document or the original PoC discovery document.
-
----
-
-**Document Version History:**
-| Version | Date | Author | Changes |
-|---------|------|--------|---------|
-| 1.0 | 2026-04-16 | Technical Team | Initial architecture design |
+This will be revisited as a Phase 2 feature once the core community management and discovery flows are stable.

@@ -2,8 +2,8 @@
 
 ## Pending
 - [ ] Sendgrid domain authentication for commons-fabric.ca (noreply@commons-fabric.ca / general@commons-fabric.ca)
-- [ ] Implement GraphQL schema and resolvers (see ARCHITECTURE.md §5)
-- [ ] Test Supabase connection + GraphQL endpoint with real queries
+- [x] Implement GraphQL schema and resolvers (see ARCHITECTURE.md §5)
+- [x] Test Supabase connection + GraphQL endpoint with real queries
 
 ## Done
 - [x] Boilerplate repo initialized (Next.js, Prisma, Apollo, Supabase, Sendgrid, Tailwind)

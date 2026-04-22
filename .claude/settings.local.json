@@ -29,7 +29,9 @@
       "Bash(npm run *)",
       "mcp__context7__resolve-library-id",
       "mcp__context7__query-docs",
-      "Bash(npx prisma *)"
+      "Bash(npx prisma *)",
+      "Bash(awk '{print $NF}')",
+      "WebFetch(domain:www.apollographql.com)"
     ]
   }
 }

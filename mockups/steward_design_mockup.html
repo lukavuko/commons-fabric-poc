@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Commons Fabric · Steward Experience Mockup</title>
+<style>
+  :root {
+    --bg: #f7f5f1;
+    --surface: #ffffff;
+    --surface-2: #fbfaf7;
+    --border: #e7e3da;
+    --text: #1f2420;
+    --text-muted: #6c7570;
+    --primary: #2f7d6b;
+    --primary-soft: #d9ebe5;
+    --accent: #c97b3f;
+    --accent-soft: #f7e6d6;
+    --danger: #c0493b;
+    --danger-soft: #f7dcd7;
+    --warning: #b8892a;
+    --warning-soft: #f7edd2;
+    --shadow: 0 1px 2px rgba(20,20,20,0.04), 0 4px 12px rgba(20,20,20,0.04);
+    --radius: 10px;
+    --radius-sm: 6px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--text);
+    background: var(--bg);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  .app {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+  }
+  /* ---------- Sidebar ---------- */
+  .sidebar {
+    background: #1f2420;
+    color: #e8e5de;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+  .brand {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand-logo {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-weight: 700; font-size: 14px;
+  }
+  .brand-name { font-weight: 600; font-size: 14px; }
+  .brand-sub { font-size: 11px; color: #9aa29d; }
+  .nav { padding: 14px 10px; flex: 1; overflow: auto; }
+  .nav-section {
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.08em;
+    color: #8a918c; padding: 12px 10px 6px;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 6px;
+    cursor: pointer; color: #d9d5cc; font-size: 13px;
+    border: none; background: transparent; width: 100%; text-align: left;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .nav-item.active { background: var(--primary); color: #fff; }
+  .nav-item .dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); margin-left: auto;
+  }
+  .steward-card {
+    margin: 14px; padding: 12px; background: rgba(255,255,255,0.04);
+    border-radius: 8px; font-size: 12px;
+  }
+  .steward-card .name { color: #fff; font-weight: 600; }
+  .steward-card .role { color: #9aa29d; }
+
+  /* ---------- Main ---------- */
+  .main {
+    padding: 28px 36px 60px;
+    max-width: 1200px;
+  }
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 24px;
+  }
+  .page-title { font-size: 22px; font-weight: 600; margin: 0; }
+  .page-sub { color: var(--text-muted); margin: 4px 0 0; font-size: 13px; }
+  .topbar-actions { display: flex; gap: 8px; }
+  .btn {
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--text); padding: 7px 14px; border-radius: 6px;
+    font-size: 13px; cursor: pointer; font-weight: 500;
+  }
+  .btn:hover { background: var(--surface-2); }
+  .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn.primary:hover { background: #286b5b; }
+  .btn.accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .btn.ghost { background: transparent; border-color: transparent; }
+  .btn.danger { color: var(--danger); border-color: var(--danger-soft); }
+
+  /* ---------- Cards ---------- */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--text-muted);
+    margin: 0 0 14px;
+  }
+  .grid { display: grid; gap: 16px; }
+  .grid.cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid.cols-3 { grid-template-columns: 2fr 1fr; }
+  .grid.cols-2 { grid-template-columns: 1fr 1fr; }
+
+  .stat .num { font-size: 26px; font-weight: 600; }
+  .stat .label { color: var(--text-muted); font-size: 12px; }
+  .stat .delta { font-size: 12px; color: var(--primary); margin-top: 4px; }
+  .stat .delta.neg { color: var(--danger); }
+
+  .tag {
+    display: inline-flex; align-items: center; gap: 4px;
+    background: var(--primary-soft); color: var(--primary);
+    padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500;
+  }
+  .tag.accent { background: var(--accent-soft); color: var(--accent); }
+  .tag.warn { background: var(--warning-soft); color: var(--warning); }
+  .tag.danger { background: var(--danger-soft); color: var(--danger); }
+  .tag.neutral { background: #eee9df; color: #6c7570; }
+
+  /* ---------- Lists ---------- */
+  .list-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-top: 1px solid var(--border);
+  }
+  .list-row:first-child { border-top: none; }
+  .avatar {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--primary-soft); color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 13px; flex-shrink: 0;
+  }
+  .list-meta { flex: 1; min-width: 0; }
+  .list-meta .title { font-weight: 500; }
+  .list-meta .sub { font-size: 12px; color: var(--text-muted); }
+  .list-actions { display: flex; gap: 6px; }
+
+  /* ---------- Wizard ---------- */
+  .wizard-steps {
+    display: flex; gap: 0; margin-bottom: 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 4px;
+  }
+  .wizard-step {
+    flex: 1; padding: 10px 14px; text-align: center;
+    font-size: 12px; color: var(--text-muted); border-radius: 6px;
+    font-weight: 500;
+  }
+  .wizard-step.active { background: var(--primary); color: #fff; }
+  .wizard-step.done { color: var(--primary); }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block; font-weight: 500; font-size: 13px;
+    margin-bottom: 6px;
+  }
+  .form-help { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+  .input, .textarea, .select {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+    border-radius: 6px; font-size: 13px; font-family: inherit;
+    background: var(--surface);
+  }
+  .textarea { resize: vertical; min-height: 80px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 4px 10px; border: 1px solid var(--border);
+    border-radius: 999px; font-size: 12px; cursor: pointer;
+    background: var(--surface);
+  }
+  .chip.selected {
+    background: var(--primary-soft); border-color: var(--primary);
+    color: var(--primary); font-weight: 500;
+  }
+  .radio-group { display: grid; gap: 8px; }
+  .radio-card {
+    border: 1px solid var(--border); padding: 12px;
+    border-radius: 6px; cursor: pointer;
+  }
+  .radio-card.selected { border-color: var(--primary); background: var(--primary-soft); }
+  .radio-card .title { font-weight: 500; }
+  .radio-card .sub { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+
+  /* ---------- Table ---------- */
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 10px 8px; font-size: 13px; }
+  th {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;
+    color: var(--text-muted); font-weight: 600;
+    border-bottom: 1px solid var(--border);
+  }
+  td { border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+
+  /* ---------- Map placeholder ---------- */
+  .map {
+    height: 220px; border-radius: 8px;
+    background:
+      radial-gradient(circle at 30% 40%, var(--primary-soft) 0, transparent 40%),
+      radial-gradient(circle at 70% 60%, var(--accent-soft) 0, transparent 40%),
+      linear-gradient(135deg, #e8e3d5, #dfdccf);
+    position: relative; overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .pin {
+    position: absolute; width: 18px; height: 18px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    background: var(--primary); border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  .pin.accent { background: var(--accent); }
+  .pin.warn { background: var(--warning); }
+
+  /* ---------- Composer ---------- */
+  .composer {
+    display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
+  }
+  .side-panel {
+    background: var(--surface-2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px;
+  }
+  .channel-row {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 6px 0; font-size: 13px;
+  }
+  .toggle {
+    width: 32px; height: 18px; background: #d4d0c5; border-radius: 999px;
+    position: relative; cursor: pointer;
+  }
+  .toggle.on { background: var(--primary); }
+  .toggle::after {
+    content: ''; position: absolute; top: 2px; left: 2px;
+    width: 14px; height: 14px; background: #fff; border-radius: 50%;
+    transition: left 0.15s;
+  }
+  .toggle.on::after { left: 16px; }
+
+  /* ---------- Inbox ---------- */
+  .inbox-item {
+    padding: 12px; border: 1px solid var(--border);
+    border-radius: 8px; margin-bottom: 8px;
+    background: var(--surface); display: flex; gap: 12px;
+    align-items: flex-start;
+  }
+  .inbox-item .icon {
+    width: 32px; height: 32px; border-radius: 8px; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+  }
+  .inbox-item .icon.join { background: var(--primary-soft); color: var(--primary); }
+  .inbox-item .icon.flag { background: var(--danger-soft); color: var(--danger); }
+  .inbox-item .icon.comment { background: var(--accent-soft); color: var(--accent); }
+  .inbox-item .icon.draft { background: var(--warning-soft); color: var(--warning); }
+  .inbox-body { flex: 1; }
+
+  /* ---------- Page switching ---------- */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .section-gap { margin-top: 24px; }
+
+  .caption {
+    background: var(--accent-soft); color: var(--accent);
+    padding: 6px 10px; border-radius: 6px; font-size: 12px;
+    margin-bottom: 16px; display: inline-block; font-weight: 500;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-logo">CF</div>
+      <div>
+        <div class="brand-name">Commons Fabric</div>
+        <div class="brand-sub">Steward console</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <div class="nav-section">Stewarding</div>
+      <button class="nav-item active" data-page="dashboard">Dashboard<span class="dot"></span></button>
+      <button class="nav-item" data-page="wizard">New community</button>
+      <button class="nav-item" data-page="claim">Claim community</button>
+      <div class="nav-section">Content</div>
+      <button class="nav-item" data-page="composer">Event composer</button>
+      <button class="nav-item" data-page="members">Members</button>
+      <button class="nav-item" data-page="moderation">Moderation</button>
+      <div class="nav-section">Collaboration</div>
+      <button class="nav-item" data-page="hubs">Hubs</button>
+    </nav>
+    <div class="steward-card">
+      <div class="name">Luka V.</div>
+      <div class="role">Steward · Repair Café YYZ</div>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- ================= DASHBOARD ================= -->
+    <section class="page active" id="dashboard">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Repair Café YYZ</h1>
+          <p class="page-sub">Your steward home · 3 things need attention today</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn">View public page</button>
+          <button class="btn primary">+ New event</button>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="grid cols-4">
+        <div class="card stat">
+          <div class="label">Members</div>
+          <div class="num">248</div>
+          <div class="delta">+12 this week</div>
+        </div>
+        <div class="card stat">
+          <div class="label">Subscribers</div>
+          <div class="num">1,431</div>
+          <div class="delta">+48 this week</div>
+        </div>
+        <div class="card stat">
+          <div class="label">Pending join requests</div>
+          <div class="num">7</div>
+          <div class="delta neg">2 older than 48h</div>
+        </div>
+        <div class="card stat">
+          <div class="label">Upcoming events</div>
+          <div class="num">4</div>
+          <div class="delta">Next: Sat 10am</div>
+        </div>
+      </div>
+
+      <!-- Inbox + Side -->
+      <div class="grid cols-3 section-gap">
+        <div class="card">
+          <h3 class="card-title">Steward inbox</h3>
+
+          <div class="inbox-item">
+            <div class="icon join">✓</div>
+            <div class="inbox-body">
+              <div><strong>3 new join requests</strong> · Repair Café YYZ</div>
+              <div class="sub" style="color:var(--text-muted);font-size:12px;margin-top:2px;">
+                Ana M., Devon S., and Priya R. applied to join. Auto-approval is off.
+              </div>
+            </div>
+            <button class="btn">Review</button>
+          </div>
+
+          <div class="inbox-item">
+            <div class="icon flag">!</div>
+            <div class="inbox-body">
+              <div><strong>Comment flagged by 2 members</strong></div>
+              <div class="sub" style="color:var(--text-muted);font-size:12px;margin-top:2px;">
+                On event "April repair night" — possible spam link.
+              </div>
+            </div>
+            <button class="btn">Moderate</button>
+          </div>
+
+          <div class="inbox-item">
+            <div class="icon comment">💬</div>
+            <div class="inbox-body">
+              <div><strong>Unanswered question on the community page</strong></div>
+              <div class="sub" style="color:var(--text-muted);font-size:12px;margin-top:2px;">
+                "Do you ever take small appliances?" — posted 19h ago.
+              </div>
+            </div>
+            <button class="btn">Reply</button>
+          </div>
+
+          <div class="inbox-item">
+            <div class="icon draft">✎</div>
+            <div class="inbox-body">
+              <div><strong>Draft announcement</strong> — "May schedule & new volunteers"</div>
+              <div class="sub" style="color:var(--text-muted);font-size:12px;margin-top:2px;">
+                Last edited yesterday. Not published.
+              </div>
+            </div>
+            <button class="btn">Open</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <h3 class="card-title">Upcoming events</h3>
+            <div class="list-row">
+              <div class="avatar" style="background:var(--accent-soft);color:var(--accent);">Sa</div>
+              <div class="list-meta">
+                <div class="title">April Repair Night</div>
+                <div class="sub">Sat · Riverdale Library · 32 RSVPs</div>
+              </div>
+            </div>
+            <div class="list-row">
+              <div class="avatar" style="background:var(--primary-soft);color:var(--primary);">Su</div>
+              <div class="list-meta">
+                <div class="title">Tool sharpening pop-up</div>
+                <div class="sub">Sun · Dufferin Grove · 8 RSVPs</div>
+              </div>
+            </div>
+            <div class="list-row">
+              <div class="avatar" style="background:var(--warning-soft);color:var(--warning);">Tu</div>
+              <div class="list-meta">
+                <div class="title">Volunteer onboarding</div>
+                <div class="sub">Tue · Members only · 5 RSVPs</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card section-gap">
+            <h3 class="card-title">Quick actions</h3>
+            <div style="display:grid;gap:8px;">
+              <button class="btn">✎ New announcement</button>
+              <button class="btn">👥 Invite members</button>
+              <button class="btn">🏷 Edit community tags</button>
+              <button class="btn">🔗 Link a hub</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= WIZARD ================= -->
+    <section class="page" id="wizard">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Create a new community</h1>
+          <p class="page-sub">Step 2 of 4 · Tell people what you're about</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn ghost">Save & exit</button>
+        </div>
+      </div>
+
+      <div class="wizard-steps">
+        <div class="wizard-step done">✓ Basics</div>
+        <div class="wizard-step active">2 · Profile & tags</div>
+        <div class="wizard-step">3 · Governance</div>
+        <div class="wizard-step">4 · Review & publish</div>
+      </div>
+
+      <div class="grid cols-2">
+        <div class="card">
+          <div class="form-group">
+            <label class="form-label">Community name</label>
+            <input class="input" value="Repair Café YYZ" />
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Short description</label>
+            <textarea class="textarea">A volunteer-run drop-in where neighbours fix household items together instead of throwing them out. All skill levels welcome.</textarea>
+            <div class="form-help">This shows up in the community popup and on your public page.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Community tags</label>
+            <div class="chips">
+              <div class="chip selected">repair</div>
+              <div class="chip selected">sustainability</div>
+              <div class="chip selected">mutual aid</div>
+              <div class="chip">skill share</div>
+              <div class="chip">free event</div>
+              <div class="chip">library-hosted</div>
+              <div class="chip">+ add tag</div>
+            </div>
+            <div class="form-help">Tags help non-members find you via filters on the explore page.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Community size</label>
+            <div class="chips">
+              <div class="chip">Just starting (&lt;25)</div>
+              <div class="chip selected">Small (25–150)</div>
+              <div class="chip">Medium (150–500)</div>
+              <div class="chip">Large (500+)</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">External links</label>
+            <input class="input" placeholder="Website" value="repaircafeyyz.org" style="margin-bottom:6px;" />
+            <input class="input" placeholder="Social / wiki" value="instagram.com/repaircafeyyz" />
+          </div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title">Location on the explore map</h3>
+          <div class="map">
+            <div class="pin" style="left:50%;top:50%;"></div>
+            <div class="pin accent" style="left:28%;top:62%;"></div>
+            <div class="pin warn" style="left:72%;top:38%;"></div>
+          </div>
+          <div class="form-help" style="margin-top:10px;">
+            Your community pin shows in green. Drag to refine, or switch to a service-area polygon.
+          </div>
+
+          <div class="form-group section-gap">
+            <label class="form-label">Cover imagery</label>
+            <div style="height:90px;border:1px dashed var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--text-muted);font-size:12px;">
+              Drop image here or click to upload
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Visibility</label>
+            <div class="radio-group">
+              <div class="radio-card selected">
+                <div class="title">🌐 Public (recommended)</div>
+                <div class="sub">Appears on the explore map and in search.</div>
+              </div>
+              <div class="radio-card">
+                <div class="title">🔗 Unlisted</div>
+                <div class="sub">Only accessible via direct link.</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;margin-top:20px;">
+        <button class="btn">← Back</button>
+        <button class="btn primary">Continue to governance →</button>
+      </div>
+    </section>
+
+    <!-- ================= CLAIM ================= -->
+    <section class="page" id="claim">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Claim this community</h1>
+          <p class="page-sub">This listing was auto-generated. Verify you steward it to take ownership.</p>
+        </div>
+      </div>
+
+      <div class="caption">Detected via the AI community scraper · 2026-03-18</div>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h3 class="card-title">What we found</h3>
+          <div style="font-weight:600;font-size:16px;">Riverdale Neighbours Association</div>
+          <div style="color:var(--text-muted);margin-bottom:12px;">riverdalena.ca · 1.2k scraped mentions</div>
+
+          <div class="form-group">
+            <label class="form-label">Scraped description (confirm or edit)</label>
+            <textarea class="textarea">Resident-led association covering Riverdale, East Chinatown, and Leslieville. Hosts quarterly meetings, park cleanups, and a monthly newsletter.</textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Scraped tags — keep what fits</label>
+            <div class="chips">
+              <div class="chip selected">neighborhood</div>
+              <div class="chip selected">civic</div>
+              <div class="chip">newsletter</div>
+              <div class="chip">advocacy</div>
+              <div class="chip">remove all</div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Scraped events (3) — review before keeping</label>
+            <div class="list-row">
+              <div class="avatar">🌳</div>
+              <div class="list-meta">
+                <div class="title">Spring park cleanup</div>
+                <div class="sub">May 4 · Jimmie Simpson Park · source: Facebook</div>
+              </div>
+              <button class="btn">Keep</button>
+              <button class="btn ghost">Drop</button>
+            </div>
+            <div class="list-row">
+              <div class="avatar">📋</div>
+              <div class="list-meta">
+                <div class="title">Quarterly meeting</div>
+                <div class="sub">May 22 · Ralph Thornton Centre · source: website</div>
+              </div>
+              <button class="btn">Keep</button>
+              <button class="btn ghost">Drop</button>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <h3 class="card-title">Verify stewardship</h3>
+            <div class="radio-group">
+              <div class="radio-card selected">
+                <div class="title">📧 Email on linked domain</div>
+                <div class="sub">Send a code to @riverdalena.ca</div>
+              </div>
+              <div class="radio-card">
+                <div class="title">🔗 Social handle confirm</div>
+                <div class="sub">Post a code from the official account</div>
+              </div>
+              <div class="radio-card">
+                <div class="title">👥 Manual review</div>
+                <div class="sub">Submit proof, reviewed in ~48h</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card section-gap">
+            <h3 class="card-title">Potential duplicates</h3>
+            <div class="list-row">
+              <div class="avatar">R</div>
+              <div class="list-meta">
+                <div class="title">Riverdale Residents Group</div>
+                <div class="sub">82% overlap · 340 subscribers</div>
+              </div>
+              <button class="btn">Merge</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= COMPOSER ================= -->
+    <section class="page" id="composer">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">New event</h1>
+          <p class="page-sub">Publishing to Repair Café YYZ · visible to subscribers & members</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn">Save draft</button>
+          <button class="btn primary">Publish & broadcast</button>
+        </div>
+      </div>
+
+      <div class="composer">
+        <div class="card">
+          <div class="form-group">
+            <label class="form-label">Event title</label>
+            <input class="input" value="May Repair Night — Small appliances welcome" />
+          </div>
+
+          <div class="grid cols-2" style="gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Date & time</label>
+              <input class="input" value="Sat, May 10 · 10:00 AM – 1:00 PM" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Location</label>
+              <input class="input" value="Riverdale Library · 370 Broadview Ave" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea class="textarea" style="min-height:140px;">Bring your broken kettles, lamps, small appliances, or that mystery gadget you've been meaning to fix. Our volunteer fixers will work through items together — it's as much about learning as repairing.
+
+Parts cost extra; diagnosis is always free. Limited to 2 items per person.</textarea>
+          </div>
+
+          <div class="grid cols-2" style="gap:12px;">
+            <div class="form-group">
+              <label class="form-label">Tags (filter & routing)</label>
+              <div class="chips">
+                <div class="chip selected">repair night</div>
+                <div class="chip selected">family-friendly</div>
+                <div class="chip">volunteer call</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label">RSVP cap</label>
+              <input class="input" value="40 people · waitlist on" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="side-panel">
+            <h3 class="card-title">Broadcast channels</h3>
+            <div class="channel-row">📧 Email<span class="toggle on"></span></div>
+            <div class="channel-row">📱 SMS<span class="toggle"></span></div>
+            <div class="channel-row">💬 In-app feed<span class="toggle on"></span></div>
+            <div class="channel-row">🟢 WhatsApp<span class="toggle on"></span></div>
+            <div class="channel-row">🔐 Signal<span class="toggle"></span></div>
+            <div class="form-help" style="margin-top:10px;">
+              Members still control their own frequency (realtime / daily / weekly).
+            </div>
+          </div>
+
+          <div class="side-panel" style="margin-top:12px;">
+            <h3 class="card-title">Syndicate to hub</h3>
+            <div class="list-row">
+              <div class="avatar" style="background:var(--accent-soft);color:var(--accent);">C</div>
+              <div class="list-meta">
+                <div class="title">Circular Economy YYZ</div>
+                <div class="sub">3 sibling communities</div>
+              </div>
+              <span class="toggle on"></span>
+            </div>
+            <div class="form-help">Each co-host community will see it branded as their own.</div>
+          </div>
+
+          <div class="side-panel" style="margin-top:12px;">
+            <h3 class="card-title">Who will see it</h3>
+            <div style="display:flex;justify-content:space-between;">
+              <span>Subscribers</span><strong>1,431</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+              <span>Members</span><strong>248</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;">
+              <span>Hub reach</span><strong>~3,200</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MEMBERS ================= -->
+    <section class="page" id="members">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Members & requests</h1>
+          <p class="page-sub">Approve joiners, assign roles, and manage community-role-tags</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn">Export CSV</button>
+          <button class="btn primary">+ Invite</button>
+        </div>
+      </div>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h3 class="card-title">Pending join requests (7)</h3>
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Applied</th>
+                <th>Source</th>
+                <th>Role-tag</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div style="display:flex;gap:8px;align-items:center;"><div class="avatar">AM</div>Ana Martins</div></td>
+                <td>2h ago</td>
+                <td><span class="tag neutral">Explore page</span></td>
+                <td>
+                  <select class="select" style="width:auto;">
+                    <option>Member</option>
+                    <option>Contributor</option>
+                    <option>Volunteer</option>
+                  </select>
+                </td>
+                <td><button class="btn primary">Approve</button> <button class="btn">Deny</button></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;gap:8px;align-items:center;"><div class="avatar">DS</div>Devon Singh</div></td>
+                <td>6h ago</td>
+                <td><span class="tag neutral">Hub: Circular YYZ</span></td>
+                <td>
+                  <select class="select" style="width:auto;">
+                    <option>Member</option>
+                  </select>
+                </td>
+                <td><button class="btn primary">Approve</button> <button class="btn">Deny</button></td>
+              </tr>
+              <tr>
+                <td><div style="display:flex;gap:8px;align-items:center;"><div class="avatar">PR</div>Priya Rao</div></td>
+                <td>3d ago <span class="tag warn">overdue</span></td>
+                <td><span class="tag neutral">Invite link</span></td>
+                <td>
+                  <select class="select" style="width:auto;">
+                    <option>Volunteer</option>
+                  </select>
+                </td>
+                <td><button class="btn primary">Approve</button> <button class="btn">Deny</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div>
+          <div class="card">
+            <h3 class="card-title">Role-tag distribution</h3>
+            <div style="display:flex;justify-content:space-between;margin:6px 0;">
+              <span>👑 Co-steward</span><strong>3</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin:6px 0;">
+              <span>🛠 Volunteer</span><strong>24</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin:6px 0;">
+              <span>🧑‍🤝‍🧑 Member</span><strong>221</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin:6px 0;">
+              <span>👁 Subscriber</span><strong>1,431</strong>
+            </div>
+            <button class="btn" style="width:100%;margin-top:10px;">Manage role-based access</button>
+          </div>
+
+          <div class="card section-gap">
+            <h3 class="card-title">Governance snapshot</h3>
+            <div style="font-size:13px;line-height:1.7;">
+              Membership: <span class="tag">approval-gated</span><br/>
+              Auto-approve after event RSVP: <span class="tag neutral">off</span><br/>
+              Member list visibility: <span class="tag">members only</span><br/>
+              <button class="btn ghost" style="padding-left:0;margin-top:6px;">Edit governance →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= MODERATION ================= -->
+    <section class="page" id="moderation">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Moderation queue</h1>
+          <p class="page-sub">Flagged comments, RSVPs, and suspicious activity · all actions log to the steward audit log</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn">View audit log</button>
+        </div>
+      </div>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h3 class="card-title">Needs review (4)</h3>
+
+          <div class="inbox-item">
+            <div class="icon flag">!</div>
+            <div class="inbox-body">
+              <div><strong>Suspicious link in comment</strong> · flagged 2x</div>
+              <div style="color:var(--text-muted);font-size:12px;margin:4px 0;">
+                "Check out free-tools-here[.]ru for amazing deals…" — on April Repair Night
+              </div>
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <button class="btn danger">Remove & warn</button>
+                <button class="btn">Hide from feed</button>
+                <button class="btn ghost">Dismiss</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="inbox-item">
+            <div class="icon flag">!</div>
+            <div class="inbox-body">
+              <div><strong>RSVP from brand-new account</strong> · flagged by auto-filter</div>
+              <div style="color:var(--text-muted);font-size:12px;margin:4px 0;">
+                Account created 14 min ago, no other activity. Bulk RSVP'd to 3 events.
+              </div>
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <button class="btn">Require email verify</button>
+                <button class="btn">Cancel RSVPs</button>
+                <button class="btn ghost">Allow</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="inbox-item">
+            <div class="icon flag">!</div>
+            <div class="inbox-body">
+              <div><strong>Comment thread getting heated</strong></div>
+              <div style="color:var(--text-muted);font-size:12px;margin:4px 0;">
+                12 replies in 20 min on "Tool sharpening pop-up" — sentiment shift detected.
+              </div>
+              <div style="display:flex;gap:6px;margin-top:8px;">
+                <button class="btn">Lock thread</button>
+                <button class="btn">Post from steward</button>
+                <button class="btn ghost">Watch only</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <h3 class="card-title">This week</h3>
+            <div style="display:flex;justify-content:space-between;margin:6px 0;">
+              <span>Items reviewed</span><strong>18</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin:6px 0;">
+              <span>Removed</span><strong>4</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin:6px 0;">
+              <span>Users warned</span><strong>2</strong>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin:6px 0;">
+              <span>Avg response time</span><strong>3h 20m</strong>
+            </div>
+          </div>
+
+          <div class="card section-gap">
+            <h3 class="card-title">Auto-filter settings</h3>
+            <div class="channel-row">Flag new-account RSVPs<span class="toggle on"></span></div>
+            <div class="channel-row">Link safety scan<span class="toggle on"></span></div>
+            <div class="channel-row">Heated-thread detection<span class="toggle on"></span></div>
+            <div class="channel-row">Profanity filter<span class="toggle"></span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= HUBS ================= -->
+    <section class="page" id="hubs">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Hubs</h1>
+          <p class="page-sub">Collaborate with related communities without duplicating work</p>
+        </div>
+        <div class="topbar-actions">
+          <button class="btn">Browse hubs</button>
+          <button class="btn primary">+ Create hub</button>
+        </div>
+      </div>
+
+      <div class="grid cols-3">
+        <div class="card">
+          <h3 class="card-title">Your hubs (1)</h3>
+          <div style="display:flex;align-items:center;gap:12px;padding:8px 0 16px;border-bottom:1px solid var(--border);">
+            <div class="avatar" style="width:48px;height:48px;background:var(--accent-soft);color:var(--accent);font-size:18px;">♻</div>
+            <div style="flex:1;">
+              <div style="font-weight:600;font-size:16px;">Circular Economy YYZ</div>
+              <div style="color:var(--text-muted);font-size:12px;">4 communities · 3,200 reach · you co-steward</div>
+            </div>
+            <button class="btn">Open hub</button>
+          </div>
+
+          <h3 class="card-title section-gap">Sibling communities in this hub</h3>
+          <div class="list-row">
+            <div class="avatar">TL</div>
+            <div class="list-meta">
+              <div class="title">Toronto Tool Library</div>
+              <div class="sub">842 subscribers · tags: tool share, DIY</div>
+            </div>
+            <span class="tag">syndicating</span>
+          </div>
+          <div class="list-row">
+            <div class="avatar">FN</div>
+            <div class="list-meta">
+              <div class="title">Food Not Bombs — East End</div>
+              <div class="sub">612 subscribers · tags: mutual aid, food</div>
+            </div>
+            <span class="tag">syndicating</span>
+          </div>
+          <div class="list-row">
+            <div class="avatar">SW</div>
+            <div class="list-meta">
+              <div class="title">Seed & Scrap Swap</div>
+              <div class="sub">410 subscribers · tags: gardening, zero waste</div>
+            </div>
+            <span class="tag neutral">paused</span>
+          </div>
+
+          <h3 class="card-title section-gap">Suggested by implied-community discovery</h3>
+          <div class="list-row">
+            <div class="avatar">BW</div>
+            <div class="list-meta">
+              <div class="title">Bike Workshop Co-op</div>
+              <div class="sub">67% tag overlap · 15% subscriber overlap</div>
+            </div>
+            <button class="btn">Invite to hub</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="card">
+            <h3 class="card-title">Hub insights · last 30d</h3>
+            <div class="stat"><div class="num">14</div><div class="label">Co-published events</div></div>
+            <div class="stat section-gap"><div class="num">+322</div><div class="label">New subscribers via hub</div></div>
+            <div class="stat section-gap"><div class="num">2,180</div><div class="label">Combined RSVPs</div></div>
+          </div>
+
+          <div class="card section-gap">
+            <h3 class="card-title">Shared resource list</h3>
+            <div class="list-row">
+              <div class="avatar" style="background:var(--warning-soft);color:var(--warning);">🛠</div>
+              <div class="list-meta"><div class="title">Cargo bike trailer</div><div class="sub">Lent by Tool Library</div></div>
+            </div>
+            <div class="list-row">
+              <div class="avatar" style="background:var(--warning-soft);color:var(--warning);">🍲</div>
+              <div class="list-meta"><div class="title">Commercial kitchen access</div><div class="sub">Fridays only</div></div>
+            </div>
+            <div class="list-row">
+              <div class="avatar" style="background:var(--warning-soft);color:var(--warning);">📋</div>
+              <div class="list-meta"><div class="title">Shared volunteer waiver template</div><div class="sub">PDF · v3</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  const navButtons = document.querySelectorAll('.nav-item');
+  const pages = document.querySelectorAll('.page');
+  navButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.page;
+      navButtons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      pages.forEach(p => p.classList.toggle('active', p.id === target));
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  });
+</script>
+</body>
+</html>
