@@ -56,5 +56,7 @@ logs/
 # Plan files
 .claude/plans/
 /.claude/
+/.claude
+.claude/**
 
 /src/generated/prisma
