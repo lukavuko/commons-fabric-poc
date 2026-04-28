@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Commons Fabric — Style 4: Risograph Postcard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --page: #F6F1E4;
+    --surface: #FFFAEE;
+    --ink: #2C2B2A;
+    --blue: #4F6BA8;
+    --pink: #D27896;
+    --yellow: #E9C25C;
+    --hairline: rgba(44, 43, 42, 0.08);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: var(--page);
+    /* riso grain overlay */
+    background-image:
+      radial-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+      radial-gradient(rgba(210, 120, 150, 0.025) 1px, transparent 1px);
+    background-size: 2px 2px, 5px 5px;
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .container { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+
+  nav.top {
+    padding: 28px 0;
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 48px;
+  }
+  .logo {
+    font-family: 'Fraunces', serif;
+    font-size: 22px; font-weight: 600;
+    color: var(--ink); letter-spacing: -0.01em;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .logo-stamp {
+    display: inline-block;
+    background: var(--blue); color: var(--surface);
+    padding: 4px 10px; border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace; font-size: 11px;
+    transform: rotate(-3deg);
+  }
+  .navlinks { display: flex; gap: 8px; }
+  .navlinks a {
+    color: var(--ink); text-decoration: none;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px;
+    padding: 8px 14px; border-radius: 999px;
+  }
+  .navlinks a.active { background: var(--ink); color: var(--surface); }
+
+  header.page { margin-bottom: 36px; }
+  h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 52px; line-height: 1.05; margin: 0 0 10px;
+    letter-spacing: -0.02em;
+  }
+  h1 .accent { color: var(--blue); font-style: italic; font-weight: 500; }
+  .subtitle {
+    color: var(--ink); opacity: 0.7;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 13px; margin: 0;
+  }
+
+  .toolbar {
+    display: flex; align-items: center; gap: 16px; flex-wrap: wrap;
+    margin: 32px 0 44px;
+  }
+  .search {
+    flex: 1 1 360px;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 12px 18px;
+    display: flex; align-items: center; gap: 10px;
+    box-shadow:
+      0 2px 0 -1px var(--pink),
+      0 -2px 0 -1px var(--blue);
+  }
+  .search input {
+    background: transparent; border: 0; outline: 0; flex: 1;
+    color: var(--ink); font: inherit; font-size: 14px;
+  }
+  .search svg { color: var(--blue); }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    padding: 8px 14px; border-radius: 8px;
+    background: transparent; color: var(--ink);
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    cursor: pointer; user-select: none;
+    text-decoration: underline;
+    text-decoration-color: var(--hairline);
+    text-underline-offset: 4px;
+  }
+  .chip.active {
+    background: var(--ink); color: var(--surface);
+    text-decoration: none;
+  }
+
+  .grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+  }
+  .card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 22px;
+    display: flex; flex-direction: column;
+    position: relative;
+    /* misregistered "riso" edges */
+    box-shadow:
+      0 -1px 0 0 var(--pink),
+      0 1px 0 0 var(--blue),
+      0 4px 18px rgba(44,43,42,0.04);
+  }
+  .stamp {
+    position: absolute; top: 14px; right: 14px;
+    background: var(--yellow);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px; font-weight: 500;
+    transform: rotate(4deg);
+    color: var(--ink);
+  }
+  .thumb {
+    height: 110px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .thumb.a { background: var(--blue); }
+  .thumb.b { background: var(--pink); }
+  .thumb.c { background: var(--blue); }
+  .thumb.d { background: var(--pink); }
+  .thumb::after {
+    content: ''; position: absolute; inset: 0;
+    background-image: radial-gradient(rgba(255,255,255,0.18) 1px, transparent 1px);
+    background-size: 4px 4px;
+    mix-blend-mode: overlay;
+  }
+  .card h3 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600; margin: 0 0 8px; font-size: 22px;
+    letter-spacing: -0.005em;
+  }
+  .desc { color: var(--ink); opacity: 0.78; font-size: 14px; margin: 0 0 14px; flex: 1; }
+  .tags { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+  .tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px; color: var(--ink);
+    text-decoration: underline;
+    text-decoration-color: var(--blue);
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+  }
+  .meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px; color: var(--ink); opacity: 0.6;
+    margin-bottom: 16px;
+  }
+  .actions {
+    display: flex; gap: 10px;
+  }
+  .btn {
+    flex: 1; padding: 11px 14px;
+    font-size: 13px; font-weight: 600; border: 0; cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    border-radius: 999px;
+  }
+  .btn.primary { background: var(--blue); color: var(--surface); }
+  .btn.secondary { background: transparent; color: var(--ink); box-shadow: inset 0 0 0 1.5px var(--ink); }
+
+  footer {
+    margin: 80px 0 48px; color: var(--ink); opacity: 0.5;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <nav class="top">
+    <div class="logo">Commons Fabric <span class="logo-stamp">v0.1 · POC</span></div>
+    <div class="navlinks">
+      <a href="#" class="active">Explore</a>
+      <a href="#">Calendar</a>
+      <a href="#">Feed</a>
+      <a href="#">You</a>
+    </div>
+  </nav>
+
+  <header class="page">
+    <h1>Explore <span class="accent">communities</span></h1>
+    <p class="subtitle">// discover groups gathering near you</p>
+  </header>
+
+  <div class="toolbar">
+    <label class="search">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <input placeholder="Search communities, tags, or places…" />
+    </label>
+    <div class="chips">
+      <span class="chip active">All</span>
+      <span class="chip">Verified only</span>
+      <span class="chip">Events this week</span>
+      <span class="chip">Within 5 km</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <article class="card">
+      <div class="thumb a"></div>
+      <span class="stamp">VERIFIED</span>
+      <h3>Riverdale Food Bank</h3>
+      <p class="desc">A neighborhood food bank serving Riverdale and Leslieville. Volunteers welcome every Saturday.</p>
+      <div class="tags"><span class="tag">food security</span><span class="tag">volunteer</span><span class="tag">weekly</span></div>
+      <div class="meta">142 MEMBERS · 3 EVENTS / WK</div>
+      <div class="actions">
+        <button class="btn secondary">Subscribe</button>
+        <button class="btn primary">Join</button>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="thumb b"></div>
+      <h3>East End Running Club</h3>
+      <p class="desc">Casual 5km runs every Wednesday evening from Withrow Park. All paces welcome.</p>
+      <div class="tags"><span class="tag">fitness</span><span class="tag">social</span><span class="tag">beginner-friendly</span></div>
+      <div class="meta">87 MEMBERS · 1 EVENT / WK</div>
+      <div class="actions">
+        <button class="btn secondary">Subscribe</button>
+        <button class="btn primary">Join</button>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="thumb c"></div>
+      <span class="stamp">VERIFIED</span>
+      <h3>Leslieville Library Friends</h3>
+      <p class="desc">Volunteer-led group supporting the Leslieville branch — book sales, programming, advocacy.</p>
+      <div class="tags"><span class="tag">books</span><span class="tag">civic</span><span class="tag">monthly</span></div>
+      <div class="meta">56 MEMBERS · 0 EVENTS / WK</div>
+      <div class="actions">
+        <button class="btn secondary">Subscribe</button>
+        <button class="btn primary">Join</button>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="thumb d"></div>
+      <h3>Toronto Tool Library — East</h3>
+      <p class="desc">Borrow tools instead of buying. Workshops, repair cafes, and community builds.</p>
+      <div class="tags"><span class="tag">sharing</span><span class="tag">sustainability</span><span class="tag">all-ages</span></div>
+      <div class="meta">234 MEMBERS · 2 EVENTS / WK</div>
+      <div class="actions">
+        <button class="btn secondary">Subscribe</button>
+        <button class="btn primary">Join</button>
+      </div>
+    </article>
+  </div>
+
+  <footer>// style 4 — risograph postcard</footer>
+</div>
+</body>
+</html>

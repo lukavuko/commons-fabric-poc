@@ -1,11 +1,30 @@
 // Use DBML to define your database structure
 // Docs: https://dbml.dbdiagram.io/docs
-// Relationship settings and names are not supported for inline form ref.
-// eg. Ref: a.id - b.id [delete: cascade, update: no action]
+//
+// Relationship settings and names are not supported for inline form reference.
+// To detail how deletions/modifications affect linked data, use standalone refs:
+//  `Ref: a.id - b.id [delete: cascade, update: no action]`
 //
 // The rule of thumb: if the ID will appear in a URL, JWT, or API response
 // that a browser or third party sees, use CUID. If it's only ever used in
 // a server-side JOIN, integer is fine.
+
+/*
+
+High Level Model Overview
+-------------------------
+Hub -> Community -> User
+
+User -> Subsrciptions / Events
+
+User + Community -> Role -> Permissions
+
+Community -> Event / Announcement -> Comment
+
+Community -> *Notification_Queue* -> User
+
+*/
+
 
 Table user {
   id cuid [pk]
@@ -54,6 +73,7 @@ Table user_role {
   checks {
     `entity_type IN ('HUB', 'COMMUNITY')` [name: 'chk_role_entity_type']
   }
+
 }
 
 Enum RoleEntityType {
@@ -91,8 +111,6 @@ Table permission {
   name varchar
   description varchar
 }
-
-
 
 
 // Communities & Hubs
@@ -163,8 +181,6 @@ Table community {
 }
 
 
-
-
 // Community/Public facing data
 // =======================================================
 
@@ -213,10 +229,12 @@ Enum ReleaseStatus {
   PUBLIC
   ARCHIVED
 }
+
 Enum EventType {
   SOCIAL
   INFORMATIONAL
 }
+
 Enum RecurrenceSchedule {
   DAILY  // repeats everyday, same time
   WEEKLY  // repeats every week on recurrence_dow
@@ -224,6 +242,7 @@ Enum RecurrenceSchedule {
   MONTHLY // repeats every month on a specific day (ie. first tuesday)
   ANNUAL // repeats every year on the same date_start
 }
+
 Enum Day {
   MON
   TUE
@@ -290,7 +309,6 @@ enum CommentStatus {
   HIDDEN
   LOCKED
 }
-
 
 
 // User facing data
@@ -360,18 +378,3 @@ enum RSVPStatus {
   NOT_GOING
 }
 
-
-// Default Records
-// =======================================================
-
-
-// Dummy Records
-// =======================================================
-
-
-// Records users(id, username, role) {
-//   0, 'Alice', 'admin'
-//   1, 'Bob', 'moderator'
-//   2, 'Candice', 'moderator'
-//   3, 'David', 'member'
-// }

@@ -1,0 +1,170 @@
+@import "tailwindcss";
+
+/* =========================================================================
+   Commons Fabric — Soft Botanical design tokens
+   Locked from 6_STYLING.md (Style 3). The single source of truth for the
+   visual language. Never use raw hex values in components — always reference
+   a token below.
+   ========================================================================= */
+
+:root {
+  /* Fonts (loaded via <link> in index.html) */
+  --font-fraunces: "Fraunces", Georgia, serif;
+  --font-inter: "Inter", system-ui, sans-serif;
+
+  /* Surfaces */
+  --cf-page: #F4EFE3;          /* oat — page background */
+  --cf-surface: #FAF5E9;       /* card surface (one shade lighter than page) */
+  --cf-surface-sunken: #EFE8D7;/* hover/active fill on cream */
+
+  /* Ink */
+  --cf-ink: #2F352C;           /* primary text — 10.98:1 on page (AAA) */
+  --cf-ink-muted: #65695A;     /* secondary text, metadata — 4.92:1 on page (AA) */
+  --cf-ink-subtle: #A6A89B;    /* placeholders / disabled only — never running text */
+
+  /* Botanical accents */
+  --cf-sage: #9CAE92;          /* light sage — chip / icon backgrounds only */
+  --cf-sage-deep: #506548;     /* sage on cream — AA-safe for body text (5.55:1) */
+  --cf-clay: #C49A82;          /* light clay — chip / icon backgrounds only */
+  --cf-clay-deep: #8C5A3F;     /* clay on cream — AA-safe for body text (5.02:1) */
+  --cf-sun: #E4C26A;           /* verified halo — non-text use only */
+
+  /* Functional */
+  --cf-link: var(--cf-sage-deep);
+  --cf-link-hover: #3E4D38;    /* 7.88:1 on page */
+  --cf-state-joined: var(--cf-clay-deep);
+  --cf-state-rsvp: var(--cf-clay-deep);
+  --cf-danger: #B5503F;        /* errors, destructive actions */
+  --cf-success: var(--cf-sage-deep);
+
+  /* Hairlines (used sparingly — never as a hard border around surfaces) */
+  --cf-hairline: rgba(47, 53, 44, 0.08);
+  --cf-hairline-strong: rgba(47, 53, 44, 0.14);
+
+  /* Focus ring (accessibility floor) */
+  --cf-focus-ring: 0 0 0 3px rgba(94, 117, 88, 0.55);
+
+  /* Shadows — two-axis, ultra-low-opacity (no hard borders allowed) */
+  --cf-shadow-card: 0 1px 0 rgba(0, 0, 0, 0.02), 0 6px 18px rgba(60, 50, 30, 0.04);
+  --cf-shadow-card-hover: 0 1px 0 rgba(0, 0, 0, 0.03), 0 10px 28px rgba(60, 50, 30, 0.06);
+  --cf-shadow-popup: 0 2px 0 rgba(0, 0, 0, 0.03), 0 18px 48px rgba(60, 50, 30, 0.10);
+
+  /* Radius scale */
+  --cf-radius-xs: 4px;
+  --cf-radius-sm: 8px;
+  --cf-radius-md: 12px;
+  --cf-radius-lg: 16px;
+  --cf-radius-xl: 20px;       /* default for botanical cards */
+  --cf-radius-pill: 9999px;
+
+  /* Spacing — 8px base */
+  --cf-space-1: 4px;
+  --cf-space-2: 8px;
+  --cf-space-3: 12px;
+  --cf-space-4: 16px;
+  --cf-space-5: 24px;
+  --cf-space-6: 32px;
+  --cf-space-7: 48px;
+  --cf-space-8: 64px;
+  --cf-space-9: 96px;
+
+  /* Type scale (1.25 modular) */
+  --cf-text-xs: 12px;
+  --cf-text-sm: 13px;
+  --cf-text-base: 16px;
+  --cf-text-md: 18px;
+  --cf-text-lg: 22px;
+  --cf-text-xl: 28px;
+  --cf-text-2xl: 36px;
+  --cf-text-3xl: 48px;
+
+  --cf-leading-tight: 1.15;
+  --cf-leading-snug: 1.35;
+  --cf-leading-normal: 1.55;
+  --cf-leading-relaxed: 1.75;
+
+  --cf-tracking-tight: -0.015em;
+  --cf-tracking-normal: 0;
+  --cf-tracking-wide: 0.04em;
+}
+
+/* Tailwind v4 token bridge — exposes the locked tokens as utilities
+   (e.g. bg-page, text-ink, rounded-cf-xl, font-display). */
+@theme inline {
+  --color-page: var(--cf-page);
+  --color-surface: var(--cf-surface);
+  --color-surface-sunken: var(--cf-surface-sunken);
+  --color-ink: var(--cf-ink);
+  --color-ink-muted: var(--cf-ink-muted);
+  --color-ink-subtle: var(--cf-ink-subtle);
+  --color-sage: var(--cf-sage);
+  --color-sage-deep: var(--cf-sage-deep);
+  --color-clay: var(--cf-clay);
+  --color-clay-deep: var(--cf-clay-deep);
+  --color-sun: var(--cf-sun);
+  --color-hairline: var(--cf-hairline);
+
+  --radius-cf-xs: var(--cf-radius-xs);
+  --radius-cf-sm: var(--cf-radius-sm);
+  --radius-cf-md: var(--cf-radius-md);
+  --radius-cf-lg: var(--cf-radius-lg);
+  --radius-cf-xl: var(--cf-radius-xl);
+  --radius-cf-pill: var(--cf-radius-pill);
+
+  --shadow-cf-card: var(--cf-shadow-card);
+  --shadow-cf-card-hover: var(--cf-shadow-card-hover);
+  --shadow-cf-popup: var(--cf-shadow-popup);
+
+  --font-display: var(--font-fraunces);
+  --font-sans: var(--font-inter);
+}
+
+/* Base styles ------------------------------------------------------------ */
+
+html, body {
+  background: var(--cf-page);
+  color: var(--cf-ink);
+}
+
+body {
+  /* Subtle paper-grain — 3% opacity per the styling brief. */
+  background-image:
+    radial-gradient(rgba(60, 40, 20, 0.025) 1px, transparent 1px),
+    radial-gradient(rgba(60, 40, 20, 0.018) 1px, transparent 1px);
+  background-size: 3px 3px, 7px 7px;
+  background-position: 0 0, 1px 2px;
+
+  font-family: var(--font-inter);
+  font-size: var(--cf-text-base);
+  line-height: var(--cf-leading-normal);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum"; /* tabular numerals everywhere by default */
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-fraunces);
+  font-weight: 500;
+  letter-spacing: var(--cf-tracking-tight);
+  line-height: var(--cf-leading-tight);
+}
+
+::selection {
+  background: rgba(156, 174, 146, 0.35);
+  color: var(--cf-ink);
+}
+
+/* Focus ring — universal, accessibility floor. */
+:where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: none;
+  box-shadow: var(--cf-focus-ring);
+  border-radius: var(--cf-radius-sm);
+}
+
+/* Reduced motion — collapse all entrance animation to a 120ms fade. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 120ms !important;
+    transition-duration: 120ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}

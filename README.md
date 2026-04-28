@@ -84,6 +84,18 @@ npm run prisma:migrate     # Create and run migrations interactively
 npm run prisma:reset       # ⚠️ Drop database and re-run migrations (dev only)
 ```
 
+Generate Prisma client:
+
+`npx prisma generate`
+
+Create initial migration:
+
+`npx prisma migrate dev --name init`
+
+GraphQL playground accessible at http://localhost:3000/api/graphql
+
+No TypeScript errors
+`npx tsc --noEmit`
 
 
 ## Logging
@@ -93,7 +105,6 @@ Logs are structured using [Pino](https://getpino.io/). You may set the `LOG_LEVE
 ```env
 LOG_LEVEL=info    # info, debug, warn, error
 ```
-
 
 
 ## Troubleshooting

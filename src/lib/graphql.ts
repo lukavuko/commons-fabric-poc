@@ -1,4 +1,4 @@
-const GQL_URL = `${process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'}/api/graphql`;
+const GQL_URL = import.meta.env.VITE_GRAPHQL_URL ?? "/api/graphql";
 
 export async function gqlFetch<T = unknown>(
   query: string,
@@ -6,13 +6,12 @@ export async function gqlFetch<T = unknown>(
   token?: string
 ): Promise<T> {
   const res = await fetch(GQL_URL, {
-    method: 'POST',
+    method: "POST",
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
     body: JSON.stringify({ query, variables }),
-    cache: 'no-store',
   });
 
   const json = await res.json();
