@@ -102,6 +102,10 @@ model User {
   lastloginAt     DateTime?
   settings        Json?
 
+  // Auth fields (added for in-house auth)
+  passwordHash             String?
+  emailVerificationToken   String?  @unique
+
   userRoles             UserRole[]
   createdRoles          Role[]
   createdHubs           Hub[]
@@ -111,6 +115,7 @@ model User {
   comments              Comment[]
   subscriptions         Subscription[]
   userEvents            UserEvent[]
+  sessions              Session[]
 
   @@index([email])
   @@index([username])
@@ -338,4 +343,50 @@ model UserEvent {
   rsvpStatus RSVPStatus
 
   @@index([eventId, rsvpStatus], map: "idx_user_events_event")
+}
+
+// -------------------------------------------------------
+// Auth
+// -------------------------------------------------------
+
+model Session {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  refreshToken String   @unique  // stores SHA-256 hash of the raw refresh JWT
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+// -------------------------------------------------------
+// Job Queue
+// -------------------------------------------------------
+
+enum JobStatus {
+  SCHEDULED
+  PENDING
+  READY
+  RUNNING
+  COMPLETE
+  FAILED
+}
+
+model JobQueue {
+  id           String    @id @default(cuid())
+  status       JobStatus @default(SCHEDULED)
+  serviceName  String
+  createdAt    DateTime  @default(now())
+  fireAt       DateTime
+  startedAt    DateTime?
+  completedAt  DateTime?
+  payload      Json
+  maxRetries   Int       @default(3)
+  retryCount   Int       @default(0)
+  errorMessage String?
+
+  @@index([status, fireAt])
+  @@map("job_queue")
 }
