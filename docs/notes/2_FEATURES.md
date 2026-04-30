@@ -109,30 +109,73 @@ Phase 1 is targeted for stewards only, testing and debugging, and all user-role 
 
 
 
-## Additional Server-side Features for Post Proof-of-Concept
+##  Feature Roadmap
 
-- **AI Automation and Integration** 
-  - AI Agent Community Scraper Pipeline for Onboarding new groups
-  - Automated Community to Hub Aggregation 
-  - Automated Discover of implied Communities
+| Feature                                     | Status     | Notes                                 |
+| ------------------------------------------- | ---------- | ------------------------------------- |
+| React + Vite + Prisma + Apollo Server setup | ✅ Done     |                                       |
+| Database schema + migrations                | ✅ Done     |                                       |
+| GraphQL resolvers (basic)                   | ✅ Done     |                                       |
+| User authentication (email + OAuth)         | ⬜ Todo     | Supabase Auth                         |
+| Community CRUD (organizer)                  | ⬜ Todo     |                                       |
+| Event creation and display                  | ⬜ Todo     |                                       |
+| RSVP mutations                              | ⬜ Todo     |                                       |
+| Community browser (map + search)            | ⬜ Todo     |                                       |
+| Event calendar view                         | ⬜ Todo     |                                       |
+| Subscriptions + notification preferences    | ⬜ Todo     |                                       |
+| Comment system                              | ⬜ Todo     | Creation + moderation status          |
+| Email digest job                            | ⬜ Todo     | Sendgrid + scheduled backend job      |
+| Organizer dashboard                         | ⬜ Todo     | Member management, community settings |
+| .ics calendar export                        | ⬜ Todo     | Per-event download                    |
+| "Add to calendar" deep links                | ⬜ Todo     | Google + Outlook                      |
+| Tag filtering + search                      | ⬜ Todo     |                                       |
+| Responsive mobile design                    | ⬜ Todo     |                                       |
+| Unverified user cleanup job                 | ⬜ Todo     | Scheduled backend job, 30-day TTL     |
+| Row-Level Security (RLS) policies           | ⬜ Deferred | Post-PoC hardening                    |
+| Full calendar sync (Google/Outlook API)     | ⬜ Deferred | Post-PoC                              |
+| Additional notification channels            | ⬜ Deferred | SMS, WhatsApp, etc.                   |
 
-- **Verification Processes**
-  - How do we verify genuine:
-    - community steward accounts
-    - created communities
-    - "adopted" communities (from those that have yet to be "claimed")
-    - created community hubs
-    - "adopted" community hubs
-    - individual users
 
-- **Logistical and Functional Opportunities**
-  - Registered Hub resource list that allows cub-communities to collaborate and use tools more effectively
 
-- **Building Micro Connections**
-  - Optional community visibility of member lists
-  - Optional community visibility of members with similar interests
-  - Optional personal profile photo
-  - Mediated invitations to connect so email and other information can be mutually shared
+## Server-side Aspirations
+
+**Community Matching Algorithm**
+
+This feature is deferred until after the PoC is validated. The intent is to surface geographic and thematic groupings of communities on the map — so that as a user zooms out, related communities aggregate visually into implied "community hubs."
+
+- Geographic clustering using K-means on community coordinates
+- Tag similarity using cosine similarity on normalized tag vectors
+- A weighted score: `match_score = 0.6 × geographic + 0.4 × tag_similarity`
+- Hierarchical groupings stored in an adjacency list table for efficient querying
+
+**AI Automation and Integration** 
+
+- AI Agent Community Scraper Pipeline for Onboarding new groups
+- Automated Community to Hub Aggregation 
+- Automated Discover of implied Communities
+
+**Verification Processes**
+
+- How do we verify genuine:
+  - community steward accounts
+  - created communities
+  - "adopted" communities (from those that have yet to be "claimed")
+  - created community hubs
+  - "adopted" community hubs
+  - individual users
+
+**Logistical and Functional Opportunities**
+
+- Registered Hub resource list that allows cub-communities to collaborate and use tools more effectively
+
+**Building Micro Connections**
+
+- Optional community visibility of member lists
+- Optional community visibility of members with similar interests
+- Optional personal profile photo
+- Mediated invitations to connect so email and other information can be mutually shared
+
+
 
 
 ## Funding Streams

@@ -1,8 +1,8 @@
 # Commons Fabric — PoC
 
-> Connecting local communities across fragmented platforms — one calendar at a time.
+> A federated community-building platform where local groups publish events and announcements, and members receive curated updates on their own schedule, through their preferred channels, with zero noise. We're here to connect local communities across fragmented platforms — one calendar at a time.
 
-A federated community-building platform where local groups publish events and announcements, and members receive curated updates on their own schedule, through their preferred channels, with zero noise.
+This readme summarizes what's in the Proof-of-Concept repo and some things you'll need for development!
 
 ---
 

@@ -1,7 +1,7 @@
 # Monorepo Migration & Service Architecture Design
 
-**Date**: 2026-04-29  
-**Status**: Approved  
+**Date**: 2026-04-29
+**Status**: Approved
 **Scope**: Restructure single-package repo into npm workspaces monorepo; add scheduler, executioner, and auth services; define job queue table; define Docker/local dev shape.
 
 ---
@@ -54,7 +54,7 @@ Runs `node-cron` loops that INSERT rows into `job_queue` with the appropriate `f
 
 A promotion loop runs every few minutes and transitions rows through the state machine:
 ```
-SCHEDULED → PENDING (within 24h window) → READY (fire_at has passed)
+SCHEDULED → PENDING (if it needs to be run on today's date) → READY (fire_at has passed)
 ```
 
 ### `apps/executioner` — no port
@@ -121,14 +121,14 @@ SCHEDULED → PENDING → READY → RUNNING → COMPLETE
 ### `docker-compose.yml` service order
 
 ```
-postgres (healthcheck) 
+postgres (healthcheck)
   → migrator (prisma migrate deploy, exits)
     → auth, server, scheduler, executioner
       → web (Vite dev server in dev / Caddy in prod)
 ```
 
-**`postgres`**: official `postgres` image with healthcheck (`pg_isready`).  
-**`migrator`**: built from `packages/db`; runs `npx prisma migrate deploy` then exits. All app services declare `depends_on: migrator: condition: service_completed_successfully`.  
+**`postgres`**: official `postgres` image with healthcheck (`pg_isready`).
+**`migrator`**: built from `packages/db`; runs `npx prisma migrate deploy` then exits. All app services declare `depends_on: migrator: condition: service_completed_successfully`.
 **`web` (production)**: Caddy container serving the pre-built `apps/web/dist/` as static files, acting as a reverse proxy in front of `server` and `auth` for a single entry point. Routing: `/auth/*` → auth:4001, `/graphql` → server:4000, all other paths → static files.
 
 ### Environment variables

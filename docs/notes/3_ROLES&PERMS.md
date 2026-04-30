@@ -1,6 +1,3 @@
-
-# User Roles & Permissions
-
 | Permission                         | Anyone | Subscriber | Member | Volunter/Co-Steward | Steward |
 | ---------------------------------- | ------ | ---------- | ------ | ------------------- | ------- |
 | View Community Page Info           | X      | X          | X      | X                   | X       |
