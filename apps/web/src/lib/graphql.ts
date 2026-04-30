@@ -2,9 +2,9 @@ const GQL_URL = import.meta.env.VITE_GRAPHQL_URL ?? "/api/graphql";
 
 export async function gqlFetch<T = unknown>(
   query: string,
-  variables?: Record<string, unknown>,
-  token?: string
+  variables?: Record<string, unknown>
 ): Promise<T> {
+  const token = localStorage.getItem("access_token");
   const res = await fetch(GQL_URL, {
     method: "POST",
     headers: {

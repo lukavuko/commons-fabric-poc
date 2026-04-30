@@ -1,0 +1,17 @@
+{
+    email {$CADDY_EMAIL}
+}
+
+{$DOMAIN:localhost} {
+    handle /auth/* {
+        reverse_proxy auth:4001
+    }
+    handle /api/graphql {
+        reverse_proxy server:4000
+    }
+    handle {
+        root * /srv
+        file_server
+        try_files {path} /index.html
+    }
+}
