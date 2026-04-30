@@ -1,194 +1,133 @@
-# Commons Fabric PoC - Development Guide
+# Commons Fabric — PoC
 
-A federated community engagement platform enabling geographic discovery, event aggregation, and lightweight community governance.
+> Connecting local communities across fragmented platforms — one calendar at a time.
 
-
-
-## Prerequisites
-
-- **Node.js** 18.17 or higher
-- **npm** 9.0 or higher
-- **PostgreSQL** account (via Supabase)
-- **Supabase** project (free tier available)
-- **Sendgrid** account (optional for local dev, required for production)
-
-
-
-## Quick Start
-
-1. Configure the local environment for testing (copy paste contents of the .env file)
-2. Install Dependencies: `npm install`
-3. Generate Prisma Client: `npm run prisma:generate`
-4. Create Database Migration
-
-```bash
-# This will:
-# 1. Connect to your PostgreSQL database
-# 2. Create all tables based on prisma/schema.prisma
-# 3. Create a timestamped migration file in prisma/migrations/
-npm run prisma:migrate
-```
-
-5. Build and Start Development Server: `npm run build` followed by  `npm run dev`
-
-6. The application will be available at:
-   - Frontend: http://localhost:3000
-   - GraphQL Playground: http://localhost:3000/api/graphql
-
-
-
-## Project Structure
-
-```
-cfp-poc/
-├── prisma/
-│   ├── schema.prisma       # Database schema definition
-│   └── migrations/         # Auto-generated migration files
-├── src/
-│   ├── app/
-│   │   ├── api/
-│   │   │   └── graphql/
-│   │   │       └── route.ts # Apollo GraphQL endpoint
-│   │   ├── layout.tsx      # Root layout
-│   │   └── page.tsx        # Homepage
-│   ├── lib/
-│   │   ├── prisma.ts       # Prisma client singleton
-│   │   ├── logger.ts       # Pino logger configuration
-│   │   ├── apollo/         # Apollo Server setup (placeholder)
-│   │   └── supabase/       # Supabase client
-│   ├── graphql/
-│   │   ├── schema.ts       # GraphQL type definitions
-│   │   ├── resolvers/      # Resolver functions
-│   │   └── types/          # TypeScript types (generated)
-│   └── types/              # Shared TypeScript types
-├── public/                 # Static assets
-├── .env            		# Environment ⚠️ Never commit `.env` to git
-```
-
-
-
-## Scripts
-
-```bash
-# Development
-npm run dev                # Start Next.js dev server with hot reload
-npm run build              # Build for production
-npm start                  # Start production server
-npm run lint               # Run ESLint
-```
-
-```bash
-# Prisma Database
-npm run prisma:generate    # Generate Prisma client (run after schema changes)
-npm run prisma:migrate     # Create and run migrations interactively
-npm run prisma:reset       # ⚠️ Drop database and re-run migrations (dev only)
-```
-
-Generate Prisma client:
-
-`npx prisma generate`
-
-Create initial migration:
-
-`npx prisma migrate dev --name init`
-
-GraphQL playground accessible at http://localhost:3000/api/graphql
-
-No TypeScript errors
-`npx tsc --noEmit`
-
-
-## Logging
-
-Logs are structured using [Pino](https://getpino.io/). You may set the `LOG_LEVEL` in `.env` which specifies how much information to capture. In development, log outputs are pretty-printed with colors whereas in production logs will be JSON-formatted for log aggregation tasks.
-
-```env
-LOG_LEVEL=info    # info, debug, warn, error
-```
-
-
-## Troubleshooting
-
-###### **"Cannot find module" errors?**
-
-```bash
-npm run prisma:generate
-npm install
-```
-
-###### **Port 3000 already in use?**
-
-```bash
-# Use a different port or stop other existing instances
-# of the webapp that may be running in another terminal
-npm run dev -- -p 3001
-```
-
-###### **Database connection fails?**
-
-1. Verify `DATABASE_URL` in `.env`
-2. Check network access in Supabase (IP whitelist)
-3. Confirm credentials in Supabase Dashboard
-
-###### **Prisma migration conflicts?**
-
-```bash
-# Reset database (dev only, loses all data)
-npm run prisma:reset
-```
-
-
-
-## Architecture
-
-For technical architecture details including:
-- System design diagram
-- Tech stack justification
-- API/GraphQL structure
-- Deployment strategy
-- Development workflow
-
-See `1_ARCHITECTURE.md`.
-
-
-
-
-## Contributing
-
-When making changes:
-
-1. Update `prisma/schema.prisma` for database changes
-2. Run `npm run prisma:migrate` to generate migrations
-3. Implement GraphQL schema and resolvers
-4. Test in GraphQL Sandbox
-5. Update `claude.log` with changes (if using Claude Code)
-
-
-
-## Next Steps
-
-After setup is complete:
-
-1. ✅ Configure `.env` (see TODO.md)
-2. ✅ Run `npm run prisma:migrate`
-3. ⬜ Implement full GraphQL schema (see ARCHITECTURE.md section 5)
-4. ⬜ Build frontend components
-5. ⬜ Implement authentication
-6. ⬜ Deploy to Vercel
-
-
-
-## Resources
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Apollo Server Documentation](https://www.apollographql.com/docs/apollo-server/)
-- [Prisma Documentation](https://www.prisma.io/docs/)
-- [Supabase Documentation](https://supabase.com/docs)
-- [Architecture Document](./1_ARCHITECTURE.md)
-
-
+A federated community-building platform where local groups publish events and announcements, and members receive curated updates on their own schedule, through their preferred channels, with zero noise.
 
 ---
 
-**Last Updated**: April 2026
-**Status**: Development / PoC Phase
+## Contents
+
+- [Prerequisites](#prerequisites)
+- [Repo Structure](#repo-structure)
+- [Architecture](#architecture)
+- [Development](#development)
+- [Contact](#contact)
+
+---
+
+## Prerequisites
+
+| Tool | Version | Notes |
+|---|---|---|
+| **Node.js** | 22+ | |
+| **npm** | 10+ | |
+| **Docker + Compose** | Latest | Required for the full local stack |
+| **PostgreSQL** | 16+ | Aiven, Neon, or local — needs a **direct** (non-pooled) URL for migrations |
+| **Pulumi CLI** | 3+ | `npm install -g pulumi` — only needed for infra management |
+| **SendGrid API key** | — | Optional for local dev, required in production |
+
+---
+
+## Repo Structure
+
+```
+commons-fabric-poc/
+│
+├── apps/                         # Independently deployable services
+│   ├── auth/                     # Auth service — register, login, refresh, logout
+│   ├── executioner/              # Job runner — polls job_queue, dispatches handlers
+│   ├── scheduler/                # Job scheduler — promotes job_queue row statuses
+│   ├── server/                   # GraphQL API — Apollo Server + Express
+│   └── web/                      # React + Vite SPA
+│
+├── packages/
+│   └── db/                       # Shared Prisma client + schema (imported as @cfp/db)
+│       └── prisma/
+│           ├── schema.prisma     # Source of truth for the database
+│           ├── schema.dbml       # Visualization-ready copy (dbdiagram.io)
+│           └── migrations/       # Versioned SQL migrations
+│
+├── infra/                        # Pulumi IaC — VPS bootstrap, deploy, DNS
+│
+├── docs/
+│   └── notes/                    # Architecture, features, roles & perms, Q&A
+│
+├── mockups/                      # UI mockups and design references
+│
+├── docker-compose.yml            # Local dev stack
+├── docker-compose.prod.yml       # Production overrides (Caddy, NODE_ENV=production)
+└── .env.example                  # Environment variable template
+```
+
+---
+
+## Architecture
+
+Full technical details — stack diagram, service responsibilities, job queue design, hosting options, IaC, and CI/CD — live in [`docs/notes/1_ARCHITECTURE.md`](docs/notes/1_ARCHITECTURE.md).
+
+---
+
+## Development
+
+### Option A — Docker Compose (recommended)
+
+The closest thing to production you can run locally. All five services + Postgres start in the right order, migrations run automatically.
+
+```bash
+cp .env.example .env          # fill in your values
+docker compose up --build
+```
+
+Services come up at:
+- Frontend → http://localhost:5173
+- GraphQL API → http://localhost:4000/api/graphql
+- Auth → http://localhost:4001
+
+### Option B — Local (no Docker)
+
+Run services individually when you want faster iteration on a single service.
+
+```bash
+cp .env.example .env
+npm install
+
+# Run the DB migration (requires a direct, non-pooled DATABASE_URL)
+cd packages/db && npx prisma migrate dev --name init && cd ../..
+
+# Start everything concurrently
+npm run dev
+```
+
+### Common tasks
+
+```bash
+# Database
+cd packages/db
+npx prisma migrate dev --name <description>   # new migration after schema change
+npx prisma generate                            # regenerate types (auto-runs after migrate)
+npx prisma studio                              # browse the DB in a UI
+
+# Tests
+npm run test                                   # all workspaces
+npm run test --workspace=apps/auth             # single service
+
+# Infrastructure (from infra/)
+pulumi preview                                 # dry run
+pulumi up                                      # apply to VPS
+```
+
+### Adding a notification handler
+
+Register a new handler in `apps/executioner/handlers/index.ts` under a `serviceName` key. Any `job_queue` row inserted with that `serviceName` will be routed to it automatically.
+
+---
+
+## Contact
+
+- **Project site** → [commonsfabric.ca](https://commonsfabric.ca/?referrer=luma)
+- **Dev log & pins** → [lukavuko.github.io/cfp.github.io](https://lukavuko.github.io/cfp.github.io/)
+
+---
+
+*Commons Fabric PoC — April 2026*
