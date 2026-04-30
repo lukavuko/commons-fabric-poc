@@ -2,8 +2,6 @@
 
 **Version**: 2.0
 **Date**: April 2026
-**Timeline**: 4-week PoC
-**Budget**: <$200 USD (free tier services)
 **Status**: Active Development
 
 ---
@@ -220,7 +218,7 @@ packages/
 Two types of notifications with different latency requirements:
 
 **Realtime notifications** (subscribers who want instant updates):
-When a steward creates an event or announcement, the GraphQL resolver inserts a `job_queue` row with `status = READY` and `serviceNamee = "notify-realtime-subscribers"`. The executioner picks it up within its next poll cycle (≤10s). The handler queries all realtime subscribers for that community and dispatches emails.
+When a steward creates an event or announcement, the GraphQL resolver inserts a `job_queue` row with `status = READY` and `serviceName = "notify-realtime-subscribers"`. The executioner picks it up within its next poll cycle (≤10s). The handler queries all realtime subscribers for that community and dispatches emails.
 
 **Periodic digests** (subscribers who want weekly/daily/etc. summaries):
 The scheduler inserts `job_queue` rows with `status = SCHEDULED` and a `fireAt` matching the user's preferred digest time. The promotion loop transitions them through `SCHEDULED → PENDING → READY` as the time approaches. The executioner handler collects all undelivered content since the last digest and sends one batched email.
@@ -229,12 +227,12 @@ The scheduler inserts `job_queue` rows with `status = SCHEDULED` and a `fireAt` 
 
 | Status | Meaning |
 |---|---|
-| `SCHEDULED` | Registered, fires more than 24h from now |
-| `PENDING` | Fires within the next 24h — scheduler is watching |
-| `READY` | Past `fireAt`, awaiting the executioner |
-| `RUNNING` | Executioner has picked it up |
-| `COMPLETE` | Finished successfully |
-| `FAILED` | Failed after exhausting retries |
+| `SCHEDULED` | Registered, but not for today's 24 hour window (ie. fires tomorrow or later) |
+| `PENDING` | To be launched at some point today, within the next 24h — scheduler is watching |
+| `READY` | Current time has passed the `fireAt` time and is now awaiting the executioner |
+| `RUNNING` | Executioner has picked it up and started the job |
+| `COMPLETE` | Job finished successfully |
+| `FAILED` | Job failed after exhausting retries if more than 1 specified |
 
 On failure: `retryCount` increments, status resets to `READY` if `retryCount < maxRetries`. Final failure records the `errorMessage` for debugging.
 
@@ -268,6 +266,34 @@ The migrator service runs `prisma migrate deploy` on every `docker compose up` a
 | **Database** | Aiven (CA region) or self-hosted on Oracle Cloud | Canadian residency, free tier available |
 | **Email** | SendGrid | 100 emails/day free; swap for Resend (3k/month) when limits hit |
 | **Frontend (alternative)** | Cloudflare Pages / Netlify | If we want CDN-distributed static hosting separately from the VPS |
+
+---
+
+### Infrastructure as Code — Pulumi
+
+Infrastructure is managed with **Pulumi (TypeScript)** in the `infra/` directory. It's not a workspace package — it has its own `node_modules` and is managed independently with the Pulumi CLI.
+
+**Why Pulumi?** Same language as the rest of the stack. No HCL, no YAML DSL — just TypeScript. Providers exist for every service we need (Oracle Cloud, Fly.io, Cloudflare, Aiven). State is stored in Pulumi Cloud (free for individuals/small teams) or any S3-compatible backend.
+
+**What it manages:**
+- **Bootstrap** — installs Docker on the VPS, clones the repo into `/opt/cfp`
+- **Deploy** — pulls latest `main`, rebuilds containers, runs `docker compose up --build` with the prod override
+- **DNS** (Cloudflare) — commented out until the domain is confirmed, then uncomment and `pulumi up`
+
+**First-time setup:**
+```bash
+cd infra
+npm install
+pulumi stack init dev
+
+# Required secrets (never committed):
+pulumi config set --secret cfp-poc:host <vps-ip>
+pulumi config set --secret cfp-poc:sshPrivateKey "$(cat ~/.ssh/id_rsa)"
+
+pulumi up   # preview → confirm → apply
+```
+
+**Subsequent deploys** (`pulumi up`) SSH into the VPS, pull the latest code, and restart the stack. Caddy handles TLS certificate issuance automatically on first run — no cert management needed.
 
 ---
 
@@ -348,6 +374,9 @@ docker compose up --build
 | **Monorepo tooling** | npm workspaces | **Turborepo** | CI build times become painful (adds incremental build caching) |
 | **Static hosting** | Caddy on VPS | **Cloudflare Pages / Netlify** | Want global CDN distribution without managing the proxy |
 | **Job queue** | Postgres `job_queue` table | **BullMQ (Redis)** | Job volume grows large enough that Postgres polling becomes a bottleneck |
+| **IaC** | Pulumi (TypeScript) | **OpenTofu** (OSS Terraform fork, HCL) | Team has prior Terraform experience or needs a provider not yet in Pulumi's ecosystem |
+| **IaC** | Pulumi (TypeScript) | **Ansible** | Configuration management over a fleet of VMs rather than cloud resource provisioning |
+| **IaC** | Pulumi (TypeScript) | **Kamal** (Shopify) | Simplest possible Docker-to-VPS deploy — single YAML config, zero-downtime rolling restarts via SSH, no resource provisioning needed |
 
 ---
 

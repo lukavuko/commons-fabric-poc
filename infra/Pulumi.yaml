@@ -1,0 +1,6 @@
+name: cfp-poc
+runtime:
+  name: nodejs
+  options:
+    typescript: true
+description: Commons Fabric PoC — cloud infrastructure

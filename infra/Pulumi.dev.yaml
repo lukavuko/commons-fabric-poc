@@ -1,0 +1,9 @@
+config:
+  cfp-poc:domain: commonsfabric.app
+  cfp-poc:sshUser: ubuntu
+  cfp-poc:appDir: /opt/cfp
+  # cfp-poc:cloudflareZoneId: <your-zone-id>
+  #
+  # Secrets — set via CLI, never committed:
+  #   pulumi config set --secret cfp-poc:sshPrivateKey "$(cat ~/.ssh/id_rsa)"
+  #   pulumi config set --secret cfp-poc:host <vps-ip>
