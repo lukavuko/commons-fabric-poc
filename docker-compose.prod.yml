@@ -1,0 +1,37 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.prod
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN}
+      CADDY_EMAIL: ${CADDY_EMAIL}
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - server
+      - auth
+
+  auth:
+    environment:
+      NODE_ENV: production
+
+  server:
+    environment:
+      NODE_ENV: production
+
+  scheduler:
+    environment:
+      NODE_ENV: production
+
+  executioner:
+    environment:
+      NODE_ENV: production
+
+volumes:
+  caddy_data:
+  caddy_config:
