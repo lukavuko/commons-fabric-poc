@@ -45,7 +45,7 @@ next-env.d.ts
 !.env.example
 
 # Prisma
-prisma/migrations/
+/prisma/migrations/
 
 # Logs
 *.log
