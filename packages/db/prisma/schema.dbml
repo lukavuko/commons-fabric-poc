@@ -1,13 +1,16 @@
 // Use DBML to define your database structure
 // Docs: https://dbml.dbdiagram.io/docs
+// Visualize at: https://dbdiagram.io
+//
+// Source of truth is schema.prisma — this file is kept in sync for visualization.
 //
 // Relationship settings and names are not supported for inline form reference.
-// To detail how deletions/modifications affect linked data, use standalone refs:
+// Use standalone refs for cascade/nullify behaviour:
 //  `Ref: a.id - b.id [delete: cascade, update: no action]`
 //
-// The rule of thumb: if the ID will appear in a URL, JWT, or API response
-// that a browser or third party sees, use CUID. If it's only ever used in
-// a server-side JOIN, integer is fine.
+// PK rule of thumb:
+//   CUID  — anything that appears in a URL, JWT, or API response
+//   integer (autoincrement) — internal/junction tables, never exposed
 
 /*
 
@@ -15,65 +18,85 @@ High Level Model Overview
 -------------------------
 Hub -> Community -> User
 
-User -> Subsrciptions / Events
+User -> Subscriptions / UserEvents
 
 User + Community -> Role -> Permissions
 
 Community -> Event / Announcement -> Comment
 
-Community -> *Notification_Queue* -> User
+Community -> *job_queue* -> User  (via scheduler + executioner)
+
+Auth: User -> Session (refresh token store)
 
 */
 
+
+// -------------------------------------------------------
+// Users & Auth
+// -------------------------------------------------------
 
 Table user {
   id cuid [pk]
   username varchar [unique, not null]
   email varchar [unique, not null]
   phone varchar
+
   email_verified_at timestamp
   phone_verified_at timestamp
 
-  // name display may be required for certain communities
   firstname varchar
   lastname varchar
 
-  // meta
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
   lastlogin_at timestamp
 
-  settings jsonb // all settings in a flexible json format
+  settings jsonb
+
+  // In-house auth
+  password_hash varchar
+  email_verification_token varchar [unique]
 
   indexes {
-    id [pk]
     email
     username
-    lastlogin_at [name: 'lastlogin_index', note: 'Date']
+    lastlogin_at [name: 'lastlogin_index']
   }
 }
 
+Table sessions {
+  id cuid [pk]
+  user_id cuid [not null, ref: > user.id]
+  refresh_token varchar [unique, not null, note: 'SHA-256 hash of the raw refresh JWT']
+  expires_at timestamp [not null]
+  created_at timestamp [default: `now()`]
+
+  indexes {
+    user_id
+  }
+}
+
+Ref: sessions.user_id > user.id [delete: cascade]
+
+
+// -------------------------------------------------------
 // Role Based Access Controls
-// =======================================================
-// Polymorphic many-to-many table for controlling user RBACs.
-// Each role is provisioned over a specific entity (ie. a community, a hub).
-// Community stewards have the ability to define specific role permissions
-// if they wish to create a non-default (custom) role type.
+// -------------------------------------------------------
+// Polymorphic many-to-many: each role is scoped to a specific entity
+// (community or hub). Stewards can define custom roles beyond defaults.
+
 Table user_role {
   user_id cuid [not null, ref: > user.id]
   entity_type RoleEntityType [not null]
-  entity_id cuid [not null] // cant do fk to multiple tables
+  entity_id cuid [not null, note: 'No FK — polymorphic ref to hub.id or community.id']
   role_id integer [not null, ref: > role.id]
 
   indexes {
-    (user_id, entity_id) [pk, unique]  // can only have 1 role per entity
+    (user_id, entity_id) [pk, unique, note: 'One role per entity per user']
     (entity_type, entity_id) [name: 'idx_user_role_entity']
   }
 
-  checks {
-    `entity_type IN ('HUB', 'COMMUNITY')` [name: 'chk_role_entity_type']
-  }
-
+  Note: 'CHECK: entity_type IN (''HUB'', ''COMMUNITY'')'
 }
 
 Enum RoleEntityType {
@@ -81,97 +104,92 @@ Enum RoleEntityType {
   COMMUNITY
 }
 
-Enum CommentEntityType {
-  ANNOUNCEMENT
-  EVENT
-}
-
 Table role {
-  id integer [pk]
-  name varchar // ADMIN > STEWARD > MODERATOR > MEMBER
+  id integer [pk, increment]
+  name varchar [not null, note: 'ADMIN > STEWARD > MODERATOR > MEMBER']
   description text
-  is_default bool // for default permission sets
-  entity_id cuid // NULL for default roles, otherwise applies to a specific community/hub
+  is_default bool [not null, note: 'true = platform default, false = community custom']
+  entity_id cuid [note: 'NULL for default roles; scoped to a hub/community for custom']
   entity_type RoleEntityType
-  creator_id cuid [ref: > user.id] // user that created the custom role
+  creator_id cuid [ref: > user.id]
 
-  checks {
-    `is_default = (entity_id IS NULL)` [name: 'chk_role_default_entity']
-  }
+  Note: 'CHECK: is_default = (entity_id IS NULL)'
 }
 
 Table role_permissions {
   role_id integer [not null, ref: > role.id]
   permission_id integer [not null, ref: > permission.id]
-}
 
-// set of universal app API actions that can be done
-Table permission {
-  id integer [pk]
-  name varchar
-  description varchar
-}
-
-
-// Communities & Hubs
-// =======================================================
-
-Table hub {
-  id cuid [pk]
-  type HubType
-  name varchar [not null]
-  description text [not null]
-  creator_id cuid [default: NULL, ref: > user.id]
-  address varchar // if provided
-  latitude "double precision" // if agglomerated (average)
-  longitude "double precision" // if agglomerated (average)
-
-  // meta
-  created_at timestamp [default: `now()`]
-  updated_at timestamp [default: `now()`]
-
-  checks {
-    `latitude BETWEEN -90 AND 90` [name: 'chk_hub_lat']
-    `longitude BETWEEN -180 AND 180` [name: 'chk_hub_lng']
+  indexes {
+    (role_id, permission_id) [pk]
   }
 }
 
+Table permission {
+  id integer [pk, increment]
+  name varchar [not null]
+  description varchar
+}
+
+Ref: user_role.user_id > user.id [delete: cascade]
+Ref: user_role.role_id > role.id [delete: cascade]
+Ref: role.creator_id > user.id [delete: set null]
+Ref: role_permissions.role_id > role.id [delete: cascade]
+Ref: role_permissions.permission_id > permission.id [delete: cascade]
+
+
+// -------------------------------------------------------
+// Hubs & Communities
+// -------------------------------------------------------
+
+Table hub {
+  id cuid [pk]
+  type HubType [not null]
+  name varchar [not null]
+  description text [not null]
+  creator_id cuid [ref: > user.id]
+  address varchar
+  latitude "double precision" [note: 'Agglomerated average; CHECK: BETWEEN -90 AND 90']
+  longitude "double precision" [note: 'Agglomerated average; CHECK: BETWEEN -180 AND 180']
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+}
+
 Enum HubType {
-  REGISTERED // hub registered by a known hub steward
-  AGGLOMERATE // hub created based on community agglomeration
+  REGISTERED   [note: 'Registered by a known hub steward']
+  AGGLOMERATE  [note: 'Auto-created from community geographic clustering']
 }
 
 Table hub_communities {
-  hub_id cuid [ref: > hub.id]
-  community_id cuid [ref: > community.id]
+  hub_id cuid [not null, ref: > hub.id]
+  community_id cuid [not null, ref: > community.id]
+
+  indexes {
+    (hub_id, community_id) [pk]
+  }
 }
 
-// Community information
 Table community {
   id cuid [pk]
   name varchar [not null]
   website varchar
   description text [not null]
-  tags text[]
+  tags "text[]"
 
-  // logistic
   contact_firstname varchar [not null]
   contact_lastname varchar [not null]
   contact_email varchar [not null]
-  contact_number varchar // +1 000 000 0000
+  contact_number varchar
   address varchar [not null]
   city varchar [not null]
   province varchar [not null]
   postal_code varchar
   country varchar [not null]
 
-  // settings
-  settings jsonb // all settings in a flexible json format
-
-  // metadata
+  settings jsonb
   creator_id cuid [ref: > user.id]
-  verified_email bool [default: `False`]
-  verified_externally bool [default: `False`]
+  verified_email bool [default: false]
+  verified_externally bool [default: false]
   created_at timestamp [default: `now()`]
   updated_at timestamp [default: `now()`]
 
@@ -180,45 +198,45 @@ Table community {
   }
 }
 
+Ref: hub.creator_id > user.id [delete: set null]
+Ref: hub_communities.hub_id > hub.id [delete: cascade]
+Ref: hub_communities.community_id > community.id [delete: cascade]
+Ref: community.creator_id > user.id [delete: set null]
 
-// Community/Public facing data
-// =======================================================
 
-// calendar
+// -------------------------------------------------------
+// Community / Public Facing
+// -------------------------------------------------------
+
 Table event {
   id cuid [pk]
   community_id cuid [not null, ref: > community.id]
-  creator_id cuid [not null, ref: > user.id]
-  announcement_id cuid [ref: > announcement.id] // if related to an announcement
+  creator_id cuid [ref: > user.id, note: 'Nullable — preserved as null if user deleted']
+  announcement_id cuid [ref: > announcement.id]
 
-  release_status ReleaseStatus
+  release_status ReleaseStatus [not null]
   event_type EventType
   title varchar [not null]
   subtitle varchar
-  description text // where key information is linked and rendered
-  links text[]
-  tags text[]
+  description text
+  links "text[]"
+  tags "text[]"
 
   location varchar
-  starts_at datetime
-  ends_at datetime
-  icalUrl varchar  // Generated .ics file URL
+  starts_at timestamp
+  ends_at timestamp [note: 'CHECK: ends_at IS NULL OR ends_at > starts_at']
+  ical_url varchar
 
   recurring RecurrenceSchedule
-  recurring_dow Day[] // day(s) of week
+  recurring_dow "Day[]"
 
-  // meta
   created_at timestamp [default: `now()`]
   released_at timestamp
   updated_at timestamp [default: `now()`]
 
   indexes {
     (community_id, release_status, starts_at) [name: 'idx_event_community_feed']
-    (recurring) [name: 'idx_event_recurring']
-  }
-
-  checks {
-    `ends_at IS NULL OR ends_at > starts_at` [name: 'chk_event_dates']
+    recurring [name: 'idx_event_recurring']
   }
 }
 
@@ -236,11 +254,11 @@ Enum EventType {
 }
 
 Enum RecurrenceSchedule {
-  DAILY  // repeats everyday, same time
-  WEEKLY  // repeats every week on recurrence_dow
-  BIWEEKLY // repeats every 2 weeks on recurrence dow
-  MONTHLY // repeats every month on a specific day (ie. first tuesday)
-  ANNUAL // repeats every year on the same date_start
+  DAILY
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  ANNUAL
 }
 
 Enum Day {
@@ -255,21 +273,19 @@ Enum Day {
 
 Table announcement {
   id cuid [pk]
-  community_id cuid [ref: > community.id]
+  community_id cuid [not null, ref: > community.id]
   author_id cuid [ref: > user.id]
-  release_status ReleaseStatus
+  release_status ReleaseStatus [not null]
 
   title varchar [not null]
   subtitle varchar
-  description text // where key information is linked and rendered
-  tags text[]
+  description text
+  tags "text[]"
 
-  // meta
   created_at timestamp [default: `now()`]
   released_at timestamp
   updated_at timestamp [default: `now()`]
 
-  // analytics
   likes integer
   views integer
 
@@ -278,31 +294,33 @@ Table announcement {
   }
 }
 
-Table comments {
-  id integer [pk]
-  community_id cuid [ref: > community.id]
+Table comment {
+  id integer [pk, increment]
+  community_id cuid [not null, ref: > community.id]
   author_id cuid [ref: > user.id]
-  comment_status CommentStatus
-  content text
+  comment_status CommentStatus [not null]
+  content text [not null]
   ts timestamp [default: `now()`]
   ts_edited timestamp
 
-  // what do these comments apply to? Announcement/Event
-  parent_entity_type CommentEntityType
-  parent_entity_id cuid [not null]
-  parent_comment_id integer [ref: - comments.id]
+  parent_entity_type CommentEntityType [not null]
+  parent_entity_id cuid [not null, note: 'No FK — polymorphic ref to announcement.id or event.id']
+  parent_comment_id integer [ref: - comment.id]
 
   indexes {
     (parent_entity_type, parent_entity_id) [name: 'idx_comments_parent']
-    (parent_comment_id) [name: 'idx_comments_thread']
+    parent_comment_id [name: 'idx_comments_thread']
   }
 
-  checks {
-    `parent_entity_type IN ('ANNOUNCEMENT', 'EVENT')` [name: 'chk_comment_entity_type']
-  }
+  Note: 'CHECK: parent_entity_type IN (''ANNOUNCEMENT'', ''EVENT'')'
 }
 
-enum CommentStatus {
+Enum CommentEntityType {
+  ANNOUNCEMENT
+  EVENT
+}
+
+Enum CommentStatus {
   PENDING
   APPROVED
   REJECTED
@@ -310,42 +328,46 @@ enum CommentStatus {
   LOCKED
 }
 
+Ref: event.community_id > community.id [delete: cascade]
+Ref: event.creator_id > user.id [delete: set null]
+Ref: event.announcement_id > announcement.id [delete: set null]
+Ref: announcement.community_id > community.id [delete: cascade]
+Ref: announcement.author_id > user.id [delete: set null]
+Ref: comment.community_id > community.id [delete: cascade]
+Ref: comment.author_id > user.id [delete: set null]
 
-// User facing data
-// =======================================================
 
-// what communities users subscribe to, how they'd like to be notified,
-// and any persisting filters they've placed on particular community feeds
+// -------------------------------------------------------
+// User Facing
+// -------------------------------------------------------
+// Stores what communities users subscribe to, how they'd like
+// to be notified, and at what frequency/channel per content type.
+
 Table subscription {
-  id integer [pk]
-  user_id cuid [ref: > user.id]
-  community_id cuid [ref: > community.id]
+  id integer [pk, increment]
+  user_id cuid [not null, ref: > user.id]
+  community_id cuid [not null, ref: > community.id]
 
-  is_active bool
+  is_active bool [not null]
   ts_subscribed timestamp [default: `now()`]
-  ts_unsubscribed timestamp
+  ts_unsubscribed timestamp [note: 'CHECK: is_active OR ts_unsubscribed IS NOT NULL']
 
-  // communication preferences
   calendar_freq CommunicationFrequency
-  calendar_preferred_time time
-  calendar_channels CommunicationMethod[]
+  calendar_preferred_time time [note: 'Stored as HH:MM']
+  calendar_channels "CommunicationMethod[]"
 
   announcement_freq CommunicationFrequency
-  announcement_preferred_time time
-  announcement_channels CommunicationMethod[]
+  announcement_preferred_time time [note: 'Stored as HH:MM']
+  announcement_channels "CommunicationMethod[]"
 
   indexes {
     (user_id, community_id) [unique]
     (community_id, is_active) [name: 'idx_subscription_community']
   }
-
-  checks {
-    `is_active OR ts_unsubscribed IS NOT NULL` [name: 'chk_unsub_timestamp']
-  }
 }
 
 Enum CommunicationFrequency {
-  NEVER // essentially turned OFF
+  NEVER
   REALTIME
   DAILY
   WEEKLY
@@ -356,25 +378,65 @@ Enum CommunicationFrequency {
 Enum CommunicationMethod {
   EMAIL
   SMS
-  // WHATSAPP / SIGNAL / MESSENGER / DISCORD / TELEGRAM
-  // PUSH_NOTIFICATION // only if an app is develoepd
 }
 
-
-Table user_events {
-  id integer [pk]
-  user_id cuid [ref: > user.id]
-  event_id cuid [ref: > event.id]
-  rsvp_status RSVPStatus
+Table user_event {
+  id integer [pk, increment]
+  user_id cuid [not null, ref: > user.id]
+  event_id cuid [not null, ref: > event.id]
+  rsvp_status RSVPStatus [not null]
 
   indexes {
     (event_id, rsvp_status) [name: 'idx_user_events_event']
   }
 }
 
-enum RSVPStatus {
+Enum RSVPStatus {
   GOING
   INTERESTED
   NOT_GOING
 }
 
+Ref: subscription.user_id > user.id [delete: cascade]
+Ref: subscription.community_id > community.id [delete: cascade]
+Ref: user_event.user_id > user.id [delete: cascade]
+Ref: user_event.event_id > event.id [delete: cascade]
+
+
+// -------------------------------------------------------
+// Job Queue
+// -------------------------------------------------------
+// All background work — notifications, digests, scrapers — flows
+// through this table. No inter-service HTTP calls; this is the
+// contract between the scheduler and the executioner.
+//
+// State machine:
+//   SCHEDULED → PENDING → READY → RUNNING → COMPLETE
+//                                          ↘ FAILED (retry if count < max)
+
+Table job_queue {
+  id cuid [pk]
+  status JobStatus [not null, default: 'SCHEDULED']
+  service_name varchar [not null, note: 'Handler key in apps/executioner/handlers/index.ts']
+  created_at timestamp [default: `now()`]
+  fire_at timestamp [not null]
+  started_at timestamp
+  completed_at timestamp
+  payload jsonb [not null, note: 'User IDs, entity refs, or any loose job data']
+  max_retries integer [default: 3]
+  retry_count integer [default: 0]
+  error_message text
+
+  indexes {
+    (status, fire_at) [name: 'idx_job_queue_status_fire']
+  }
+}
+
+Enum JobStatus {
+  SCHEDULED  [note: 'Fires more than 24h from now']
+  PENDING    [note: 'Fires within the next 24h — scheduler watching']
+  READY      [note: 'Past fireAt — awaiting executioner pickup']
+  RUNNING    [note: 'Executioner has claimed this job']
+  COMPLETE   [note: 'Finished successfully']
+  FAILED     [note: 'Exhausted all retries']
+}
