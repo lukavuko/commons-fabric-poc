@@ -1,4 +1,4 @@
-import { Context } from "../context";
+import { Context } from "../context.js";
 
 export const Query = {
   me: async (_: unknown, __: unknown, ctx: Context) => {

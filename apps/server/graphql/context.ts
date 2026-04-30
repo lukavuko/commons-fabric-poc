@@ -1,7 +1,9 @@
 import type { Request } from "express";
 import { GraphQLError } from "graphql";
-import { prisma } from "../lib/prisma";
-import { supabaseAdmin } from "../lib/supabase";
+import { jwtVerify } from "jose";
+import { prisma } from "@cfp/db";
+
+const accessSecret = new TextEncoder().encode(process.env.JWT_SECRET!);
 
 export type AuthUser = { id: string; email: string };
 
@@ -9,10 +11,7 @@ export type Context = {
   user: AuthUser | null;
   prisma: typeof prisma;
   requireAuth: () => AuthUser;
-  requireCommunityRole: (
-    communityId: string,
-    allowedRoles: string[]
-  ) => Promise<AuthUser>;
+  requireCommunityRole: (communityId: string, allowedRoles: string[]) => Promise<AuthUser>;
 };
 
 export async function buildContext(req: Request): Promise<Context> {
@@ -21,24 +20,18 @@ export async function buildContext(req: Request): Promise<Context> {
   let user: AuthUser | null = null;
 
   if (token) {
-    const {
-      data: { user: supabaseUser },
-      error,
-    } = await supabaseAdmin.auth.getUser(token);
-
-    if (!error && supabaseUser?.email) {
-      const dbUser = await prisma.user.upsert({
-        where: { id: supabaseUser.id },
-        update: { lastloginAt: new Date() },
-        create: {
-          id: supabaseUser.id,
-          email: supabaseUser.email,
-          username:
-            supabaseUser.user_metadata?.username ??
-            supabaseUser.email.split("@")[0],
-        },
-      });
-      user = { id: dbUser.id, email: dbUser.email };
+    try {
+      const { payload } = await jwtVerify(token, accessSecret);
+      const userId = payload.sub;
+      if (userId) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { id: true, email: true },
+        });
+        if (dbUser) user = dbUser;
+      }
+    } catch {
+      // invalid or expired token — user stays null
     }
   }
 
@@ -61,9 +54,7 @@ export async function buildContext(req: Request): Promise<Context> {
     });
     const roleName = userRole?.role.name.toUpperCase() ?? "";
     if (!allowedRoles.map((r) => r.toUpperCase()).includes(roleName)) {
-      throw new GraphQLError("Not authorized", {
-        extensions: { code: "FORBIDDEN" },
-      });
+      throw new GraphQLError("Not authorized", { extensions: { code: "FORBIDDEN" } });
     }
     return authedUser;
   };

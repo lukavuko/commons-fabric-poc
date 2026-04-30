@@ -1,5 +1,5 @@
-import { Query } from "./query";
-import { Mutation } from "./mutation";
+import { Query } from "./query.js";
+import { Mutation } from "./mutation.js";
 import {
   DateTime,
   Community,
@@ -11,7 +11,7 @@ import {
   UserRole,
   Hub,
   User,
-} from "./fields";
+} from "./fields.js";
 
 export const resolvers = {
   DateTime,

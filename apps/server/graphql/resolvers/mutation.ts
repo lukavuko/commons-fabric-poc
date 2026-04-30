@@ -1,64 +1,26 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { GraphQLError } from "graphql";
-import { Context } from "../context";
-import { supabaseAdmin } from "../../lib/supabase";
+import { Context } from "../context.js";
 
 export const Mutation = {
   signUp: async (
     _: unknown,
-    args: { email: string; password: string; username: string },
-    ctx: Context
+    _args: { email: string; password: string; username: string },
+    _ctx: Context
   ) => {
-    const { data, error } = await supabaseAdmin.auth.admin.createUser({
-      email: args.email,
-      password: args.password,
-      email_confirm: true,
-      user_metadata: { username: args.username },
+    throw new GraphQLError("signUp is handled by the auth service", {
+      extensions: { code: "NOT_IMPLEMENTED" },
     });
-
-    if (error || !data.user)
-      throw new GraphQLError(error?.message ?? "Sign up failed");
-
-    const user = await ctx.prisma.user.upsert({
-      where: { id: data.user.id },
-      update: {},
-      create: { id: data.user.id, email: args.email, username: args.username },
-    });
-
-    const { data: session } = await supabaseAdmin.auth.signInWithPassword({
-      email: args.email,
-      password: args.password,
-    });
-    if (!session.session)
-      throw new GraphQLError("Could not create session after sign up");
-
-    return { user, token: session.session.access_token };
   },
 
   signIn: async (
     _: unknown,
-    args: { email: string; password: string },
-    ctx: Context
+    _args: { email: string; password: string },
+    _ctx: Context
   ) => {
-    const { data, error } = await supabaseAdmin.auth.signInWithPassword({
-      email: args.email,
-      password: args.password,
+    throw new GraphQLError("signIn is handled by the auth service", {
+      extensions: { code: "NOT_IMPLEMENTED" },
     });
-    if (error || !data.session)
-      throw new GraphQLError(error?.message ?? "Sign in failed");
-
-    const user = await ctx.prisma.user.upsert({
-      where: { id: data.user.id },
-      update: { lastloginAt: new Date() },
-      create: {
-        id: data.user.id,
-        email: args.email,
-        username:
-          data.user.user_metadata?.username ?? args.email.split("@")[0],
-      },
-    });
-
-    return { user, token: data.session.access_token };
   },
 
   signOut: () => true,
