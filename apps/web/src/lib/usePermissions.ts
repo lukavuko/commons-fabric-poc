@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { gqlFetch } from "./graphql";
-import { getAccessToken } from "./auth";
+import { getAccessToken, refreshAccessToken } from "./auth";
 
 type EntityType = "COMMUNITY" | "HUB";
 
@@ -38,7 +38,7 @@ export function usePermissions(
   const fetchedRef = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!entityId || !getAccessToken()) {
+    if (!entityId) {
       setPermissions([]);
       setLoading(false);
       return;
@@ -55,10 +55,17 @@ export function usePermissions(
     fetchedRef.current = key;
 
     let cancelled = false;
-    gqlFetch<{ myPermissions: string[] }>(MY_PERMISSIONS, {
-      entityId,
-      entityType,
-    })
+    const fetchPermissions = async () => {
+      if (!getAccessToken()) {
+        await refreshAccessToken();
+      }
+      return gqlFetch<{ myPermissions: string[] }>(MY_PERMISSIONS, {
+        entityId,
+        entityType,
+      });
+    };
+
+    fetchPermissions()
       .then((data) => {
         if (cancelled) return;
         cache.set(key, data.myPermissions);

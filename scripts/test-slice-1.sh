@@ -124,13 +124,22 @@ pass "emailVerifiedAt = $VERIFIED_AT"
 
 step "POST /auth/login"
 LOGIN_CODE=$(curl -s -o /tmp/cfp_login_body -w "%{http_code}" \
+  -c /tmp/cfp_login_cookies \
   -X POST "$AUTH_URL/auth/login" \
   -H "Content-Type: application/json" \
   --data-raw "{\"email\":\"$EMAIL\",\"password\":\"$PASSWORD\"}")
 [ "$LOGIN_CODE" = "200" ] || fail "login expected 200, got $LOGIN_CODE (body: $(cat /tmp/cfp_login_body))"
 grep -q '"accessToken"' /tmp/cfp_login_body || fail "login response missing accessToken"
-grep -q '"refreshToken"' /tmp/cfp_login_body || fail "login response missing refreshToken"
-pass "login returned access + refresh tokens"
+grep -q 'cfp_refresh_token' /tmp/cfp_login_cookies || fail "login response missing refresh cookie"
+pass "login returned access token + httpOnly refresh cookie"
+
+step "POST /auth/refresh with cookie"
+REFRESH_CODE=$(curl -s -o /tmp/cfp_refresh_body -w "%{http_code}" \
+  -b /tmp/cfp_login_cookies \
+  -X POST "$AUTH_URL/auth/refresh")
+[ "$REFRESH_CODE" = "200" ] || fail "refresh expected 200, got $REFRESH_CODE (body: $(cat /tmp/cfp_refresh_body))"
+grep -q '"accessToken"' /tmp/cfp_refresh_body || fail "refresh response missing accessToken"
+pass "refresh returned a new access token from the cookie session"
 
 step "POST /auth/resend-verification (already verified — should no-op)"
 RESEND_CODE=$(curl -s -o /tmp/cfp_resend_body -w "%{http_code}" \

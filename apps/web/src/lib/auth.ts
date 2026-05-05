@@ -1,8 +1,17 @@
-const AUTH_URL = import.meta.env.VITE_AUTH_URL ?? "http://localhost:4001";
+const AUTH_URL = import.meta.env.VITE_AUTH_URL ?? "";
+
+let accessToken: string | null = null;
+
+try {
+  localStorage.removeItem("access_token");
+  localStorage.removeItem("refresh_token");
+} catch {
+  // Storage can be unavailable in stricter browser contexts.
+}
 
 export interface AuthTokens {
   accessToken: string;
-  refreshToken: string;
+  refreshToken?: string;
 }
 
 export interface RegisterInput {
@@ -20,6 +29,7 @@ export async function register(input: RegisterInput): Promise<void> {
   const res = await fetch(`${AUTH_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(input),
   });
   if (!res.ok) {
@@ -37,6 +47,7 @@ export async function login(
   const res = await fetch(`${AUTH_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ email, password }),
   });
   if (!res.ok) {
@@ -44,45 +55,40 @@ export async function login(
     throw new Error((body as { error?: string }).error ?? "Login failed");
   }
   const tokens = (await res.json()) as AuthTokens;
-  localStorage.setItem("access_token", tokens.accessToken);
-  localStorage.setItem("refresh_token", tokens.refreshToken);
+  accessToken = tokens.accessToken;
   return tokens;
 }
 
 export async function logout(): Promise<void> {
-  const refreshToken = localStorage.getItem("refresh_token");
-  if (refreshToken) {
-    await fetch(`${AUTH_URL}/auth/logout`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refreshToken }),
-    }).catch(() => {});
-  }
-  localStorage.removeItem("access_token");
-  localStorage.removeItem("refresh_token");
+  await fetch(`${AUTH_URL}/auth/logout`, {
+    method: "POST",
+    credentials: "include",
+  }).catch(() => {});
+  accessToken = null;
 }
 
 export async function refreshAccessToken(): Promise<string | null> {
-  const refreshToken = localStorage.getItem("refresh_token");
-  if (!refreshToken) return null;
   const res = await fetch(`${AUTH_URL}/auth/refresh`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ refreshToken }),
+    credentials: "include",
   });
-  if (!res.ok) return null;
-  const { accessToken } = (await res.json()) as { accessToken: string };
-  localStorage.setItem("access_token", accessToken);
-  return accessToken;
+  if (!res.ok) {
+    accessToken = null;
+    return null;
+  }
+  const body = (await res.json()) as { accessToken: string };
+  accessToken = body.accessToken;
+  return body.accessToken;
 }
 
 export function getAccessToken(): string | null {
-  return localStorage.getItem("access_token");
+  return accessToken;
 }
 
 export async function verifyEmail(token: string): Promise<void> {
   const res = await fetch(
     `${AUTH_URL}/auth/verify-email/${encodeURIComponent(token)}`,
+    { credentials: "include" },
   );
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -96,6 +102,7 @@ export async function resendVerification(email: string): Promise<void> {
   const res = await fetch(`${AUTH_URL}/auth/resend-verification`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ email }),
   });
   if (!res.ok) {

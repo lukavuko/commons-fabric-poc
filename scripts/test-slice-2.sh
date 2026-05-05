@@ -142,13 +142,21 @@ COMMUNITY_ID=$(echo "$CC_RESP" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p' | head -n 
 [ -n "$COMMUNITY_ID" ] || fail "createCommunity did not return id (resp: $CC_RESP)"
 pass "createCommunity returned community id ($COMMUNITY_ID)"
 
+step "createCommunity auto-subscribes the creator"
+cat > /tmp/cfp_s2_mysubs <<'EOF'
+{"query":"{ mySubscriptions { community { id } calendarFreq calendarChannels } }"}
+EOF
+MYSUBS_RESP=$(gql "$TOKEN" /tmp/cfp_s2_mysubs)
+echo "$MYSUBS_RESP" | grep -q "\"id\":\"$COMMUNITY_ID\"" || fail "new steward community missing from mySubscriptions"
+pass "creator inherits an active subscription on createCommunity"
+
 step "subscribeToCommunity (verified) → success"
 cat > /tmp/cfp_s2_sub2 <<EOF
 {"query":"mutation(\$id:ID!){ subscribeToCommunity(communityId:\$id){ id isActive } }","variables":{"id":"$COMMUNITY_ID"}}
 EOF
 SUB_RESP=$(gql "$TOKEN" /tmp/cfp_s2_sub2)
 echo "$SUB_RESP" | grep -q '"isActive":true' || fail "subscribe did not return isActive=true (resp: $SUB_RESP)"
-pass "subscribe succeeded"
+pass "subscribe remains safely idempotent"
 
 step "updateSubscription persists notification preferences"
 cat > /tmp/cfp_s2_update <<EOF
@@ -161,23 +169,27 @@ echo "$UPD_RESP" | grep -q '"announcementFreq":"REALTIME"' || fail "announcement
 pass "updateSubscription persisted preferences"
 
 step "mySubscriptions reflects the saved preferences"
-cat > /tmp/cfp_s2_mysubs <<'EOF'
-{"query":"{ mySubscriptions { community { id } calendarFreq calendarChannels } }"}
-EOF
 MYSUBS_RESP=$(gql "$TOKEN" /tmp/cfp_s2_mysubs)
 echo "$MYSUBS_RESP" | grep -q "\"id\":\"$COMMUNITY_ID\"" || fail "subscription not in mySubscriptions"
 echo "$MYSUBS_RESP" | grep -q '"calendarFreq":"WEEKLY"' || fail "mySubscriptions.calendarFreq != WEEKLY"
 pass "mySubscriptions returns saved preferences"
 
-step "createEvent (verified, no community role) → FORBIDDEN (NOT EMAIL_NOT_VERIFIED)"
+step "createEvent (verified steward) → success"
 cat > /tmp/cfp_s2_create_e2 <<EOF
 {"query":"mutation(\$i:CreateEventInput!){ createEvent(input:\$i){ id } }","variables":{"i":{"communityId":"$COMMUNITY_ID","title":"T"}}}
 EOF
 CE_RESP=$(gql "$TOKEN" /tmp/cfp_s2_create_e2)
-# Verified user without ORGANIZER/ADMIN/STEWARD role on the community should be blocked
-# by the role check, not the verification check. Confirms gate ordering.
-echo "$CE_RESP" | grep -q '"code":"FORBIDDEN"' || fail "expected FORBIDDEN post-verify, got: $CE_RESP"
-pass "createEvent correctly hits role check (not verification gate) post-verify"
+EVENT_ID=$(echo "$CE_RESP" | sed -n 's/.*"id":"\([^"]*\)".*/\1/p' | head -n 1)
+[ -n "$EVENT_ID" ] || fail "expected steward-created event id, got: $CE_RESP"
+pass "steward can create an event immediately after community creation"
+
+step "unsubscribeFromCommunity is blocked for inherited steward access"
+cat > /tmp/cfp_s2_unsub <<EOF
+{"query":"mutation(\$id:ID!){ unsubscribeFromCommunity(communityId:\$id) }","variables":{"id":"$COMMUNITY_ID"}}
+EOF
+UNSUB_RESP=$(gql "$TOKEN" /tmp/cfp_s2_unsub)
+echo "$UNSUB_RESP" | grep -q '"code":"FORBIDDEN"' || fail "expected FORBIDDEN on inherited unsubscribe, got: $UNSUB_RESP"
+pass "steward subscription cannot be manually removed"
 
 step "Cleanup"
 docker exec "$PG_CONTAINER" psql -U "$PG_USER" -d "$PG_DB" \

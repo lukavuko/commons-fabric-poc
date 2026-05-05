@@ -1,6 +1,37 @@
 import { ANON_USER, REGISTERED_USER, resolvedRoles } from "@cfp/defaults";
 import { Context } from "../context.js";
 
+async function syncRoleBackedSubscriptions(ctx: Context, userId: string) {
+  const roleLinks = await ctx.prisma.userRole.findMany({
+    where: { userId, entityType: "COMMUNITY" },
+    select: { entityId: true },
+  });
+
+  await Promise.all(
+    roleLinks.map(({ entityId }) =>
+      ctx.prisma.subscription.upsert({
+        where: {
+          userId_communityId: {
+            userId,
+            communityId: entityId,
+          },
+        },
+        update: {
+          isActive: true,
+          tsUnsubscribed: null,
+        },
+        create: {
+          userId,
+          communityId: entityId,
+          isActive: true,
+          calendarChannels: ["EMAIL"],
+          announcementChannels: ["EMAIL"],
+        },
+      }),
+    ),
+  );
+}
+
 export const Query = {
   me: async (_: unknown, __: unknown, ctx: Context) => {
     if (!ctx.user) return null;
@@ -139,10 +170,65 @@ export const Query = {
 
   mySubscriptions: async (_: unknown, __: unknown, ctx: Context) => {
     const user = ctx.requireAuth();
+    await syncRoleBackedSubscriptions(ctx, user.id);
     return ctx.prisma.subscription.findMany({
       where: { userId: user.id, isActive: true },
       orderBy: { tsSubscribed: "desc" },
     });
+  },
+
+  communityAccess: async (
+    _: unknown,
+    args: { communityId: string },
+    ctx: Context,
+  ) => {
+    if (!ctx.user) {
+      return {
+        scope: "PUBLIC",
+        isSubscribed: false,
+        roleName: null,
+      };
+    }
+
+    const user = ctx.requireAuth();
+    await syncRoleBackedSubscriptions(ctx, user.id);
+
+    const [subscription, userRole] = await Promise.all([
+      ctx.prisma.subscription.findUnique({
+        where: {
+          userId_communityId: {
+            userId: user.id,
+            communityId: args.communityId,
+          },
+        },
+        select: { isActive: true },
+      }),
+      ctx.prisma.userRole.findUnique({
+        where: {
+          userId_entityId: {
+            userId: user.id,
+            entityId: args.communityId,
+          },
+        },
+        include: { role: true },
+      }),
+    ]);
+
+    const roleName = userRole?.role.name ?? null;
+    const scope =
+      roleName === "STEWARD"
+        ? "STEWARD"
+        : roleName === "MEMBER"
+          ? "MEMBER"
+          : subscription?.isActive
+            ? "SUBSCRIBER"
+            : "PUBLIC";
+
+    return {
+      scope,
+      isSubscribed: !!subscription?.isActive,
+      roleName,
+    };
   },
 
   myPermissions: async (

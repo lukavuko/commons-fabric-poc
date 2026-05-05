@@ -1,4 +1,4 @@
-import { Router } from "express";
+import { Router, type Response } from "express";
 import { randomBytes } from "crypto";
 import { prisma } from "@cfp/db";
 import {
@@ -13,62 +13,113 @@ import { sendVerificationEmail } from "../lib/email.js";
 
 export const authRouter = Router();
 
-authRouter.post("/register", async (req, res) => {
-  const {
-    email,
-    password,
-    displayName,
-    firstname,
-    lastname,
-    postalCode,
-    city,
-    phone,
-  } = req.body as {
-    email?: string;
-    password?: string;
-    displayName?: string;
-    firstname?: string;
-    lastname?: string;
-    postalCode?: string;
-    city?: string;
-    phone?: string;
-  };
-  if (!email || !password || !displayName) {
-    return res
-      .status(400)
-      .json({ error: "email, password and displayName are required" });
-  }
+const refreshCookieName = "cfp_refresh_token";
+const refreshCookieMaxAgeMs = 30 * 24 * 60 * 60 * 1000;
 
-  const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing)
-    return res.status(409).json({ error: "Email already registered" });
+function getRefreshTokenCookie(cookieHeader: string | undefined) {
+  if (!cookieHeader) return null;
+  const cookies = cookieHeader.split(";").map((cookie) => cookie.trim());
+  const prefix = `${refreshCookieName}=`;
+  const cookie = cookies.find((value) => value.startsWith(prefix));
+  return cookie ? decodeURIComponent(cookie.slice(prefix.length)) : null;
+}
 
-  const passwordHash = await hashPassword(password);
-  const emailVerificationToken = randomBytes(32).toString("hex");
-  const username = email.split("@")[0];
-
-  const trimOrNull = (v?: string) => {
-    const t = v?.trim();
-    return t ? t : null;
-  };
-
-  await prisma.user.create({
-    data: {
-      email,
-      username,
-      displayName: displayName.trim(),
-      passwordHash,
-      emailVerificationToken,
-      firstname: trimOrNull(firstname),
-      lastname: trimOrNull(lastname),
-      postalCode: trimOrNull(postalCode),
-      city: trimOrNull(city),
-      phone: trimOrNull(phone),
-    },
+function setRefreshTokenCookie(res: Response, refreshToken: string) {
+  res.cookie(refreshCookieName, refreshToken, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/auth",
+    maxAge: refreshCookieMaxAgeMs,
   });
+}
 
-  await sendVerificationEmail(email, emailVerificationToken);
-  return res.status(201).json({ message: "Verification email sent" });
+function clearRefreshTokenCookie(res: Response) {
+  res.clearCookie(refreshCookieName, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/auth",
+  });
+}
+
+function isPrismaKnownError(error: unknown, code: string) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === code
+  );
+}
+
+authRouter.post("/register", async (req, res) => {
+  let createdUserId: string | null = null;
+  try {
+    const {
+      email,
+      password,
+      displayName,
+      firstname,
+      lastname,
+      postalCode,
+      city,
+      phone,
+    } = req.body as {
+      email?: string;
+      password?: string;
+      displayName?: string;
+      firstname?: string;
+      lastname?: string;
+      postalCode?: string;
+      city?: string;
+      phone?: string;
+    };
+    if (!email || !password || !displayName) {
+      return res
+        .status(400)
+        .json({ error: "email, password and displayName are required" });
+    }
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing)
+      return res.status(409).json({ error: "Email already registered" });
+
+    const passwordHash = await hashPassword(password);
+    const emailVerificationToken = randomBytes(32).toString("hex");
+    const username = email.split("@")[0];
+
+    const trimOrNull = (v?: string) => {
+      const t = v?.trim();
+      return t ? t : null;
+    };
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        username,
+        displayName: displayName.trim(),
+        passwordHash,
+        emailVerificationToken,
+        firstname: trimOrNull(firstname),
+        lastname: trimOrNull(lastname),
+        postalCode: trimOrNull(postalCode),
+        city: trimOrNull(city),
+        phone: trimOrNull(phone),
+      },
+    });
+    createdUserId = user.id;
+
+    await sendVerificationEmail(email, emailVerificationToken);
+    return res.status(201).json({ message: "Verification email sent" });
+  } catch (error) {
+    if (createdUserId) {
+      await prisma.user.delete({ where: { id: createdUserId } }).catch(() => {});
+    }
+    if (isPrismaKnownError(error, "P2002")) {
+      return res.status(409).json({ error: "Email already registered" });
+    }
+    return res.status(500).json({ error: "Registration failed" });
+  }
 });
 
 authRouter.post("/login", async (req, res) => {
@@ -100,11 +151,12 @@ authRouter.post("/login", async (req, res) => {
     data: { lastloginAt: new Date() },
   });
 
-  return res.json({ accessToken, refreshToken });
+  setRefreshTokenCookie(res, refreshToken);
+  return res.json({ accessToken });
 });
 
 authRouter.post("/refresh", async (req, res) => {
-  const { refreshToken } = req.body as { refreshToken?: string };
+  const refreshToken = getRefreshTokenCookie(req.headers.cookie);
   if (!refreshToken)
     return res.status(400).json({ error: "refreshToken is required" });
 
@@ -130,11 +182,12 @@ authRouter.post("/refresh", async (req, res) => {
 });
 
 authRouter.post("/logout", async (req, res) => {
-  const { refreshToken } = req.body as { refreshToken?: string };
+  const refreshToken = getRefreshTokenCookie(req.headers.cookie);
   if (refreshToken) {
     const tokenHash = hashToken(refreshToken);
     await prisma.session.deleteMany({ where: { refreshToken: tokenHash } });
   }
+  clearRefreshTokenCookie(res);
   return res.json({ message: "Logged out" });
 });
 

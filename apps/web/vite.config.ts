@@ -17,6 +17,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": "http://server:4000",
+      "/auth": "http://auth:4001",
     },
   },
 });

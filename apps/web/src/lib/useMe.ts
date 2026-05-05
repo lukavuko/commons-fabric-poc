@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { gqlFetch } from "./graphql";
-import { getAccessToken } from "./auth";
+import { getAccessToken, refreshAccessToken } from "./auth";
 
 export interface MeUser {
   id: string;
@@ -33,7 +33,10 @@ let inflight: Promise<MeUser | null> | null = null;
 const subscribers = new Set<() => void>();
 
 async function fetchMe(): Promise<MeUser | null> {
-  if (!getAccessToken()) return null;
+  if (!getAccessToken()) {
+    const refreshedToken = await refreshAccessToken();
+    if (!refreshedToken) return null;
+  }
   try {
     const data = await gqlFetch<{ me: MeUser | null }>(ME_QUERY);
     return data.me;

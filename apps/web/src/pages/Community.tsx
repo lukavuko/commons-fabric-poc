@@ -66,11 +66,12 @@ const COMMUNITY_QUERY = `
   }
 `;
 
-const MY_SUBS_QUERY = `
-  query MySubsForCommunity {
-    mySubscriptions {
-      community { id }
-      isActive
+const COMMUNITY_ACCESS_QUERY = `
+  query CommunityAccess($communityId: ID!) {
+    communityAccess(communityId: $communityId) {
+      scope
+      isSubscribed
+      roleName
     }
   }
 `;
@@ -165,6 +166,12 @@ type CommunityData = {
 };
 
 type Tab = "information" | "calendar" | "announcements";
+type CommunityScope = "PUBLIC" | "SUBSCRIBER" | "MEMBER" | "STEWARD";
+type CommunityAccessState = {
+  scope: CommunityScope;
+  isSubscribed: boolean;
+  roleName: string | null;
+};
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -183,6 +190,45 @@ function fmt(iso?: string | null) {
 function toDatetimeLocal(iso?: string | null) {
   if (!iso) return "";
   return new Date(iso).toISOString().slice(0, 16);
+}
+
+function formatScope(scope: CommunityScope) {
+  return (
+    {
+      PUBLIC: "Public",
+      SUBSCRIBER: "Subscriber",
+      MEMBER: "Member",
+      STEWARD: "Steward",
+    } satisfies Record<CommunityScope, string>
+  )[scope];
+}
+
+function ScopeBadge({
+  scope,
+  loading,
+}: {
+  scope: CommunityScope;
+  loading: boolean;
+}) {
+  const styles: Record<CommunityScope, string> = {
+    PUBLIC: "bg-[rgba(47,53,44,0.06)] text-ink-muted",
+    SUBSCRIBER: "bg-[rgba(80,101,72,0.10)] text-sage-deep",
+    MEMBER: "bg-[rgba(80,101,72,0.14)] text-sage-deep",
+    STEWARD: "bg-[rgba(140,90,63,0.12)] text-clay-deep",
+  };
+
+  return (
+    <span
+      aria-label={`Community scope: ${loading ? "loading" : formatScope(scope)}`}
+      className={`inline-flex min-h-8 items-center gap-2 rounded-cf-pill px-3 text-xs font-semibold ${styles[scope]}`}
+    >
+      <span
+        aria-hidden
+        className="h-1.5 w-1.5 rounded-cf-pill bg-current opacity-75"
+      />
+      {loading ? "Scope..." : formatScope(scope)}
+    </span>
+  );
 }
 
 // ─── EventPopup ──────────────────────────────────────────────────────────────
@@ -567,7 +613,8 @@ function SubscribeBlock({
   isVerified,
   canSubscribe,
   isLoadingMe,
-  isSubscribed,
+  isLoadingScope,
+  access,
   busy,
   error,
   showPrefs,
@@ -580,7 +627,8 @@ function SubscribeBlock({
   isVerified: boolean;
   canSubscribe: boolean;
   isLoadingMe: boolean;
-  isSubscribed: boolean;
+  isLoadingScope: boolean;
+  access: CommunityAccessState;
   busy: boolean;
   error: string;
   showPrefs: boolean;
@@ -589,7 +637,9 @@ function SubscribeBlock({
   onTogglePrefs: () => void;
   communityId: string;
 }) {
-  if (isLoadingMe) return null;
+  if (isLoadingMe || isLoadingScope) return null;
+  const { isSubscribed, scope } = access;
+  const hasInheritedSubscription = scope === "MEMBER" || scope === "STEWARD";
 
   if (!isAuthenticated) {
     return (
@@ -615,6 +665,25 @@ function SubscribeBlock({
         <Button variant="secondary" disabled>
           Subscribe
         </Button>
+      </div>
+    );
+  }
+
+  if (hasInheritedSubscription) {
+    return (
+      <div className="flex flex-col gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <StateBadge label={`${formatScope(scope)} access`} tone="sage" />
+          {isSubscribed && (
+            <Button variant="secondary" onClick={onTogglePrefs}>
+              {showPrefs ? "Hide notifications" : "Manage notifications"}
+            </Button>
+          )}
+        </div>
+        {error && <Alert tone="danger">{error}</Alert>}
+        {showPrefs && isSubscribed && (
+          <SubscriptionPreferences communityId={communityId} />
+        )}
       </div>
     );
   }
@@ -662,7 +731,12 @@ export default function Community() {
   const [activeTab, setActiveTab] = useState<Tab>("information");
   const [popup, setPopup] = useState<EventRow | null>(null);
 
-  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [access, setAccess] = useState<CommunityAccessState>({
+    scope: "PUBLIC",
+    isSubscribed: false,
+    roleName: null,
+  });
+  const [accessLoading, setAccessLoading] = useState(false);
   const [subBusy, setSubBusy] = useState(false);
   const [subError, setSubError] = useState("");
   const [showPrefs, setShowPrefs] = useState(false);
@@ -703,21 +777,27 @@ export default function Community() {
   }, [id, searchParams]);
 
   useEffect(() => {
-    if (!id || !me.isAuthenticated) {
-      setIsSubscribed(false);
+    if (!id) {
+      setAccess({ scope: "PUBLIC", isSubscribed: false, roleName: null });
       return;
     }
     let cancelled = false;
-    gqlFetch<{
-      mySubscriptions: Array<{ community: { id: string }; isActive: boolean }>;
-    }>(MY_SUBS_QUERY)
+    setAccessLoading(true);
+    gqlFetch<{ communityAccess: CommunityAccessState }>(COMMUNITY_ACCESS_QUERY, {
+      communityId: id,
+    })
       .then((d) => {
         if (cancelled) return;
-        setIsSubscribed(
-          !!d.mySubscriptions.find((s) => s.community.id === id && s.isActive),
-        );
+        setAccess(d.communityAccess);
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) {
+          setAccess({ scope: "PUBLIC", isSubscribed: false, roleName: null });
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setAccessLoading(false);
+      });
     return () => {
       cancelled = true;
     };
@@ -729,7 +809,11 @@ export default function Community() {
     setSubError("");
     try {
       await gqlFetch(SUBSCRIBE, { communityId: id });
-      setIsSubscribed(true);
+      setAccess((current) => ({
+        ...current,
+        isSubscribed: true,
+        scope: current.scope === "PUBLIC" ? "SUBSCRIBER" : current.scope,
+      }));
       setShowPrefs(true);
     } catch (err) {
       if (
@@ -751,7 +835,11 @@ export default function Community() {
     setSubError("");
     try {
       await gqlFetch(UNSUBSCRIBE, { communityId: id });
-      setIsSubscribed(false);
+      setAccess((current) => ({
+        ...current,
+        isSubscribed: false,
+        scope: "PUBLIC",
+      }));
       setShowPrefs(false);
     } catch (err) {
       setSubError(err instanceof Error ? err.message : "Could not unsubscribe");
@@ -798,7 +886,6 @@ export default function Community() {
       label: `Announcements${community.announcements.length ? ` (${community.announcements.length})` : ""}`,
     },
   ];
-
   return (
     <>
       <div className="max-w-[1200px] w-full mx-auto px-8 flex-1 flex flex-col">
@@ -813,18 +900,28 @@ export default function Community() {
 
           {/* Community header */}
           <div className="mb-6">
-            <div className="flex flex-wrap items-start gap-3 mb-2">
-              <h1 className="font-display text-4xl font-medium text-ink tracking-tight">
-                {community.name}
-              </h1>
-              {(community.verifiedEmail || community.verifiedExternally) && (
-                <VerifiedBadge />
-              )}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-start gap-3 mb-2">
+                  <h1 className="font-display text-4xl font-medium text-ink tracking-tight">
+                    {community.name}
+                  </h1>
+                  {(community.verifiedEmail || community.verifiedExternally) && (
+                    <VerifiedBadge />
+                  )}
+                </div>
+                <p className="text-ink-muted text-sm">
+                  {community.city}, {community.province} ·{" "}
+                  {community.subscriberCount} subscribers
+                </p>
+              </div>
+              <div className="shrink-0 sm:pt-1">
+                <ScopeBadge
+                  scope={access.scope}
+                  loading={me.loading || accessLoading}
+                />
+              </div>
             </div>
-            <p className="text-ink-muted text-sm">
-              {community.city}, {community.province} ·{" "}
-              {community.subscriberCount} subscribers
-            </p>
             {community.tags.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mt-3">
                 {community.tags.map((t) => (
@@ -843,7 +940,8 @@ export default function Community() {
               isVerified={me.isVerified}
               canSubscribe={can("community:subscribe")}
               isLoadingMe={me.loading}
-              isSubscribed={isSubscribed}
+              isLoadingScope={accessLoading}
+              access={access}
               busy={subBusy}
               error={subError}
               showPrefs={showPrefs}

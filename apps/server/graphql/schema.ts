@@ -70,6 +70,12 @@ export const typeDefs = gql`
     INTERESTED
     NOT_GOING
   }
+  enum CommunityScope {
+    PUBLIC
+    SUBSCRIBER
+    MEMBER
+    STEWARD
+  }
 
   # -------------------------------------------------------
   # Types
@@ -231,6 +237,12 @@ export const typeDefs = gql`
     token: String!
   }
 
+  type CommunityAccess {
+    scope: CommunityScope!
+    isSubscribed: Boolean!
+    roleName: String
+  }
+
   # -------------------------------------------------------
   # Inputs
   # -------------------------------------------------------
@@ -363,6 +375,7 @@ export const typeDefs = gql`
     ): [Comment!]!
     myFeed: Feed!
     mySubscriptions: [UserSubscription!]!
+    communityAccess(communityId: ID!): CommunityAccess!
     """
     Returns the resolved permission names the current user holds for a given
     entity (community or hub). Falls back to the ANYONE implicit set when the

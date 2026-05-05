@@ -2,6 +2,89 @@
 import { GraphQLError } from "graphql";
 import { Context } from "../context.js";
 
+const updateUserFields = [
+  "firstname",
+  "lastname",
+  "phone",
+  "username",
+  "displayName",
+] as const;
+
+const communityFields = [
+  "name",
+  "website",
+  "description",
+  "tags",
+  "contactFirstname",
+  "contactLastname",
+  "contactEmail",
+  "contactNumber",
+  "address",
+  "city",
+  "province",
+  "postalCode",
+  "country",
+] as const;
+
+const createEventFields = [
+  "communityId",
+  "title",
+  "subtitle",
+  "description",
+  "eventType",
+  "links",
+  "tags",
+  "location",
+  "startsAt",
+  "endsAt",
+  "recurring",
+  "recurringDow",
+] as const;
+
+const updateEventFields = [
+  "title",
+  "subtitle",
+  "description",
+  "eventType",
+  "links",
+  "tags",
+  "location",
+  "startsAt",
+  "endsAt",
+  "recurring",
+  "recurringDow",
+  "releaseStatus",
+] as const;
+
+const createAnnouncementFields = [
+  "communityId",
+  "title",
+  "subtitle",
+  "description",
+  "tags",
+] as const;
+
+const subscriptionFields = [
+  "calendarFreq",
+  "calendarPreferredTime",
+  "calendarChannels",
+  "announcementFreq",
+  "announcementPreferredTime",
+  "announcementChannels",
+] as const;
+
+function pickInput<const T extends readonly string[]>(
+  input: Record<string, unknown> | undefined,
+  allowedFields: T,
+): Partial<Record<T[number], any>> {
+  if (!input) return {};
+  return Object.fromEntries(
+    allowedFields
+      .filter((field) => Object.hasOwn(input, field))
+      .map((field) => [field, input[field]]),
+  ) as Partial<Record<T[number], any>>;
+}
+
 export const Mutation = {
   signUp: async (
     _: unknown,
@@ -33,7 +116,7 @@ export const Mutation = {
     const user = ctx.requireAuth();
     return ctx.prisma.user.update({
       where: { id: user.id },
-      data: args.input as object,
+      data: pickInput(args.input, updateUserFields),
     });
   },
 
@@ -51,7 +134,10 @@ export const Mutation = {
     const user = ctx.requireEmailVerified();
     return ctx.prisma.$transaction(async (tx) => {
       const community = await tx.community.create({
-        data: { ...(args.input as any), creatorId: user.id },
+        data: {
+          ...pickInput(args.input, communityFields),
+          creatorId: user.id,
+        } as any,
       });
       const stewardRole = await tx.role.findFirst({
         where: { name: "STEWARD", isDefault: true },
@@ -66,6 +152,25 @@ export const Mutation = {
           },
         });
       }
+      await tx.subscription.upsert({
+        where: {
+          userId_communityId: {
+            userId: user.id,
+            communityId: community.id,
+          },
+        },
+        update: {
+          isActive: true,
+          tsUnsubscribed: null,
+        },
+        create: {
+          userId: user.id,
+          communityId: community.id,
+          isActive: true,
+          calendarChannels: ["EMAIL"],
+          announcementChannels: ["EMAIL"],
+        },
+      });
       return community;
     });
   },
@@ -78,7 +183,7 @@ export const Mutation = {
     await ctx.requirePermission("community:edit", args.id);
     return ctx.prisma.community.update({
       where: { id: args.id },
-      data: args.input as object,
+      data: pickInput(args.input, communityFields),
     });
   },
 
@@ -88,13 +193,14 @@ export const Mutation = {
     ctx: Context,
   ) => {
     const communityId = args.input.communityId as string;
+    ctx.requireEmailVerified();
     const user = await ctx.requirePermission("event:create", communityId);
     return ctx.prisma.event.create({
       data: {
-        ...(args.input as any),
+        ...pickInput(args.input, createEventFields),
         creatorId: user.id,
         releaseStatus: "DRAFT",
-      },
+      } as any,
     });
   },
 
@@ -109,7 +215,7 @@ export const Mutation = {
     await ctx.requirePermission("event:edit", event.communityId);
     return ctx.prisma.event.update({
       where: { id: args.id },
-      data: args.input as object,
+      data: pickInput(args.input, updateEventFields),
     });
   },
 
@@ -145,10 +251,10 @@ export const Mutation = {
     );
     return ctx.prisma.announcement.create({
       data: {
-        ...(args.input as any),
+        ...pickInput(args.input, createAnnouncementFields),
         authorId: user.id,
         releaseStatus: "DRAFT",
-      },
+      } as any,
     });
   },
 
@@ -180,13 +286,13 @@ export const Mutation = {
       update: {
         isActive: true,
         tsUnsubscribed: null,
-        ...(args.input ?? {}),
+        ...pickInput(args.input, subscriptionFields),
       },
       create: {
         userId: user.id,
         communityId: args.communityId,
         isActive: true,
-        ...(args.input ?? {}),
+        ...pickInput(args.input, subscriptionFields),
       },
     });
   },
@@ -197,6 +303,17 @@ export const Mutation = {
     ctx: Context,
   ) => {
     const user = ctx.requireAuth();
+    const userRole = await ctx.prisma.userRole.findUnique({
+      where: {
+        userId_entityId: { userId: user.id, entityId: args.communityId },
+      },
+      include: { role: true },
+    });
+    if (userRole?.role.name === "MEMBER" || userRole?.role.name === "STEWARD") {
+      throw new GraphQLError("Community roles inherit subscription access", {
+        extensions: { code: "FORBIDDEN" },
+      });
+    }
     await ctx.prisma.subscription.update({
       where: {
         userId_communityId: { userId: user.id, communityId: args.communityId },
@@ -216,7 +333,7 @@ export const Mutation = {
       where: {
         userId_communityId: { userId: user.id, communityId: args.communityId },
       },
-      data: args.input as object,
+      data: pickInput(args.input, subscriptionFields),
     });
   },
 
