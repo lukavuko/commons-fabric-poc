@@ -1,32 +1,47 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Alert, AuthShell, Button, FormField, Input } from "../components";
+import { login, register } from "../lib/auth";
 
-const SIGN_IN = `
-  mutation SignIn($email: String!, $password: String!) {
-    signIn(email: $email, password: $password) {
-      token
-      user { id username email }
-    }
-  }
-`;
+type Mode = "signin" | "signup";
 
-const SIGN_UP = `
-  mutation SignUp($email: String!, $password: String!, $username: String!) {
-    signUp(email: $email, password: $password, username: $username) {
-      token
-      user { id username email }
-    }
-  }
-`;
+interface SignupFields {
+  displayName: string;
+  firstname: string;
+  lastname: string;
+  postalCode: string;
+  city: string;
+  phone: string;
+}
+
+const emptySignupFields: SignupFields = {
+  displayName: "",
+  firstname: "",
+  lastname: "",
+  postalCode: "",
+  city: "",
+  phone: "",
+};
 
 export default function Auth() {
   const navigate = useNavigate();
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<Mode>("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [username, setUsername] = useState("");
+  const [signupFields, setSignupFields] =
+    useState<SignupFields>(emptySignupFields);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [signupComplete, setSignupComplete] = useState(false);
+
+  const updateField = (key: keyof SignupFields) => (v: string) =>
+    setSignupFields((prev) => ({ ...prev, [key]: v }));
+
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setError("");
+    setSignupComplete(false);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,22 +49,22 @@ export default function Auth() {
     setLoading(true);
 
     try {
-      const query = mode === "signin" ? SIGN_IN : SIGN_UP;
-      const variables =
-        mode === "signin" ? { email, password } : { email, password, username };
-
-      const res = await fetch("/api/graphql", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, variables }),
-      });
-
-      const json = await res.json();
-      if (json.errors?.length) throw new Error(json.errors[0].message);
-
-      const token = json.data?.signIn?.token ?? json.data?.signUp?.token;
-      localStorage.setItem("cfp_token", token);
-      navigate("/");
+      if (mode === "signup") {
+        await register({
+          email,
+          password,
+          displayName: signupFields.displayName,
+          firstname: signupFields.firstname || undefined,
+          lastname: signupFields.lastname || undefined,
+          postalCode: signupFields.postalCode || undefined,
+          city: signupFields.city || undefined,
+          phone: signupFields.phone || undefined,
+        });
+        setSignupComplete(true);
+      } else {
+        await login(email, password);
+        navigate("/");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
@@ -57,69 +72,190 @@ export default function Auth() {
     }
   };
 
+  if (signupComplete) {
+    return (
+      <AuthShell title="Check your email" accent>
+        <Alert tone="success">
+          We sent a verification link to <strong>{email}</strong>. Click it to
+          activate your account, then come back and sign in.
+        </Alert>
+        <Button
+          variant="secondary"
+          className="mt-2"
+          onClick={() => switchMode("signin")}
+        >
+          Back to sign in
+        </Button>
+      </AuthShell>
+    );
+  }
+
+  const isSignup = mode === "signup";
+
   return (
-    <main className="max-w-sm mx-auto px-4 py-20">
-      <h1 className="text-2xl font-bold mb-1">
-        {mode === "signin" ? "Sign in" : "Create account"}
-      </h1>
-      <p className="text-zinc-500 text-sm mb-8">
-        {mode === "signin" ? "Don't have an account? " : "Already have an account? "}
-        <button
-          onClick={() => {
-            setMode(mode === "signin" ? "signup" : "signin");
-            setError("");
-          }}
-          className="text-black underline"
-        >
-          {mode === "signin" ? "Sign up" : "Sign in"}
-        </button>
-      </p>
-
+    <AuthShell
+      title={isSignup ? "Create your account" : "Welcome back"}
+      subtitle={
+        isSignup
+          ? "Free, no spam. We'll send a one-time link to verify your email."
+          : "Sign in to subscribe to communities and manage your calendar."
+      }
+      accent={isSignup}
+    >
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        {mode === "signup" && (
-          <div>
-            <label className="block text-sm font-medium mb-1">Username</label>
-            <input
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+        <FormField label="Email">
+          {({ id }) => (
+            <Input
+              id={id}
+              type="email"
+              autoComplete="email"
               required
-              className="w-full border rounded px-3 py-2 text-sm"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
             />
-          </div>
+          )}
+        </FormField>
+
+        {isSignup && (
+          <FormField
+            label="Display name"
+            hint="How others will see you in the community."
+          >
+            {({ id }) => (
+              <Input
+                id={id}
+                type="text"
+                autoComplete="nickname"
+                required
+                value={signupFields.displayName}
+                onChange={(e) => updateField("displayName")(e.target.value)}
+              />
+            )}
+          </FormField>
         )}
-        <div>
-          <label className="block text-sm font-medium mb-1">Email</label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            className="w-full border rounded px-3 py-2 text-sm"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium mb-1">Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            minLength={6}
-            className="w-full border rounded px-3 py-2 text-sm"
-          />
-        </div>
 
-        {error && <p className="text-red-600 text-sm">{error}</p>}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="bg-black text-white rounded py-2 text-sm font-medium disabled:opacity-50"
+        <FormField
+          label="Password"
+          hint={isSignup ? "At least 8 characters." : undefined}
         >
-          {loading ? "Please wait..." : mode === "signin" ? "Sign in" : "Create account"}
-        </button>
+          {({ id }) => (
+            <Input
+              id={id}
+              type="password"
+              autoComplete={isSignup ? "new-password" : "current-password"}
+              required
+              minLength={isSignup ? 8 : undefined}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          )}
+        </FormField>
+
+        {isSignup && (
+          <details className="rounded-cf-md bg-[rgba(80,101,72,0.04)] px-3.5 py-2.5 group">
+            <summary className="text-xs font-medium text-ink-muted tracking-wide cursor-pointer select-none list-none flex items-center justify-between">
+              <span>Optional details</span>
+              <span className="text-ink-subtle group-open:rotate-180 transition-transform">
+                ▾
+              </span>
+            </summary>
+            <div className="flex flex-col gap-4 mt-4">
+              <div className="grid grid-cols-2 gap-3">
+                <FormField label="First name">
+                  {({ id }) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      autoComplete="given-name"
+                      value={signupFields.firstname}
+                      onChange={(e) => updateField("firstname")(e.target.value)}
+                    />
+                  )}
+                </FormField>
+                <FormField label="Last name">
+                  {({ id }) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      autoComplete="family-name"
+                      value={signupFields.lastname}
+                      onChange={(e) => updateField("lastname")(e.target.value)}
+                    />
+                  )}
+                </FormField>
+              </div>
+              <div className="grid grid-cols-[1fr_2fr] gap-3">
+                <FormField label="Postal code">
+                  {({ id }) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      autoComplete="postal-code"
+                      value={signupFields.postalCode}
+                      onChange={(e) =>
+                        updateField("postalCode")(e.target.value)
+                      }
+                    />
+                  )}
+                </FormField>
+                <FormField label="City">
+                  {({ id }) => (
+                    <Input
+                      id={id}
+                      type="text"
+                      autoComplete="address-level2"
+                      value={signupFields.city}
+                      onChange={(e) => updateField("city")(e.target.value)}
+                    />
+                  )}
+                </FormField>
+              </div>
+              <FormField label="Phone">
+                {({ id }) => (
+                  <Input
+                    id={id}
+                    type="tel"
+                    autoComplete="tel"
+                    value={signupFields.phone}
+                    onChange={(e) => updateField("phone")(e.target.value)}
+                  />
+                )}
+              </FormField>
+            </div>
+          </details>
+        )}
+
+        {error && <Alert tone="danger">{error}</Alert>}
+
+        <Button type="submit" disabled={loading} className="mt-2">
+          {loading ? "Please wait…" : isSignup ? "Create account" : "Sign in"}
+        </Button>
       </form>
-    </main>
+
+      <div className="flex gap-3 mt-6">
+        <button
+          type="button"
+          onClick={() => switchMode("signin")}
+          className={`flex-1 px-4 py-2.5 rounded-cf-pill text-sm font-medium transition-colors ${
+            !isSignup
+              ? "bg-sage-deep text-surface"
+              : "text-ink shadow-[inset_0_0_0_1px_rgba(80,101,72,0.32)] hover:bg-[rgba(80,101,72,0.06)]"
+          }`}
+        >
+          Sign in
+        </button>
+        <button
+          type="button"
+          onClick={() => switchMode("signup")}
+          className={`flex-1 px-4 py-2.5 rounded-cf-pill text-sm font-medium transition-colors ${
+            isSignup
+              ? "bg-sage-deep text-surface"
+              : "text-ink shadow-[inset_0_0_0_1px_rgba(80,101,72,0.32)] hover:bg-[rgba(80,101,72,0.06)]"
+          }`}
+        >
+          Create account
+        </button>
+      </div>
+    </AuthShell>
   );
 }

@@ -1,7 +1,12 @@
 import { useEffect, useState } from "react";
 import { SiteNav } from "@/components/SiteNav";
-import { CommunityCard, type CommunityCardData } from "@/components/CommunityCard";
+import {
+  CommunityCard,
+  type CommunityCardData,
+} from "@/components/CommunityCard";
+import { LinkButton } from "@/components";
 import { gqlFetch } from "@/lib/graphql";
+import { useMe } from "@/lib/useMe";
 
 const COMMUNITIES_QUERY = `
   query {
@@ -129,6 +134,7 @@ function toCardData(c: RawCommunity): CommunityCardData {
 }
 
 export default function Explore() {
+  const me = useMe();
   const [communities, setCommunities] = useState<CommunityCardData[]>(SAMPLE);
   const [usingSample, setUsingSample] = useState(true);
 
@@ -159,15 +165,25 @@ export default function Explore() {
         {/* Z-trace: title top-left → toolbar (search + filters) top-right of toolbar
             → gallery body → CTAs bottom-right of every card. */}
         <header className="mb-8">
-          <h1 className="font-display text-5xl font-medium text-ink mb-2 tracking-tight">
-            Explore communities
-          </h1>
-          <p className="text-ink-muted text-lg">
-            Discover groups gathering near you.
-          </p>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <h1 className="font-display text-5xl font-medium text-ink mb-2 tracking-tight">
+                Explore communities
+              </h1>
+              <p className="text-ink-muted text-lg">
+                Discover groups gathering near you.
+              </p>
+            </div>
+            {!me.loading && me.isAuthenticated && (
+              <LinkButton variant="secondary" to="/communities/new">
+                + New community
+              </LinkButton>
+            )}
+          </div>
           {usingSample && (
             <p className="text-xs text-clay-deep mt-3">
-              Showing sample data — connect the backend to load live communities.
+              Showing sample data — connect the backend to load live
+              communities.
             </p>
           )}
         </header>
@@ -224,7 +240,9 @@ export default function Explore() {
         {/* Gallery */}
         <ul
           className="grid gap-6"
-          style={{ gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))" }}
+          style={{
+            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+          }}
         >
           {communities.map((c) => (
             <li key={c.id} className="contents">
@@ -234,7 +252,8 @@ export default function Explore() {
         </ul>
 
         <footer className="text-xs text-ink-muted text-center py-12 mt-12">
-          Showing {communities.length} {communities.length === 1 ? "community" : "communities"}.
+          Showing {communities.length}{" "}
+          {communities.length === 1 ? "community" : "communities"}.
         </footer>
       </main>
     </div>

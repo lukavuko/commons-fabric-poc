@@ -1,565 +1,1160 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Calendar — Commons Fabric · v3 Agenda</title>
-<style>
-  /* ── V3: CLEAN AGENDA ────────────────────────────────────────────────
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calendar — Commons Fabric · v3 Agenda</title>
+    <style>
+      /* ── V3: CLEAN AGENDA ────────────────────────────────────────────────
      Inspired by Linear / Things 3. Agenda / list view. Sage green
      accents. Tight typography, structured density, no decoration.
   ─────────────────────────────────────────────────────────────────── */
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-  :root {
-    --bg:       #F7F5F2;
-    --surface:  #FFFFFF;
-    --border:   #E6E2DC;
-    --border-lt:#EFECE7;
-    --text:     #1C1A17;
-    --muted:    #8E8880;
-    --accent:   #5F7A62;   /* sage green */
-    --accent-lt:#EBF0EC;
-    --accent-md:#C8D8CA;
+      :root {
+        --bg: #f7f5f2;
+        --surface: #ffffff;
+        --border: #e6e2dc;
+        --border-lt: #efece7;
+        --text: #1c1a17;
+        --muted: #8e8880;
+        --accent: #5f7a62; /* sage green */
+        --accent-lt: #ebf0ec;
+        --accent-md: #c8d8ca;
 
-    --c1: #8A7F99;
-    --c2: #6B967E;
-    --c3: #96906E;
-    --c4: #6B7F96;
-    --c5: #96766E;
-  }
+        --c1: #8a7f99;
+        --c2: #6b967e;
+        --c3: #96906e;
+        --c4: #6b7f96;
+        --c5: #96766e;
+      }
 
-  body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; min-height: 100vh; font-size: 14px; }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          sans-serif;
+        min-height: 100vh;
+        font-size: 14px;
+      }
 
-  /* ── NAV ── */
-  nav {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 0 1.5rem; height: 48px;
-    position: sticky; top: 0; z-index: 100;
-  }
-  .nav-brand { font-size: .82rem; font-weight: 700; color: var(--text); letter-spacing: -.01em; }
-  .nav-brand span { color: var(--accent); }
-  .nav-tabs { display: flex; }
-  .nav-tabs a {
-    text-decoration: none; font-size: .78rem; color: var(--muted);
-    padding: .3rem .9rem; border-bottom: 2px solid transparent;
-    transition: all .15s; height: 48px; display: flex; align-items: center;
-  }
-  .nav-tabs a.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 500; }
-  .nav-right { display: flex; align-items: center; gap: .5rem; }
-  .btn-icon { background: none; border: none; cursor: pointer; color: var(--muted); font-size: .95rem; padding: 5px 7px; border-radius: 5px; transition: all .15s; }
-  .btn-icon:hover { background: var(--bg); color: var(--text); }
-  .avatar { width: 26px; height: 26px; border-radius: 50%; background: var(--accent-lt); display: flex; align-items: center; justify-content: center; font-size: .68rem; font-weight: 700; color: var(--accent); cursor: pointer; }
+      /* ── NAV ── */
+      nav {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 1.5rem;
+        height: 48px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .nav-brand {
+        font-size: 0.82rem;
+        font-weight: 700;
+        color: var(--text);
+        letter-spacing: -0.01em;
+      }
+      .nav-brand span {
+        color: var(--accent);
+      }
+      .nav-tabs {
+        display: flex;
+      }
+      .nav-tabs a {
+        text-decoration: none;
+        font-size: 0.78rem;
+        color: var(--muted);
+        padding: 0.3rem 0.9rem;
+        border-bottom: 2px solid transparent;
+        transition: all 0.15s;
+        height: 48px;
+        display: flex;
+        align-items: center;
+      }
+      .nav-tabs a.active {
+        color: var(--accent);
+        border-bottom-color: var(--accent);
+        font-weight: 500;
+      }
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+      .btn-icon {
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 0.95rem;
+        padding: 5px 7px;
+        border-radius: 5px;
+        transition: all 0.15s;
+      }
+      .btn-icon:hover {
+        background: var(--bg);
+        color: var(--text);
+      }
+      .avatar {
+        width: 26px;
+        height: 26px;
+        border-radius: 50%;
+        background: var(--accent-lt);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.68rem;
+        font-weight: 700;
+        color: var(--accent);
+        cursor: pointer;
+      }
 
-  /* ── LAYOUT ── */
-  .layout { display: flex; height: calc(100vh - 48px); }
+      /* ── LAYOUT ── */
+      .layout {
+        display: flex;
+        height: calc(100vh - 48px);
+      }
 
-  /* ── LEFT SIDEBAR ── */
-  .left-sidebar { width: 220px; min-width: 220px; border-right: 1px solid var(--border); overflow-y: auto; padding: 1rem 0; background: var(--surface); }
-  .sidebar-section { padding: 0 .75rem; margin-bottom: 1.25rem; }
-  .sidebar-title { font-size: .65rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: .3rem .5rem; margin-bottom: .25rem; }
-  .sidebar-item {
-    display: flex; align-items: center; gap: .5rem;
-    padding: .3rem .5rem; border-radius: 5px; cursor: pointer;
-    font-size: .8rem; color: var(--text); transition: background .1s;
-    margin-bottom: 1px;
-  }
-  .sidebar-item:hover { background: var(--bg); }
-  .sidebar-item.active { background: var(--accent-lt); color: var(--accent); font-weight: 500; }
-  .sidebar-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
-  .sidebar-count { font-size: .7rem; color: var(--muted); margin-left: auto; background: var(--bg); padding: .1rem .35rem; border-radius: 10px; }
-  .sidebar-item.active .sidebar-count { background: var(--accent-md); color: var(--accent); }
-  .sidebar-divider { height: 1px; background: var(--border-lt); margin: .75rem .75rem; }
-  .type-list { list-style: none; }
-  .type-item { display: flex; align-items: center; gap: .4rem; padding: .28rem .5rem; font-size: .78rem; color: var(--muted); cursor: pointer; border-radius: 4px; transition: all .12s; }
-  .type-item:hover { background: var(--bg); color: var(--text); }
-  .type-item.on { color: var(--text); }
-  .type-dot { width: 6px; height: 6px; border-radius: 2px; background: var(--border); flex-shrink: 0; }
-  .type-item.on .type-dot { background: var(--accent); }
+      /* ── LEFT SIDEBAR ── */
+      .left-sidebar {
+        width: 220px;
+        min-width: 220px;
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+        padding: 1rem 0;
+        background: var(--surface);
+      }
+      .sidebar-section {
+        padding: 0 0.75rem;
+        margin-bottom: 1.25rem;
+      }
+      .sidebar-title {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        padding: 0.3rem 0.5rem;
+        margin-bottom: 0.25rem;
+      }
+      .sidebar-item {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.3rem 0.5rem;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 0.8rem;
+        color: var(--text);
+        transition: background 0.1s;
+        margin-bottom: 1px;
+      }
+      .sidebar-item:hover {
+        background: var(--bg);
+      }
+      .sidebar-item.active {
+        background: var(--accent-lt);
+        color: var(--accent);
+        font-weight: 500;
+      }
+      .sidebar-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        flex-shrink: 0;
+      }
+      .sidebar-count {
+        font-size: 0.7rem;
+        color: var(--muted);
+        margin-left: auto;
+        background: var(--bg);
+        padding: 0.1rem 0.35rem;
+        border-radius: 10px;
+      }
+      .sidebar-item.active .sidebar-count {
+        background: var(--accent-md);
+        color: var(--accent);
+      }
+      .sidebar-divider {
+        height: 1px;
+        background: var(--border-lt);
+        margin: 0.75rem 0.75rem;
+      }
+      .type-list {
+        list-style: none;
+      }
+      .type-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.28rem 0.5rem;
+        font-size: 0.78rem;
+        color: var(--muted);
+        cursor: pointer;
+        border-radius: 4px;
+        transition: all 0.12s;
+      }
+      .type-item:hover {
+        background: var(--bg);
+        color: var(--text);
+      }
+      .type-item.on {
+        color: var(--text);
+      }
+      .type-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 2px;
+        background: var(--border);
+        flex-shrink: 0;
+      }
+      .type-item.on .type-dot {
+        background: var(--accent);
+      }
 
-  /* ── MAIN AGENDA ── */
-  .main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
-  .main-toolbar {
-    background: var(--surface); border-bottom: 1px solid var(--border);
-    display: flex; align-items: center; justify-content: space-between;
-    padding: .6rem 1.5rem; position: sticky; top: 0; z-index: 10;
-  }
-  .toolbar-left { display: flex; align-items: center; gap: 1rem; }
-  .toolbar-left h1 { font-size: .95rem; font-weight: 600; }
-  .toolbar-left p { font-size: .75rem; color: var(--muted); }
-  .toolbar-right { display: flex; gap: .35rem; }
-  .tb-btn { font-size: .73rem; padding: .3rem .65rem; border-radius: 5px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); cursor: pointer; transition: all .15s; }
-  .tb-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .tb-btn.active { background: var(--accent-lt); color: var(--accent); border-color: var(--accent-md); }
+      /* ── MAIN AGENDA ── */
+      .main {
+        flex: 1;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+      }
+      .main-toolbar {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.6rem 1.5rem;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .toolbar-left {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+      }
+      .toolbar-left h1 {
+        font-size: 0.95rem;
+        font-weight: 600;
+      }
+      .toolbar-left p {
+        font-size: 0.75rem;
+        color: var(--muted);
+      }
+      .toolbar-right {
+        display: flex;
+        gap: 0.35rem;
+      }
+      .tb-btn {
+        font-size: 0.73rem;
+        padding: 0.3rem 0.65rem;
+        border-radius: 5px;
+        border: 1px solid var(--border);
+        background: var(--surface);
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+      .tb-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      .tb-btn.active {
+        background: var(--accent-lt);
+        color: var(--accent);
+        border-color: var(--accent-md);
+      }
 
-  /* ── AGENDA GROUPS ── */
-  .agenda { padding: 1.25rem 1.5rem; max-width: 720px; }
-  .date-group { margin-bottom: 2rem; }
-  .date-heading {
-    display: flex; align-items: baseline; gap: .75rem;
-    margin-bottom: .75rem; padding-bottom: .4rem;
-    border-bottom: 1px solid var(--border-lt);
-  }
-  .date-heading .dday { font-size: 1.5rem; font-weight: 300; color: var(--text); line-height: 1; }
-  .date-heading .ddate { font-size: .78rem; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
-  .date-heading.today-head .dday { color: var(--accent); }
-  .date-heading.today-head .ddate { color: var(--accent); }
-  .today-badge { font-size: .65rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; background: var(--accent); color: #fff; padding: .15rem .45rem; border-radius: 3px; }
+      /* ── AGENDA GROUPS ── */
+      .agenda {
+        padding: 1.25rem 1.5rem;
+        max-width: 720px;
+      }
+      .date-group {
+        margin-bottom: 2rem;
+      }
+      .date-heading {
+        display: flex;
+        align-items: baseline;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 1px solid var(--border-lt);
+      }
+      .date-heading .dday {
+        font-size: 1.5rem;
+        font-weight: 300;
+        color: var(--text);
+        line-height: 1;
+      }
+      .date-heading .ddate {
+        font-size: 0.78rem;
+        font-weight: 600;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+      }
+      .date-heading.today-head .dday {
+        color: var(--accent);
+      }
+      .date-heading.today-head .ddate {
+        color: var(--accent);
+      }
+      .today-badge {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        background: var(--accent);
+        color: #fff;
+        padding: 0.15rem 0.45rem;
+        border-radius: 3px;
+      }
 
-  /* ── EVENT ROWS ── */
-  .event-row {
-    display: flex; align-items: flex-start; gap: 1rem;
-    padding: .6rem .75rem; border-radius: 7px; cursor: pointer;
-    transition: background .12s; position: relative;
-    margin-bottom: 2px;
-  }
-  .event-row:hover { background: var(--surface); }
-  .event-time { font-size: .75rem; color: var(--muted); min-width: 68px; padding-top: 2px; white-space: nowrap; }
-  .event-left-bar { width: 3px; border-radius: 2px; align-self: stretch; min-height: 40px; flex-shrink: 0; margin-top: 2px; }
-  .event-left-bar.c1 { background: var(--c1); }
-  .event-left-bar.c2 { background: var(--c2); }
-  .event-left-bar.c3 { background: var(--c3); }
-  .event-left-bar.c4 { background: var(--c4); }
-  .event-left-bar.c5 { background: var(--c5); }
-  .event-body { flex: 1; }
-  .event-title { font-size: .85rem; font-weight: 500; margin-bottom: .2rem; }
-  .event-sub { font-size: .75rem; color: var(--muted); display: flex; gap: .75rem; flex-wrap: wrap; }
-  .event-right { display: flex; flex-direction: column; align-items: flex-end; gap: .25rem; }
-  .event-type-tag { font-size: .65rem; letter-spacing: .05em; text-transform: uppercase; padding: .15rem .45rem; border-radius: 3px; background: var(--bg); color: var(--muted); font-weight: 500; }
-  .event-attendees { font-size: .72rem; color: var(--muted); }
-  .rsvp-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); display: inline-block; margin-right: .3rem; }
+      /* ── EVENT ROWS ── */
+      .event-row {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        padding: 0.6rem 0.75rem;
+        border-radius: 7px;
+        cursor: pointer;
+        transition: background 0.12s;
+        position: relative;
+        margin-bottom: 2px;
+      }
+      .event-row:hover {
+        background: var(--surface);
+      }
+      .event-time {
+        font-size: 0.75rem;
+        color: var(--muted);
+        min-width: 68px;
+        padding-top: 2px;
+        white-space: nowrap;
+      }
+      .event-left-bar {
+        width: 3px;
+        border-radius: 2px;
+        align-self: stretch;
+        min-height: 40px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+      .event-left-bar.c1 {
+        background: var(--c1);
+      }
+      .event-left-bar.c2 {
+        background: var(--c2);
+      }
+      .event-left-bar.c3 {
+        background: var(--c3);
+      }
+      .event-left-bar.c4 {
+        background: var(--c4);
+      }
+      .event-left-bar.c5 {
+        background: var(--c5);
+      }
+      .event-body {
+        flex: 1;
+      }
+      .event-title {
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-bottom: 0.2rem;
+      }
+      .event-sub {
+        font-size: 0.75rem;
+        color: var(--muted);
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+      }
+      .event-right {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 0.25rem;
+      }
+      .event-type-tag {
+        font-size: 0.65rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.45rem;
+        border-radius: 3px;
+        background: var(--bg);
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .event-attendees {
+        font-size: 0.72rem;
+        color: var(--muted);
+      }
+      .rsvp-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--accent);
+        display: inline-block;
+        margin-right: 0.3rem;
+      }
 
-  /* ── MODAL ── */
-  .overlay { display: none; position: fixed; inset: 0; background: rgba(28,26,23,.25); z-index: 200; align-items: center; justify-content: center; }
-  .overlay.open { display: flex; }
-  .modal { background: var(--surface); max-width: 460px; width: 90%; border-radius: 10px; padding: 1.75rem; position: relative; box-shadow: 0 4px 30px rgba(0,0,0,.1), 0 0 0 1px var(--border); }
-  .modal-close { position: absolute; top: .75rem; right: .75rem; background: var(--bg); border: none; width: 26px; height: 26px; border-radius: 5px; cursor: pointer; color: var(--muted); font-size: .85rem; display: flex; align-items: center; justify-content: center; }
-  .modal-close:hover { background: var(--border); }
-  .modal-eyebrow { display: flex; align-items: center; gap: .5rem; margin-bottom: .75rem; }
-  .modal-community-dot { width: 8px; height: 8px; border-radius: 50%; }
-  .modal-community-name { font-size: .75rem; color: var(--muted); font-weight: 500; }
-  .modal-type-tag { font-size: .65rem; letter-spacing: .05em; text-transform: uppercase; padding: .15rem .45rem; border-radius: 3px; background: var(--accent-lt); color: var(--accent); font-weight: 600; }
-  .modal h2 { font-size: 1.15rem; font-weight: 600; margin-bottom: .5rem; }
-  .modal-meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem .75rem; margin-bottom: .9rem; }
-  .meta-item { font-size: .78rem; }
-  .meta-label { color: var(--muted); font-size: .68rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .1rem; }
-  .modal-desc { font-size: .83rem; line-height: 1.65; color: var(--text); margin-bottom: 1.1rem; padding-top: .75rem; border-top: 1px solid var(--border-lt); }
-  .progress-wrap { margin-bottom: 1.1rem; }
-  .progress-label { display: flex; justify-content: space-between; font-size: .73rem; color: var(--muted); margin-bottom: .35rem; }
-  .progress-bar { height: 4px; background: var(--bg); border-radius: 2px; overflow: hidden; }
-  .progress-fill { height: 100%; background: var(--accent); border-radius: 2px; }
-  .modal-actions { display: flex; flex-wrap: wrap; gap: .35rem; }
-  .btn { font-size: .76rem; padding: .45rem .9rem; border-radius: 6px; cursor: pointer; transition: all .15s; text-decoration: none; display: inline-flex; align-items: center; gap: .3rem; border: none; font-family: inherit; }
-  .btn-accent { background: var(--accent); color: #fff; }
-  .btn-accent:hover { background: #4e6651; }
-  .btn-outline { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
-  .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+      /* ── MODAL ── */
+      .overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(28, 26, 23, 0.25);
+        z-index: 200;
+        align-items: center;
+        justify-content: center;
+      }
+      .overlay.open {
+        display: flex;
+      }
+      .modal {
+        background: var(--surface);
+        max-width: 460px;
+        width: 90%;
+        border-radius: 10px;
+        padding: 1.75rem;
+        position: relative;
+        box-shadow:
+          0 4px 30px rgba(0, 0, 0, 0.1),
+          0 0 0 1px var(--border);
+      }
+      .modal-close {
+        position: absolute;
+        top: 0.75rem;
+        right: 0.75rem;
+        background: var(--bg);
+        border: none;
+        width: 26px;
+        height: 26px;
+        border-radius: 5px;
+        cursor: pointer;
+        color: var(--muted);
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .modal-close:hover {
+        background: var(--border);
+      }
+      .modal-eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.75rem;
+      }
+      .modal-community-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+      .modal-community-name {
+        font-size: 0.75rem;
+        color: var(--muted);
+        font-weight: 500;
+      }
+      .modal-type-tag {
+        font-size: 0.65rem;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+        padding: 0.15rem 0.45rem;
+        border-radius: 3px;
+        background: var(--accent-lt);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .modal h2 {
+        font-size: 1.15rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+      .modal-meta-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.5rem 0.75rem;
+        margin-bottom: 0.9rem;
+      }
+      .meta-item {
+        font-size: 0.78rem;
+      }
+      .meta-label {
+        color: var(--muted);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 0.1rem;
+      }
+      .modal-desc {
+        font-size: 0.83rem;
+        line-height: 1.65;
+        color: var(--text);
+        margin-bottom: 1.1rem;
+        padding-top: 0.75rem;
+        border-top: 1px solid var(--border-lt);
+      }
+      .progress-wrap {
+        margin-bottom: 1.1rem;
+      }
+      .progress-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.73rem;
+        color: var(--muted);
+        margin-bottom: 0.35rem;
+      }
+      .progress-bar {
+        height: 4px;
+        background: var(--bg);
+        border-radius: 2px;
+        overflow: hidden;
+      }
+      .progress-fill {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 2px;
+      }
+      .modal-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem;
+      }
+      .btn {
+        font-size: 0.76rem;
+        padding: 0.45rem 0.9rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.15s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        border: none;
+        font-family: inherit;
+      }
+      .btn-accent {
+        background: var(--accent);
+        color: #fff;
+      }
+      .btn-accent:hover {
+        background: #4e6651;
+      }
+      .btn-outline {
+        background: var(--surface);
+        color: var(--text);
+        border: 1px solid var(--border);
+      }
+      .btn-outline:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
 
-  /* ── SETTINGS ── */
-  .settings-overlay { display: none; position: fixed; inset: 0; background: rgba(28,26,23,.15); z-index: 150; }
-  .settings-overlay.open { display: block; }
-  .settings-panel { position: fixed; right: 0; top: 48px; bottom: 0; width: 290px; background: var(--surface); border-left: 1px solid var(--border); padding: 1.25rem; overflow-y: auto; transform: translateX(100%); transition: transform .18s ease; }
-  .settings-overlay.open .settings-panel { transform: translateX(0); }
-  .settings-panel h3 { font-size: .9rem; font-weight: 600; margin-bottom: 1.1rem; }
-  .setting-group { margin-bottom: 1.1rem; }
-  .setting-label { font-size: .65rem; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .5rem; }
-  .setting-row { display: flex; align-items: center; justify-content: space-between; padding: .35rem 0; }
-  .setting-row span { font-size: .8rem; }
-  .toggle { width: 34px; height: 19px; border-radius: 10px; background: var(--border); cursor: pointer; position: relative; transition: background .2s; border: none; }
-  .toggle.on { background: var(--accent); }
-  .toggle::after { content: ''; position: absolute; width: 13px; height: 13px; border-radius: 50%; background: white; top: 3px; left: 3px; transition: left .2s; }
-  .toggle.on::after { left: 18px; }
-  select { font-family: inherit; font-size: .78rem; border: 1px solid var(--border); background: var(--bg); color: var(--text); padding: .35rem .5rem; border-radius: 5px; width: 100%; appearance: none; }
-</style>
-</head>
-<body>
-
-<!-- NAV -->
-<nav>
-  <span class="nav-brand">Commons<span>Fabric</span></span>
-  <div class="nav-tabs">
-    <a href="#">Explore</a>
-    <a href="#">Feed</a>
-    <a href="#" class="active">Calendar</a>
-  </div>
-  <div class="nav-right">
-    <button class="btn-icon" onclick="toggleSettings()">⚙</button>
-    <div class="avatar">ML</div>
-  </div>
-</nav>
-
-<!-- SETTINGS -->
-<div class="settings-overlay" id="settingsOverlay" onclick="handleSettingsClick(event)">
-  <div class="settings-panel" id="settingsPanel">
-    <h3>Notifications</h3>
-    <div class="setting-group">
-      <div class="setting-label">Delivery method</div>
-      <div class="setting-row"><span>Email</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-      <div class="setting-row"><span>WhatsApp</span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
-      <div class="setting-row"><span>Signal</span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
-    </div>
-    <div class="setting-group">
-      <div class="setting-label">Frequency</div>
-      <select><option>Real-time</option><option selected>Daily digest</option><option>Weekly digest</option></select>
-    </div>
-    <div class="setting-group">
-      <div class="setting-label">Digest time</div>
-      <select><option>7:00 AM</option><option selected>9:00 AM</option><option>12:00 PM</option><option>6:00 PM</option></select>
-    </div>
-    <div class="setting-group">
-      <div class="setting-label">Notify me about</div>
-      <div class="setting-row"><span>New events</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-      <div class="setting-row"><span>RSVP reminders</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-      <div class="setting-row"><span>Announcements</span><button class="toggle on" onclick="this.classList.toggle('on')"></button></div>
-      <div class="setting-row"><span>Community updates</span><button class="toggle" onclick="this.classList.toggle('on')"></button></div>
-    </div>
-  </div>
-</div>
-
-<div class="layout">
-
-  <!-- LEFT SIDEBAR -->
-  <aside class="left-sidebar">
-    <div class="sidebar-section">
-      <div class="sidebar-title">Communities</div>
-      <div class="sidebar-item active">
-        <div class="sidebar-dot" style="background:#8A7F99"></div>
-        <span>Verdun Running Club</span>
-        <span class="sidebar-count">5</span>
+      /* ── SETTINGS ── */
+      .settings-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(28, 26, 23, 0.15);
+        z-index: 150;
+      }
+      .settings-overlay.open {
+        display: block;
+      }
+      .settings-panel {
+        position: fixed;
+        right: 0;
+        top: 48px;
+        bottom: 0;
+        width: 290px;
+        background: var(--surface);
+        border-left: 1px solid var(--border);
+        padding: 1.25rem;
+        overflow-y: auto;
+        transform: translateX(100%);
+        transition: transform 0.18s ease;
+      }
+      .settings-overlay.open .settings-panel {
+        transform: translateX(0);
+      }
+      .settings-panel h3 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-bottom: 1.1rem;
+      }
+      .setting-group {
+        margin-bottom: 1.1rem;
+      }
+      .setting-label {
+        font-size: 0.65rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 0.5rem;
+      }
+      .setting-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.35rem 0;
+      }
+      .setting-row span {
+        font-size: 0.8rem;
+      }
+      .toggle {
+        width: 34px;
+        height: 19px;
+        border-radius: 10px;
+        background: var(--border);
+        cursor: pointer;
+        position: relative;
+        transition: background 0.2s;
+        border: none;
+      }
+      .toggle.on {
+        background: var(--accent);
+      }
+      .toggle::after {
+        content: "";
+        position: absolute;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: white;
+        top: 3px;
+        left: 3px;
+        transition: left 0.2s;
+      }
+      .toggle.on::after {
+        left: 18px;
+      }
+      select {
+        font-family: inherit;
+        font-size: 0.78rem;
+        border: 1px solid var(--border);
+        background: var(--bg);
+        color: var(--text);
+        padding: 0.35rem 0.5rem;
+        border-radius: 5px;
+        width: 100%;
+        appearance: none;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- NAV -->
+    <nav>
+      <span class="nav-brand">Commons<span>Fabric</span></span>
+      <div class="nav-tabs">
+        <a href="#">Explore</a>
+        <a href="#">Feed</a>
+        <a href="#" class="active">Calendar</a>
       </div>
-      <div class="sidebar-item">
-        <div class="sidebar-dot" style="background:#6B967E"></div>
-        <span>NDG Community Garden</span>
-        <span class="sidebar-count">3</span>
+      <div class="nav-right">
+        <button class="btn-icon" onclick="toggleSettings()">⚙</button>
+        <div class="avatar">ML</div>
       </div>
-      <div class="sidebar-item">
-        <div class="sidebar-dot" style="background:#96906E"></div>
-        <span>Mile End Arts</span>
-        <span class="sidebar-count">2</span>
-      </div>
-      <div class="sidebar-item">
-        <div class="sidebar-dot" style="background:#6B7F96"></div>
-        <span>Plateau Book Exchange</span>
-        <span class="sidebar-count">2</span>
-      </div>
-      <div class="sidebar-item">
-        <div class="sidebar-dot" style="background:#96766E"></div>
-        <span>Hochelaga Makers</span>
-        <span class="sidebar-count">2</span>
+    </nav>
+
+    <!-- SETTINGS -->
+    <div
+      class="settings-overlay"
+      id="settingsOverlay"
+      onclick="handleSettingsClick(event)"
+    >
+      <div class="settings-panel" id="settingsPanel">
+        <h3>Notifications</h3>
+        <div class="setting-group">
+          <div class="setting-label">Delivery method</div>
+          <div class="setting-row">
+            <span>Email</span
+            ><button
+              class="toggle on"
+              onclick="this.classList.toggle('on')"
+            ></button>
+          </div>
+          <div class="setting-row">
+            <span>WhatsApp</span
+            ><button
+              class="toggle"
+              onclick="this.classList.toggle('on')"
+            ></button>
+          </div>
+          <div class="setting-row">
+            <span>Signal</span
+            ><button
+              class="toggle"
+              onclick="this.classList.toggle('on')"
+            ></button>
+          </div>
+        </div>
+        <div class="setting-group">
+          <div class="setting-label">Frequency</div>
+          <select>
+            <option>Real-time</option>
+            <option selected>Daily digest</option>
+            <option>Weekly digest</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <div class="setting-label">Digest time</div>
+          <select>
+            <option>7:00 AM</option>
+            <option selected>9:00 AM</option>
+            <option>12:00 PM</option>
+            <option>6:00 PM</option>
+          </select>
+        </div>
+        <div class="setting-group">
+          <div class="setting-label">Notify me about</div>
+          <div class="setting-row">
+            <span>New events</span
+            ><button
+              class="toggle on"
+              onclick="this.classList.toggle('on')"
+            ></button>
+          </div>
+          <div class="setting-row">
+            <span>RSVP reminders</span
+            ><button
+              class="toggle on"
+              onclick="this.classList.toggle('on')"
+            ></button>
+          </div>
+          <div class="setting-row">
+            <span>Announcements</span
+            ><button
+              class="toggle on"
+              onclick="this.classList.toggle('on')"
+            ></button>
+          </div>
+          <div class="setting-row">
+            <span>Community updates</span
+            ><button
+              class="toggle"
+              onclick="this.classList.toggle('on')"
+            ></button>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="sidebar-divider"></div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-title">Filter by type</div>
-      <ul class="type-list">
-        <li class="type-item on" onclick="this.classList.toggle('on')"><div class="type-dot"></div>All events</li>
-        <li class="type-item on" onclick="this.classList.toggle('on')"><div class="type-dot"></div>Social</li>
-        <li class="type-item on" onclick="this.classList.toggle('on')"><div class="type-dot"></div>Workshop</li>
-        <li class="type-item on" onclick="this.classList.toggle('on')"><div class="type-dot"></div>Sports</li>
-        <li class="type-item on" onclick="this.classList.toggle('on')"><div class="type-dot"></div>Meeting</li>
-        <li class="type-item on" onclick="this.classList.toggle('on')"><div class="type-dot"></div>Volunteer</li>
-      </ul>
-    </div>
-
-    <div class="sidebar-divider"></div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-title">Quick jump</div>
-      <div class="sidebar-item" onclick="document.getElementById('grp-20').scrollIntoView({behavior:'smooth'})">Today — Apr 20</div>
-      <div class="sidebar-item" onclick="document.getElementById('grp-21').scrollIntoView({behavior:'smooth'})">Tomorrow — Apr 21</div>
-      <div class="sidebar-item">This week (5 events)</div>
-      <div class="sidebar-item">Next week (4 events)</div>
-    </div>
-  </aside>
-
-  <!-- MAIN -->
-  <main class="main">
-    <div class="main-toolbar">
-      <div class="toolbar-left">
-        <h1>My Calendar</h1>
-        <p>April 2026 · 12 events</p>
-      </div>
-      <div class="toolbar-right">
-        <button class="tb-btn">← Apr</button>
-        <button class="tb-btn active">Today</button>
-        <button class="tb-btn">May →</button>
-      </div>
-    </div>
-
-    <div class="agenda">
-
-      <!-- APR 20 (TODAY) -->
-      <div class="date-group" id="grp-20">
-        <div class="date-heading today-head">
-          <span class="dday">20</span>
-          <span class="ddate">Monday · April</span>
-          <span class="today-badge">Today</span>
+    <div class="layout">
+      <!-- LEFT SIDEBAR -->
+      <aside class="left-sidebar">
+        <div class="sidebar-section">
+          <div class="sidebar-title">Communities</div>
+          <div class="sidebar-item active">
+            <div class="sidebar-dot" style="background: #8a7f99"></div>
+            <span>Verdun Running Club</span>
+            <span class="sidebar-count">5</span>
+          </div>
+          <div class="sidebar-item">
+            <div class="sidebar-dot" style="background: #6b967e"></div>
+            <span>NDG Community Garden</span>
+            <span class="sidebar-count">3</span>
+          </div>
+          <div class="sidebar-item">
+            <div class="sidebar-dot" style="background: #96906e"></div>
+            <span>Mile End Arts</span>
+            <span class="sidebar-count">2</span>
+          </div>
+          <div class="sidebar-item">
+            <div class="sidebar-dot" style="background: #6b7f96"></div>
+            <span>Plateau Book Exchange</span>
+            <span class="sidebar-count">2</span>
+          </div>
+          <div class="sidebar-item">
+            <div class="sidebar-dot" style="background: #96766e"></div>
+            <span>Hochelaga Makers</span>
+            <span class="sidebar-count">2</span>
+          </div>
         </div>
 
-        <div class="event-row" onclick="openModal('garden-prep')">
-          <div class="event-time">10:00 AM</div>
-          <div class="event-left-bar c2"></div>
-          <div class="event-body">
-            <div class="event-title">Spring Garden Prep</div>
-            <div class="event-sub">
-              <span>NDG Community Garden</span>
-              <span>📍 Girouard Ave</span>
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-title">Filter by type</div>
+          <ul class="type-list">
+            <li class="type-item on" onclick="this.classList.toggle('on')">
+              <div class="type-dot"></div>
+              All events
+            </li>
+            <li class="type-item on" onclick="this.classList.toggle('on')">
+              <div class="type-dot"></div>
+              Social
+            </li>
+            <li class="type-item on" onclick="this.classList.toggle('on')">
+              <div class="type-dot"></div>
+              Workshop
+            </li>
+            <li class="type-item on" onclick="this.classList.toggle('on')">
+              <div class="type-dot"></div>
+              Sports
+            </li>
+            <li class="type-item on" onclick="this.classList.toggle('on')">
+              <div class="type-dot"></div>
+              Meeting
+            </li>
+            <li class="type-item on" onclick="this.classList.toggle('on')">
+              <div class="type-dot"></div>
+              Volunteer
+            </li>
+          </ul>
+        </div>
+
+        <div class="sidebar-divider"></div>
+
+        <div class="sidebar-section">
+          <div class="sidebar-title">Quick jump</div>
+          <div
+            class="sidebar-item"
+            onclick="
+              document
+                .getElementById('grp-20')
+                .scrollIntoView({ behavior: 'smooth' })
+            "
+          >
+            Today — Apr 20
+          </div>
+          <div
+            class="sidebar-item"
+            onclick="
+              document
+                .getElementById('grp-21')
+                .scrollIntoView({ behavior: 'smooth' })
+            "
+          >
+            Tomorrow — Apr 21
+          </div>
+          <div class="sidebar-item">This week (5 events)</div>
+          <div class="sidebar-item">Next week (4 events)</div>
+        </div>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="main">
+        <div class="main-toolbar">
+          <div class="toolbar-left">
+            <h1>My Calendar</h1>
+            <p>April 2026 · 12 events</p>
+          </div>
+          <div class="toolbar-right">
+            <button class="tb-btn">← Apr</button>
+            <button class="tb-btn active">Today</button>
+            <button class="tb-btn">May →</button>
+          </div>
+        </div>
+
+        <div class="agenda">
+          <!-- APR 20 (TODAY) -->
+          <div class="date-group" id="grp-20">
+            <div class="date-heading today-head">
+              <span class="dday">20</span>
+              <span class="ddate">Monday · April</span>
+              <span class="today-badge">Today</span>
+            </div>
+
+            <div class="event-row" onclick="openModal('garden-prep')">
+              <div class="event-time">10:00 AM</div>
+              <div class="event-left-bar c2"></div>
+              <div class="event-body">
+                <div class="event-title">Spring Garden Prep</div>
+                <div class="event-sub">
+                  <span>NDG Community Garden</span>
+                  <span>📍 Girouard Ave</span>
+                </div>
+              </div>
+              <div class="event-right">
+                <span class="event-type-tag">Volunteer</span>
+                <span class="event-attendees">9 / 15 going</span>
+              </div>
+            </div>
+
+            <div class="event-row" onclick="openModal('opening')">
+              <div class="event-time">5:30 PM</div>
+              <div class="event-left-bar c3"></div>
+              <div class="event-body">
+                <div class="event-title">Spring Group Exhibition Opening</div>
+                <div class="event-sub">
+                  <span>Mile End Arts Collective</span>
+                  <span>📍 5445 Ave de Gaspé</span>
+                </div>
+              </div>
+              <div class="event-right">
+                <span class="event-type-tag">Social</span>
+                <span class="event-attendees">53 going</span>
+              </div>
             </div>
           </div>
-          <div class="event-right">
-            <span class="event-type-tag">Volunteer</span>
-            <span class="event-attendees">9 / 15 going</span>
-          </div>
-        </div>
 
-        <div class="event-row" onclick="openModal('opening')">
-          <div class="event-time">5:30 PM</div>
-          <div class="event-left-bar c3"></div>
-          <div class="event-body">
-            <div class="event-title">Spring Group Exhibition Opening</div>
-            <div class="event-sub">
-              <span>Mile End Arts Collective</span>
-              <span>📍 5445 Ave de Gaspé</span>
+          <!-- APR 21 -->
+          <div class="date-group" id="grp-21">
+            <div class="date-heading">
+              <span class="dday">21</span>
+              <span class="ddate">Tuesday · April</span>
+            </div>
+
+            <div class="event-row" onclick="openModal('morning-run')">
+              <div class="event-time">8:00 AM</div>
+              <div class="event-left-bar c1"></div>
+              <div class="event-body">
+                <div class="event-title">
+                  <span class="rsvp-dot"></span>Morning Run
+                </div>
+                <div class="event-sub">
+                  <span>Verdun Running Club</span>
+                  <span>📍 Verdun Auditorium</span>
+                </div>
+              </div>
+              <div class="event-right">
+                <span class="event-type-tag">Sports</span>
+                <span class="event-attendees">14 / 20 going</span>
+              </div>
+            </div>
+
+            <div class="event-row" onclick="openModal('run-meetup')">
+              <div class="event-time">7:00 PM</div>
+              <div class="event-left-bar c1"></div>
+              <div class="event-body">
+                <div class="event-title">
+                  <span class="rsvp-dot"></span>Club Monthly Meetup
+                </div>
+                <div class="event-sub">
+                  <span>Verdun Running Club</span>
+                  <span>📍 Verdun Community Centre</span>
+                </div>
+              </div>
+              <div class="event-right">
+                <span class="event-type-tag">Meeting</span>
+                <span class="event-attendees">21 / 40 going</span>
+              </div>
             </div>
           </div>
-          <div class="event-right">
-            <span class="event-type-tag">Social</span>
-            <span class="event-attendees">53 going</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- APR 21 -->
-      <div class="date-group" id="grp-21">
-        <div class="date-heading">
-          <span class="dday">21</span>
-          <span class="ddate">Tuesday · April</span>
-        </div>
+          <!-- APR 22 -->
+          <div class="date-group">
+            <div class="date-heading">
+              <span class="dday">22</span>
+              <span class="ddate">Wednesday · April</span>
+            </div>
 
-        <div class="event-row" onclick="openModal('morning-run')">
-          <div class="event-time">8:00 AM</div>
-          <div class="event-left-bar c1"></div>
-          <div class="event-body">
-            <div class="event-title"><span class="rsvp-dot"></span>Morning Run</div>
-            <div class="event-sub">
-              <span>Verdun Running Club</span>
-              <span>📍 Verdun Auditorium</span>
+            <div class="event-row" onclick="openModal('book-swap')">
+              <div class="event-time">12:00 PM</div>
+              <div class="event-left-bar c4"></div>
+              <div class="event-body">
+                <div class="event-title">Monthly Book Swap</div>
+                <div class="event-sub">
+                  <span>Plateau Book Exchange</span>
+                  <span>📍 Café Olimpico</span>
+                </div>
+              </div>
+              <div class="event-right">
+                <span class="event-type-tag">Social</span>
+                <span class="event-attendees">17 going</span>
+              </div>
             </div>
           </div>
-          <div class="event-right">
-            <span class="event-type-tag">Sports</span>
-            <span class="event-attendees">14 / 20 going</span>
-          </div>
-        </div>
 
-        <div class="event-row" onclick="openModal('run-meetup')">
-          <div class="event-time">7:00 PM</div>
-          <div class="event-left-bar c1"></div>
-          <div class="event-body">
-            <div class="event-title"><span class="rsvp-dot"></span>Club Monthly Meetup</div>
-            <div class="event-sub">
-              <span>Verdun Running Club</span>
-              <span>📍 Verdun Community Centre</span>
+          <!-- APR 23 -->
+          <div class="date-group">
+            <div class="date-heading">
+              <span class="dday">23</span>
+              <span class="ddate">Thursday · April</span>
+            </div>
+
+            <div class="event-row" onclick="openModal('print-workshop')">
+              <div class="event-time">2:00 PM</div>
+              <div class="event-left-bar c3"></div>
+              <div class="event-body">
+                <div class="event-title">
+                  <span class="rsvp-dot"></span>Risograph Print Workshop
+                </div>
+                <div class="event-sub">
+                  <span>Mile End Arts Collective</span>
+                  <span>📍 Studio 104</span>
+                </div>
+              </div>
+              <div class="event-right">
+                <span class="event-type-tag">Workshop</span>
+                <span class="event-attendees">6 / 8 going</span>
+              </div>
             </div>
           </div>
-          <div class="event-right">
-            <span class="event-type-tag">Meeting</span>
-            <span class="event-attendees">21 / 40 going</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- APR 22 -->
-      <div class="date-group">
-        <div class="date-heading">
-          <span class="dday">22</span>
-          <span class="ddate">Wednesday · April</span>
-        </div>
+          <!-- APR 24 -->
+          <div class="date-group">
+            <div class="date-heading">
+              <span class="dday">24</span>
+              <span class="ddate">Friday · April</span>
+            </div>
 
-        <div class="event-row" onclick="openModal('book-swap')">
-          <div class="event-time">12:00 PM</div>
-          <div class="event-left-bar c4"></div>
-          <div class="event-body">
-            <div class="event-title">Monthly Book Swap</div>
-            <div class="event-sub">
-              <span>Plateau Book Exchange</span>
-              <span>📍 Café Olimpico</span>
+            <div class="event-row" onclick="openModal('morning-run')">
+              <div class="event-time">8:00 AM</div>
+              <div class="event-left-bar c1"></div>
+              <div class="event-body">
+                <div class="event-title">
+                  <span class="rsvp-dot"></span>Morning Run
+                </div>
+                <div class="event-sub">
+                  <span>Verdun Running Club</span
+                  ><span>📍 Verdun Auditorium</span>
+                </div>
+              </div>
+              <div class="event-right">
+                <span class="event-type-tag">Sports</span>
+                <span class="event-attendees">14 / 20 going</span>
+              </div>
+            </div>
+
+            <div class="event-row" onclick="openModal('makers')">
+              <div class="event-time">6:00 PM</div>
+              <div class="event-left-bar c5"></div>
+              <div class="event-body">
+                <div class="event-title">Friday Makers Night</div>
+                <div class="event-sub">
+                  <span>Hochelaga Makers</span
+                  ><span>📍 1751 Rue Richardson</span>
+                </div>
+              </div>
+              <div class="event-right">
+                <span class="event-type-tag">Workshop</span>
+                <span class="event-attendees">11 / 25 going</span>
+              </div>
             </div>
           </div>
-          <div class="event-right">
-            <span class="event-type-tag">Social</span>
-            <span class="event-attendees">17 going</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- APR 23 -->
-      <div class="date-group">
-        <div class="date-heading">
-          <span class="dday">23</span>
-          <span class="ddate">Thursday · April</span>
-        </div>
+          <!-- APR 25 -->
+          <div class="date-group">
+            <div class="date-heading">
+              <span class="dday">25</span>
+              <span class="ddate">Saturday · April</span>
+            </div>
 
-        <div class="event-row" onclick="openModal('print-workshop')">
-          <div class="event-time">2:00 PM</div>
-          <div class="event-left-bar c3"></div>
-          <div class="event-body">
-            <div class="event-title"><span class="rsvp-dot"></span>Risograph Print Workshop</div>
-            <div class="event-sub">
-              <span>Mile End Arts Collective</span>
-              <span>📍 Studio 104</span>
+            <div class="event-row" onclick="openModal('planting')">
+              <div class="event-time">10:00 AM</div>
+              <div class="event-left-bar c2"></div>
+              <div class="event-body">
+                <div class="event-title">Spring Planting Day</div>
+                <div class="event-sub">
+                  <span>NDG Community Garden</span><span>📍 Girouard Ave</span>
+                </div>
+              </div>
+              <div class="event-right">
+                <span class="event-type-tag">Volunteer</span>
+                <span class="event-attendees">22 / 30 going</span>
+              </div>
             </div>
           </div>
-          <div class="event-right">
-            <span class="event-type-tag">Workshop</span>
-            <span class="event-attendees">6 / 8 going</span>
+
+          <!-- APR 28 -->
+          <div class="date-group">
+            <div class="date-heading">
+              <span class="dday">28</span>
+              <span class="ddate">Tuesday · April</span>
+            </div>
+            <div class="event-row" onclick="openModal('morning-run')">
+              <div class="event-time">8:00 AM</div>
+              <div class="event-left-bar c1"></div>
+              <div class="event-body">
+                <div class="event-title">
+                  <span class="rsvp-dot"></span>Morning Run
+                </div>
+                <div class="event-sub">
+                  <span>Verdun Running Club</span
+                  ><span>📍 Verdun Auditorium</span>
+                </div>
+              </div>
+              <div class="event-right">
+                <span class="event-type-tag">Sports</span>
+                <span class="event-attendees">14 / 20 going</span>
+              </div>
+            </div>
           </div>
         </div>
-      </div>
-
-      <!-- APR 24 -->
-      <div class="date-group">
-        <div class="date-heading">
-          <span class="dday">24</span>
-          <span class="ddate">Friday · April</span>
-        </div>
-
-        <div class="event-row" onclick="openModal('morning-run')">
-          <div class="event-time">8:00 AM</div>
-          <div class="event-left-bar c1"></div>
-          <div class="event-body">
-            <div class="event-title"><span class="rsvp-dot"></span>Morning Run</div>
-            <div class="event-sub"><span>Verdun Running Club</span><span>📍 Verdun Auditorium</span></div>
-          </div>
-          <div class="event-right">
-            <span class="event-type-tag">Sports</span>
-            <span class="event-attendees">14 / 20 going</span>
-          </div>
-        </div>
-
-        <div class="event-row" onclick="openModal('makers')">
-          <div class="event-time">6:00 PM</div>
-          <div class="event-left-bar c5"></div>
-          <div class="event-body">
-            <div class="event-title">Friday Makers Night</div>
-            <div class="event-sub"><span>Hochelaga Makers</span><span>📍 1751 Rue Richardson</span></div>
-          </div>
-          <div class="event-right">
-            <span class="event-type-tag">Workshop</span>
-            <span class="event-attendees">11 / 25 going</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- APR 25 -->
-      <div class="date-group">
-        <div class="date-heading">
-          <span class="dday">25</span>
-          <span class="ddate">Saturday · April</span>
-        </div>
-
-        <div class="event-row" onclick="openModal('planting')">
-          <div class="event-time">10:00 AM</div>
-          <div class="event-left-bar c2"></div>
-          <div class="event-body">
-            <div class="event-title">Spring Planting Day</div>
-            <div class="event-sub"><span>NDG Community Garden</span><span>📍 Girouard Ave</span></div>
-          </div>
-          <div class="event-right">
-            <span class="event-type-tag">Volunteer</span>
-            <span class="event-attendees">22 / 30 going</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- APR 28 -->
-      <div class="date-group">
-        <div class="date-heading">
-          <span class="dday">28</span>
-          <span class="ddate">Tuesday · April</span>
-        </div>
-        <div class="event-row" onclick="openModal('morning-run')">
-          <div class="event-time">8:00 AM</div>
-          <div class="event-left-bar c1"></div>
-          <div class="event-body">
-            <div class="event-title"><span class="rsvp-dot"></span>Morning Run</div>
-            <div class="event-sub"><span>Verdun Running Club</span><span>📍 Verdun Auditorium</span></div>
-          </div>
-          <div class="event-right">
-            <span class="event-type-tag">Sports</span>
-            <span class="event-attendees">14 / 20 going</span>
-          </div>
-        </div>
-      </div>
-
-    </div><!-- /agenda -->
-  </main>
-</div>
-
-<!-- MODAL -->
-<div class="overlay" id="eventOverlay" onclick="handleOverlayClick(event)">
-  <div class="modal" id="eventModal">
-    <button class="modal-close" onclick="closeModal()">✕</button>
-    <div id="modal-content"></div>
-  </div>
-</div>
-
-<script>
-const events = {
-  'morning-run': { title:'Morning Run', community:'Verdun Running Club', cls:'c1', clr:'#8A7F99', date:'Tue & Fri, Apr 21/24/28 · 8:00–9:00 AM', location:'Verdun Auditorium, start point', type:'Sports', desc:'Easy-paced 5K along the river. All levels welcome. Bring water and wear reflective gear. The group typically splits into two pace groups — ask the run leader on arrival.', rsvp:true, attendees:14, capacity:20 },
-  'garden-prep': { title:'Spring Garden Prep', community:'NDG Community Garden', cls:'c2', clr:'#6B967E', date:'Mon, Apr 20 · 10:00 AM–12:00 PM', location:'NDG Garden Plots, Girouard Ave', type:'Volunteer', desc:'Help clear the winter beds, turn the compost, and set up the seedling tables for the season. No experience needed — just bring gloves if you have them.', rsvp:false, attendees:9, capacity:15 },
-  'planting': { title:'Spring Planting Day', community:'NDG Community Garden', cls:'c2', clr:'#6B967E', date:'Sat, Apr 25 · 10:00 AM–1:00 PM', location:'NDG Garden Plots, Girouard Ave', type:'Volunteer', desc:'Plant tomatoes, herbs, and flowers in the shared beds. Gloves provided, bring your own trowel if you have one. Light lunch provided for volunteers.', rsvp:false, attendees:22, capacity:30 },
-  'book-swap': { title:'Monthly Book Swap', community:'Plateau Book Exchange', cls:'c4', clr:'#6B7F96', date:'Wed, Apr 22 · 12:00–2:00 PM', location:'Café Olimpico, St-Viateur', type:'Social', desc:'Bring up to 3 books you'd like to swap. No purchase necessary — just good conversation and great coffee.', rsvp:false, attendees:17, capacity:null },
-  'print-workshop': { title:'Risograph Print Workshop', community:'Mile End Arts Collective', cls:'c3', clr:'#96906E', date:'Thu, Apr 23 · 2:00–5:00 PM', location:'5445 Ave de Gaspé, Studio 104', type:'Workshop', desc:'Learn the basics of risograph printing in this hands-on workshop. All materials included. Limited to 8 participants — you are registered.', rsvp:true, attendees:6, capacity:8 },
-  'opening': { title:'Spring Group Exhibition Opening', community:'Mile End Arts Collective', cls:'c3', clr:'#96906E', date:'Mon, Apr 20 · 5:30–8:00 PM', location:'5445 Ave de Gaspé, Main Gallery', type:'Social', desc:'Opening reception for 12 local artists exhibiting new work. Light refreshments served. Free entry — all are welcome.', rsvp:false, attendees:53, capacity:null },
-  'makers': { title:'Friday Makers Night', community:'Hochelaga Makers', cls:'c5', clr:'#96766E', date:'Fri, Apr 24 · 6:00–9:00 PM', location:'1751 Rue Richardson', type:'Workshop', desc:'Open-studio session. Bring your own project or learn from others. Access to laser cutter, 3D printers, and woodshop included.', rsvp:false, attendees:11, capacity:25 },
-  'run-meetup': { title:'Club Monthly Meetup', community:'Verdun Running Club', cls:'c1', clr:'#8A7F99', date:'Tue, Apr 21 · 7:00–8:30 PM', location:'Verdun Community Centre', type:'Meeting', desc:'Seasonal recap, route planning for May, and intro to new members. Light snacks provided.', rsvp:true, attendees:21, capacity:40 },
-};
-
-function openModal(key) {
-  const e = events[key];
-  const pct = e.capacity ? Math.round((e.attendees / e.capacity) * 100) : null;
-  const cap = e.capacity ? `/ ${e.capacity}` : '';
-  const icsUrl = `data:text/calendar;charset=utf-8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ASUMMARY:${encodeURIComponent(e.title)}%0ADESCRIPTION:${encodeURIComponent(e.desc)}%0AEND:VEVENT%0AEND:VCALENDAR`;
-  const rsvpBtn = e.rsvp
-    ? `<button class="btn btn-accent">✓ RSVP'd — remove</button>`
-    : `<button class="btn btn-accent">RSVP to this event</button>`;
-  const progressSection = e.capacity ? `
-    <div class="progress-wrap">
-      <div class="progress-label"><span>${e.attendees} ${cap} going</span><span>${pct}% full</span></div>
-      <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-    </div>` : `<div style="font-size:.78rem;color:var(--muted);margin-bottom:1.1rem;">${e.attendees} people going</div>`;
-  document.getElementById('modal-content').innerHTML = `
-    <div class="modal-eyebrow">
-      <div class="modal-community-dot" style="background:${e.clr}"></div>
-      <span class="modal-community-name">${e.community}</span>
-      <span class="modal-type-tag">${e.type}</span>
+        <!-- /agenda -->
+      </main>
     </div>
-    <h2>${e.title}</h2>
-    <div class="modal-meta-grid">
-      <div class="meta-item"><div class="meta-label">Date & time</div>${e.date}</div>
-      <div class="meta-item"><div class="meta-label">Location</div>${e.location}</div>
-    </div>
-    <div class="modal-desc">${e.desc}</div>
-    ${progressSection}
-    <div class="modal-actions">
-      ${rsvpBtn}
-      <a class="btn btn-outline" href="${icsUrl}" download="${e.title.replace(/ /g,'_')}.ics">↓ Download .ics</a>
-      <a class="btn btn-outline" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank">+ Google Calendar</a>
-      <a class="btn btn-outline" href="https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(e.title)}" target="_blank">+ Outlook</a>
-    </div>
-  `;
-  document.getElementById('eventOverlay').classList.add('open');
-}
 
-function closeModal() { document.getElementById('eventOverlay').classList.remove('open'); }
-function handleOverlayClick(e) { if (e.target.id === 'eventOverlay') closeModal(); }
-function toggleSettings() { document.getElementById('settingsOverlay').classList.toggle('open'); }
-function handleSettingsClick(e) { if (e.target.id === 'settingsOverlay') document.getElementById('settingsOverlay').classList.remove('open'); }
-</script>
-</body>
+    <!-- MODAL -->
+    <div class="overlay" id="eventOverlay" onclick="handleOverlayClick(event)">
+      <div class="modal" id="eventModal">
+        <button class="modal-close" onclick="closeModal()">✕</button>
+        <div id="modal-content"></div>
+      </div>
+    </div>
+
+    <script>
+      const events = {
+        'morning-run': { title:'Morning Run', community:'Verdun Running Club', cls:'c1', clr:'#8A7F99', date:'Tue & Fri, Apr 21/24/28 · 8:00–9:00 AM', location:'Verdun Auditorium, start point', type:'Sports', desc:'Easy-paced 5K along the river. All levels welcome. Bring water and wear reflective gear. The group typically splits into two pace groups — ask the run leader on arrival.', rsvp:true, attendees:14, capacity:20 },
+        'garden-prep': { title:'Spring Garden Prep', community:'NDG Community Garden', cls:'c2', clr:'#6B967E', date:'Mon, Apr 20 · 10:00 AM–12:00 PM', location:'NDG Garden Plots, Girouard Ave', type:'Volunteer', desc:'Help clear the winter beds, turn the compost, and set up the seedling tables for the season. No experience needed — just bring gloves if you have them.', rsvp:false, attendees:9, capacity:15 },
+        'planting': { title:'Spring Planting Day', community:'NDG Community Garden', cls:'c2', clr:'#6B967E', date:'Sat, Apr 25 · 10:00 AM–1:00 PM', location:'NDG Garden Plots, Girouard Ave', type:'Volunteer', desc:'Plant tomatoes, herbs, and flowers in the shared beds. Gloves provided, bring your own trowel if you have one. Light lunch provided for volunteers.', rsvp:false, attendees:22, capacity:30 },
+        'book-swap': { title:'Monthly Book Swap', community:'Plateau Book Exchange', cls:'c4', clr:'#6B7F96', date:'Wed, Apr 22 · 12:00–2:00 PM', location:'Café Olimpico, St-Viateur', type:'Social', desc:'Bring up to 3 books you'd like to swap. No purchase necessary — just good conversation and great coffee.', rsvp:false, attendees:17, capacity:null },
+        'print-workshop': { title:'Risograph Print Workshop', community:'Mile End Arts Collective', cls:'c3', clr:'#96906E', date:'Thu, Apr 23 · 2:00–5:00 PM', location:'5445 Ave de Gaspé, Studio 104', type:'Workshop', desc:'Learn the basics of risograph printing in this hands-on workshop. All materials included. Limited to 8 participants — you are registered.', rsvp:true, attendees:6, capacity:8 },
+        'opening': { title:'Spring Group Exhibition Opening', community:'Mile End Arts Collective', cls:'c3', clr:'#96906E', date:'Mon, Apr 20 · 5:30–8:00 PM', location:'5445 Ave de Gaspé, Main Gallery', type:'Social', desc:'Opening reception for 12 local artists exhibiting new work. Light refreshments served. Free entry — all are welcome.', rsvp:false, attendees:53, capacity:null },
+        'makers': { title:'Friday Makers Night', community:'Hochelaga Makers', cls:'c5', clr:'#96766E', date:'Fri, Apr 24 · 6:00–9:00 PM', location:'1751 Rue Richardson', type:'Workshop', desc:'Open-studio session. Bring your own project or learn from others. Access to laser cutter, 3D printers, and woodshop included.', rsvp:false, attendees:11, capacity:25 },
+        'run-meetup': { title:'Club Monthly Meetup', community:'Verdun Running Club', cls:'c1', clr:'#8A7F99', date:'Tue, Apr 21 · 7:00–8:30 PM', location:'Verdun Community Centre', type:'Meeting', desc:'Seasonal recap, route planning for May, and intro to new members. Light snacks provided.', rsvp:true, attendees:21, capacity:40 },
+      };
+
+      function openModal(key) {
+        const e = events[key];
+        const pct = e.capacity ? Math.round((e.attendees / e.capacity) * 100) : null;
+        const cap = e.capacity ? `/ ${e.capacity}` : '';
+        const icsUrl = `data:text/calendar;charset=utf-8,BEGIN:VCALENDAR%0AVERSION:2.0%0ABEGIN:VEVENT%0ASUMMARY:${encodeURIComponent(e.title)}%0ADESCRIPTION:${encodeURIComponent(e.desc)}%0AEND:VEVENT%0AEND:VCALENDAR`;
+        const rsvpBtn = e.rsvp
+          ? `<button class="btn btn-accent">✓ RSVP'd — remove</button>`
+          : `<button class="btn btn-accent">RSVP to this event</button>`;
+        const progressSection = e.capacity ? `
+          <div class="progress-wrap">
+            <div class="progress-label"><span>${e.attendees} ${cap} going</span><span>${pct}% full</span></div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+          </div>` : `<div style="font-size:.78rem;color:var(--muted);margin-bottom:1.1rem;">${e.attendees} people going</div>`;
+        document.getElementById('modal-content').innerHTML = `
+          <div class="modal-eyebrow">
+            <div class="modal-community-dot" style="background:${e.clr}"></div>
+            <span class="modal-community-name">${e.community}</span>
+            <span class="modal-type-tag">${e.type}</span>
+          </div>
+          <h2>${e.title}</h2>
+          <div class="modal-meta-grid">
+            <div class="meta-item"><div class="meta-label">Date & time</div>${e.date}</div>
+            <div class="meta-item"><div class="meta-label">Location</div>${e.location}</div>
+          </div>
+          <div class="modal-desc">${e.desc}</div>
+          ${progressSection}
+          <div class="modal-actions">
+            ${rsvpBtn}
+            <a class="btn btn-outline" href="${icsUrl}" download="${e.title.replace(/ /g,'_')}.ics">↓ Download .ics</a>
+            <a class="btn btn-outline" href="https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(e.title)}" target="_blank">+ Google Calendar</a>
+            <a class="btn btn-outline" href="https://outlook.live.com/calendar/0/deeplink/compose?subject=${encodeURIComponent(e.title)}" target="_blank">+ Outlook</a>
+          </div>
+        `;
+        document.getElementById('eventOverlay').classList.add('open');
+      }
+
+      function closeModal() { document.getElementById('eventOverlay').classList.remove('open'); }
+      function handleOverlayClick(e) { if (e.target.id === 'eventOverlay') closeModal(); }
+      function toggleSettings() { document.getElementById('settingsOverlay').classList.toggle('open'); }
+      function handleSettingsClick(e) { if (e.target.id === 'settingsOverlay') document.getElementById('settingsOverlay').classList.remove('open'); }
+    </script>
+  </body>
 </html>

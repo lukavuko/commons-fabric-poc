@@ -1,27 +1,70 @@
 import { Router } from "express";
 import { randomBytes } from "crypto";
 import { prisma } from "@cfp/db";
-import { hashPassword, verifyPassword, hashToken } from "../lib/hash.js";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/jwt.js";
+import {
+  hashPassword,
+  verifyPassword,
+  hashToken,
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} from "@cfp/auth-tokens";
 import { sendVerificationEmail } from "../lib/email.js";
 
 export const authRouter = Router();
 
 authRouter.post("/register", async (req, res) => {
-  const { email, password } = req.body as { email?: string; password?: string };
-  if (!email || !password) {
-    return res.status(400).json({ error: "email and password are required" });
+  const {
+    email,
+    password,
+    displayName,
+    firstname,
+    lastname,
+    postalCode,
+    city,
+    phone,
+  } = req.body as {
+    email?: string;
+    password?: string;
+    displayName?: string;
+    firstname?: string;
+    lastname?: string;
+    postalCode?: string;
+    city?: string;
+    phone?: string;
+  };
+  if (!email || !password || !displayName) {
+    return res
+      .status(400)
+      .json({ error: "email, password and displayName are required" });
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return res.status(409).json({ error: "Email already registered" });
+  if (existing)
+    return res.status(409).json({ error: "Email already registered" });
 
   const passwordHash = await hashPassword(password);
   const emailVerificationToken = randomBytes(32).toString("hex");
   const username = email.split("@")[0];
 
+  const trimOrNull = (v?: string) => {
+    const t = v?.trim();
+    return t ? t : null;
+  };
+
   await prisma.user.create({
-    data: { email, username, passwordHash, emailVerificationToken },
+    data: {
+      email,
+      username,
+      displayName: displayName.trim(),
+      passwordHash,
+      emailVerificationToken,
+      firstname: trimOrNull(firstname),
+      lastname: trimOrNull(lastname),
+      postalCode: trimOrNull(postalCode),
+      city: trimOrNull(city),
+      phone: trimOrNull(phone),
+    },
   });
 
   await sendVerificationEmail(email, emailVerificationToken);
@@ -35,7 +78,8 @@ authRouter.post("/login", async (req, res) => {
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user?.passwordHash) return res.status(401).json({ error: "Invalid credentials" });
+  if (!user?.passwordHash)
+    return res.status(401).json({ error: "Invalid credentials" });
 
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) return res.status(401).json({ error: "Invalid credentials" });
@@ -61,7 +105,8 @@ authRouter.post("/login", async (req, res) => {
 
 authRouter.post("/refresh", async (req, res) => {
   const { refreshToken } = req.body as { refreshToken?: string };
-  if (!refreshToken) return res.status(400).json({ error: "refreshToken is required" });
+  if (!refreshToken)
+    return res.status(400).json({ error: "refreshToken is required" });
 
   let userId: string;
   try {
@@ -72,7 +117,9 @@ authRouter.post("/refresh", async (req, res) => {
   }
 
   const tokenHash = hashToken(refreshToken);
-  const session = await prisma.session.findUnique({ where: { refreshToken: tokenHash } });
+  const session = await prisma.session.findUnique({
+    where: { refreshToken: tokenHash },
+  });
 
   if (!session || session.userId !== userId || session.expiresAt < new Date()) {
     return res.status(401).json({ error: "Session not found or expired" });
@@ -93,7 +140,9 @@ authRouter.post("/logout", async (req, res) => {
 
 authRouter.get("/verify-email/:token", async (req, res) => {
   const { token } = req.params;
-  const user = await prisma.user.findUnique({ where: { emailVerificationToken: token } });
+  const user = await prisma.user.findUnique({
+    where: { emailVerificationToken: token },
+  });
   if (!user) return res.status(400).json({ error: "Invalid or expired token" });
 
   await prisma.user.update({
@@ -102,4 +151,28 @@ authRouter.get("/verify-email/:token", async (req, res) => {
   });
 
   return res.json({ message: "Email verified" });
+});
+
+authRouter.post("/resend-verification", async (req, res) => {
+  const { email } = req.body as { email?: string };
+  if (!email) return res.status(400).json({ error: "email is required" });
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  // Do not leak account existence — always return 200 unless the body is malformed.
+  if (!user)
+    return res.json({
+      message: "If the account exists, a verification email has been sent",
+    });
+  if (user.emailVerifiedAt) {
+    return res.json({ message: "Email is already verified" });
+  }
+
+  const emailVerificationToken = randomBytes(32).toString("hex");
+  await prisma.user.update({
+    where: { id: user.id },
+    data: { emailVerificationToken },
+  });
+  await sendVerificationEmail(email, emailVerificationToken);
+
+  return res.json({ message: "Verification email sent" });
 });

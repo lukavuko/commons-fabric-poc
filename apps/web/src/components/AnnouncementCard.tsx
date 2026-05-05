@@ -117,7 +117,9 @@ export function AnnouncementCard({
       <div className="flex gap-2 justify-end">
         <Button
           variant="secondary"
-          onClick={onSaveToEmail ? () => onSaveToEmail(announcement.id) : undefined}
+          onClick={
+            onSaveToEmail ? () => onSaveToEmail(announcement.id) : undefined
+          }
           aria-label={`Email myself "${announcement.title}"`}
         >
           Email to me

@@ -3,7 +3,12 @@ import { describe, it, expect } from "vitest";
 process.env.JWT_SECRET = "test-secret-that-is-long-enough-32ch";
 process.env.JWT_REFRESH_SECRET = "test-refresh-secret-long-enough-32c";
 
-import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from "../lib/jwt.js";
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "@cfp/auth-tokens";
 
 describe("access tokens", () => {
   it("signs and verifies an access token", async () => {

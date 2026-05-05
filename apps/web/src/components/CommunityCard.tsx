@@ -1,14 +1,19 @@
 import { Link } from "react-router-dom";
-import { Card, Tag, VerifiedBadge, StateBadge, LinkButton, Button } from "./primitives";
+import {
+  Card,
+  Tag,
+  VerifiedBadge,
+  StateBadge,
+  LinkButton,
+  Button,
+} from "./primitives";
 
-export type CommunityViewerStatus =
-  | "none"
-  | "subscriber"
-  | "member"
-  | "volunteer"
-  | "moderator"
-  | "co-steward"
-  | "steward";
+/**
+ * Role-based display state for the viewer. "subscriber" is intentionally
+ * absent — subscribing is not a role. Use the `isSubscribed` prop for the
+ * subscription badge.
+ */
+export type CommunityViewerStatus = "none" | "member" | "steward";
 
 export type CommunityCardData = {
   id: string;
@@ -17,16 +22,18 @@ export type CommunityCardData = {
   tags: string[];
   city?: string;
   province?: string;
-  verified: boolean; // verifiedEmail || verifiedExternally
+  verified: boolean;
   subscriberCount: number;
   eventsThisWeek?: number;
-  /** Optional decorative blob color seed; falls back to sage. */
   accent?: "sage" | "clay" | "mixed";
 };
 
 type Props = {
   community: CommunityCardData;
+  /** Role of the viewing user for display badges. Default: "none". */
   viewerStatus?: CommunityViewerStatus;
+  /** Whether the viewer has an active subscription (independent of role). */
+  isSubscribed?: boolean;
   /** Layout variant: gallery card (default) vs map popup (compact). */
   variant?: "gallery" | "popup";
   onSubscribe?: (id: string) => void;
@@ -39,33 +46,40 @@ const blobByAccent: Record<NonNullable<CommunityCardData["accent"]>, string> = {
   mixed: "bg-[linear-gradient(135deg,#9CAE92,#C49A82)]",
 };
 
+const roleLabel: Record<CommunityViewerStatus, string | null> = {
+  none: null,
+  member: "Member",
+  steward: "Steward",
+};
+
 export function CommunityCard({
   community,
   viewerStatus = "none",
+  isSubscribed = false,
   variant = "gallery",
   onSubscribe,
   onJoin,
 }: Props) {
-  const isMember = viewerStatus !== "none" && viewerStatus !== "subscriber";
-  const isSubscriber = viewerStatus === "subscriber";
+  const isMember = viewerStatus !== "none";
   const blob = blobByAccent[community.accent ?? "sage"];
   const compact = variant === "popup";
   const detailHref = `/communities/${community.id}`;
+  const label = roleLabel[viewerStatus];
 
   return (
     <Card className={compact ? "p-5" : ""}>
-      {/* Decorative botanical blob — purely decorative, hidden from a11y tree */}
       <div
         aria-hidden
         className={`${blob} ${compact ? "h-20" : "h-28"} mb-4`}
         style={{ borderRadius: "60% 40% 65% 35% / 50% 60% 40% 50%" }}
       />
 
-      {/* Verified / joined badges row */}
       <div className="flex items-center gap-2 mb-2 min-h-[20px]">
         {community.verified && <VerifiedBadge />}
-        {isMember && <StateBadge label={`You're a ${viewerStatus}`} tone="clay" />}
-        {isSubscriber && <StateBadge label="Subscribed" tone="sage" />}
+        {label && <StateBadge label={label} tone="clay" />}
+        {isSubscribed && !isMember && (
+          <StateBadge label="Subscribed" tone="sage" />
+        )}
       </div>
 
       <h3 className="font-display text-lg font-medium text-ink mb-1.5">
@@ -103,22 +117,24 @@ export function CommunityCard({
         {community.eventsThisWeek !== undefined && (
           <>
             {" "}
-            · <span className="tabular-nums">{community.eventsThisWeek}</span>{" "}
+            · <span className="tabular-nums">
+              {community.eventsThisWeek}
+            </span>{" "}
             events this week
           </>
         )}
       </div>
 
-      {/* Z-trace contract: CTAs bottom-right of card. We use full-width on
-          narrow widths and bottom-right alignment within the card flow. */}
       <div className="flex gap-2 justify-end">
-        {!isMember && (
+        {/* Subscribe lives on popup variant + Community detail page only (MVP spec).
+            Gallery cards are browse-only. */}
+        {compact && !isMember && (
           <Button
             variant="secondary"
             onClick={onSubscribe ? () => onSubscribe(community.id) : undefined}
-            aria-label={`${isSubscriber ? "Unsubscribe from" : "Subscribe to"} ${community.name}`}
+            aria-label={`${isSubscribed ? "Unsubscribe from" : "Subscribe to"} ${community.name}`}
           >
-            {isSubscriber ? "Unsubscribe" : "Subscribe"}
+            {isSubscribed ? "Unsubscribe" : "Subscribe"}
           </Button>
         )}
         {!isMember ? (

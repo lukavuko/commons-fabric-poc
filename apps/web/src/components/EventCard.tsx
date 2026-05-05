@@ -140,7 +140,9 @@ export function EventCard({
       <div className="flex gap-2 justify-end mt-auto">
         <Button
           variant="secondary"
-          onClick={onAddToCalendar ? () => onAddToCalendar(event.id) : undefined}
+          onClick={
+            onAddToCalendar ? () => onAddToCalendar(event.id) : undefined
+          }
           aria-label={`Add ${event.title} to calendar`}
         >
           Add to calendar
@@ -148,7 +150,11 @@ export function EventCard({
         {canRSVP && (
           <Button
             variant="primary"
-            onClick={onRSVP ? () => onRSVP(event.id, isGoing ? "INTERESTED" : "GOING") : undefined}
+            onClick={
+              onRSVP
+                ? () => onRSVP(event.id, isGoing ? "INTERESTED" : "GOING")
+                : undefined
+            }
             aria-pressed={isGoing}
           >
             {isGoing ? "Going ✓" : "RSVP"}

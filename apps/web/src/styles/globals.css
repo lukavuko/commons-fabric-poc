@@ -13,28 +13,28 @@
   --font-inter: "Inter", system-ui, sans-serif;
 
   /* Surfaces */
-  --cf-page: #F4EFE3;          /* oat — page background */
-  --cf-surface: #FAF5E9;       /* card surface (one shade lighter than page) */
-  --cf-surface-sunken: #EFE8D7;/* hover/active fill on cream */
+  --cf-page: #f4efe3; /* oat — page background */
+  --cf-surface: #faf5e9; /* card surface (one shade lighter than page) */
+  --cf-surface-sunken: #efe8d7; /* hover/active fill on cream */
 
   /* Ink */
-  --cf-ink: #2F352C;           /* primary text — 10.98:1 on page (AAA) */
-  --cf-ink-muted: #65695A;     /* secondary text, metadata — 4.92:1 on page (AA) */
-  --cf-ink-subtle: #A6A89B;    /* placeholders / disabled only — never running text */
+  --cf-ink: #2f352c; /* primary text — 10.98:1 on page (AAA) */
+  --cf-ink-muted: #65695a; /* secondary text, metadata — 4.92:1 on page (AA) */
+  --cf-ink-subtle: #a6a89b; /* placeholders / disabled only — never running text */
 
   /* Botanical accents */
-  --cf-sage: #9CAE92;          /* light sage — chip / icon backgrounds only */
-  --cf-sage-deep: #506548;     /* sage on cream — AA-safe for body text (5.55:1) */
-  --cf-clay: #C49A82;          /* light clay — chip / icon backgrounds only */
-  --cf-clay-deep: #8C5A3F;     /* clay on cream — AA-safe for body text (5.02:1) */
-  --cf-sun: #E4C26A;           /* verified halo — non-text use only */
+  --cf-sage: #9cae92; /* light sage — chip / icon backgrounds only */
+  --cf-sage-deep: #506548; /* sage on cream — AA-safe for body text (5.55:1) */
+  --cf-clay: #c49a82; /* light clay — chip / icon backgrounds only */
+  --cf-clay-deep: #8c5a3f; /* clay on cream — AA-safe for body text (5.02:1) */
+  --cf-sun: #e4c26a; /* verified halo — non-text use only */
 
   /* Functional */
   --cf-link: var(--cf-sage-deep);
-  --cf-link-hover: #3E4D38;    /* 7.88:1 on page */
+  --cf-link-hover: #3e4d38; /* 7.88:1 on page */
   --cf-state-joined: var(--cf-clay-deep);
   --cf-state-rsvp: var(--cf-clay-deep);
-  --cf-danger: #B5503F;        /* errors, destructive actions */
+  --cf-danger: #b5503f; /* errors, destructive actions */
   --cf-success: var(--cf-sage-deep);
 
   /* Hairlines (used sparingly — never as a hard border around surfaces) */
@@ -45,16 +45,19 @@
   --cf-focus-ring: 0 0 0 3px rgba(94, 117, 88, 0.55);
 
   /* Shadows — two-axis, ultra-low-opacity (no hard borders allowed) */
-  --cf-shadow-card: 0 1px 0 rgba(0, 0, 0, 0.02), 0 6px 18px rgba(60, 50, 30, 0.04);
-  --cf-shadow-card-hover: 0 1px 0 rgba(0, 0, 0, 0.03), 0 10px 28px rgba(60, 50, 30, 0.06);
-  --cf-shadow-popup: 0 2px 0 rgba(0, 0, 0, 0.03), 0 18px 48px rgba(60, 50, 30, 0.10);
+  --cf-shadow-card:
+    0 1px 0 rgba(0, 0, 0, 0.02), 0 6px 18px rgba(60, 50, 30, 0.04);
+  --cf-shadow-card-hover:
+    0 1px 0 rgba(0, 0, 0, 0.03), 0 10px 28px rgba(60, 50, 30, 0.06);
+  --cf-shadow-popup:
+    0 2px 0 rgba(0, 0, 0, 0.03), 0 18px 48px rgba(60, 50, 30, 0.1);
 
   /* Radius scale */
   --cf-radius-xs: 4px;
   --cf-radius-sm: 8px;
   --cf-radius-md: 12px;
   --cf-radius-lg: 16px;
-  --cf-radius-xl: 20px;       /* default for botanical cards */
+  --cf-radius-xl: 20px; /* default for botanical cards */
   --cf-radius-pill: 9999px;
 
   /* Spacing — 8px base */
@@ -121,7 +124,8 @@
 
 /* Base styles ------------------------------------------------------------ */
 
-html, body {
+html,
+body {
   background: var(--cf-page);
   color: var(--cf-ink);
 }
@@ -131,8 +135,12 @@ body {
   background-image:
     radial-gradient(rgba(60, 40, 20, 0.025) 1px, transparent 1px),
     radial-gradient(rgba(60, 40, 20, 0.018) 1px, transparent 1px);
-  background-size: 3px 3px, 7px 7px;
-  background-position: 0 0, 1px 2px;
+  background-size:
+    3px 3px,
+    7px 7px;
+  background-position:
+    0 0,
+    1px 2px;
 
   font-family: var(--font-inter);
   font-size: var(--cf-text-base);
@@ -141,7 +149,10 @@ body {
   font-feature-settings: "tnum"; /* tabular numerals everywhere by default */
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-fraunces);
   font-weight: 500;
   letter-spacing: var(--cf-tracking-tight);
@@ -162,7 +173,9 @@ h1, h2, h3, h4 {
 
 /* Reduced motion — collapse all entrance animation to a 120ms fade. */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 120ms !important;
     transition-duration: 120ms !important;
     animation-iteration-count: 1 !important;

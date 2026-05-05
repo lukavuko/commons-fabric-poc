@@ -2,7 +2,10 @@
   "name": "cfp-poc",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["apps/*", "packages/*"],
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "concurrently -n web,server,auth,scheduler,executioner -c blue,magenta,green,yellow,cyan \"npm run dev --workspace=apps/web\" \"npm run dev --workspace=apps/server\" \"npm run dev --workspace=apps/auth\" \"npm run dev --workspace=apps/scheduler\" \"npm run dev --workspace=apps/executioner\"",
     "test": "npm run test --workspaces --if-present"

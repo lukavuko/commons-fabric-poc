@@ -6,7 +6,7 @@ export const Mutation = {
   signUp: async (
     _: unknown,
     _args: { email: string; password: string; username: string },
-    _ctx: Context
+    _ctx: Context,
   ) => {
     throw new GraphQLError("signUp is handled by the auth service", {
       extensions: { code: "NOT_IMPLEMENTED" },
@@ -16,7 +16,7 @@ export const Mutation = {
   signIn: async (
     _: unknown,
     _args: { email: string; password: string },
-    _ctx: Context
+    _ctx: Context,
   ) => {
     throw new GraphQLError("signIn is handled by the auth service", {
       extensions: { code: "NOT_IMPLEMENTED" },
@@ -25,23 +25,57 @@ export const Mutation = {
 
   signOut: () => true,
 
+  updateMe: async (
+    _: unknown,
+    args: { input: Record<string, unknown> },
+    ctx: Context,
+  ) => {
+    const user = ctx.requireAuth();
+    return ctx.prisma.user.update({
+      where: { id: user.id },
+      data: args.input as object,
+    });
+  },
+
+  deleteMe: async (_: unknown, _args: unknown, ctx: Context) => {
+    const user = ctx.requireAuth();
+    await ctx.prisma.user.delete({ where: { id: user.id } });
+    return true;
+  },
+
   createCommunity: async (
     _: unknown,
     args: { input: Record<string, unknown> },
-    ctx: Context
+    ctx: Context,
   ) => {
-    const user = ctx.requireAuth();
-    return ctx.prisma.community.create({
-      data: { ...(args.input as any), creatorId: user.id },
+    const user = ctx.requireEmailVerified();
+    return ctx.prisma.$transaction(async (tx) => {
+      const community = await tx.community.create({
+        data: { ...(args.input as any), creatorId: user.id },
+      });
+      const stewardRole = await tx.role.findFirst({
+        where: { name: "STEWARD", isDefault: true },
+      });
+      if (stewardRole) {
+        await tx.userRole.create({
+          data: {
+            userId: user.id,
+            entityType: "COMMUNITY",
+            entityId: community.id,
+            roleId: stewardRole.id,
+          },
+        });
+      }
+      return community;
     });
   },
 
   updateCommunity: async (
     _: unknown,
     args: { id: string; input: Record<string, unknown> },
-    ctx: Context
+    ctx: Context,
   ) => {
-    await ctx.requireCommunityRole(args.id, ["ORGANIZER", "ADMIN", "STEWARD"]);
+    await ctx.requirePermission("community:edit", args.id);
     return ctx.prisma.community.update({
       where: { id: args.id },
       data: args.input as object,
@@ -51,33 +85,28 @@ export const Mutation = {
   createEvent: async (
     _: unknown,
     args: { input: Record<string, unknown> },
-    ctx: Context
+    ctx: Context,
   ) => {
     const communityId = args.input.communityId as string;
-    await ctx.requireCommunityRole(communityId, [
-      "ORGANIZER",
-      "ADMIN",
-      "STEWARD",
-    ]);
-    const user = ctx.requireAuth();
+    const user = await ctx.requirePermission("event:create", communityId);
     return ctx.prisma.event.create({
-      data: { ...(args.input as any), creatorId: user.id, releaseStatus: "DRAFT" },
+      data: {
+        ...(args.input as any),
+        creatorId: user.id,
+        releaseStatus: "DRAFT",
+      },
     });
   },
 
   updateEvent: async (
     _: unknown,
     args: { id: string; input: Record<string, unknown> },
-    ctx: Context
+    ctx: Context,
   ) => {
     const event = await ctx.prisma.event.findUniqueOrThrow({
       where: { id: args.id },
     });
-    await ctx.requireCommunityRole(event.communityId, [
-      "ORGANIZER",
-      "ADMIN",
-      "STEWARD",
-    ]);
+    await ctx.requirePermission("event:edit", event.communityId);
     return ctx.prisma.event.update({
       where: { id: args.id },
       data: args.input as object,
@@ -88,11 +117,7 @@ export const Mutation = {
     const event = await ctx.prisma.event.findUniqueOrThrow({
       where: { id: args.id },
     });
-    await ctx.requireCommunityRole(event.communityId, [
-      "ORGANIZER",
-      "ADMIN",
-      "STEWARD",
-    ]);
+    await ctx.requirePermission("event:delete", event.communityId);
     await ctx.prisma.event.delete({ where: { id: args.id } });
     return true;
   },
@@ -101,11 +126,7 @@ export const Mutation = {
     const event = await ctx.prisma.event.findUniqueOrThrow({
       where: { id: args.id },
     });
-    await ctx.requireCommunityRole(event.communityId, [
-      "ORGANIZER",
-      "ADMIN",
-      "STEWARD",
-    ]);
+    await ctx.requirePermission("event:publish", event.communityId);
     return ctx.prisma.event.update({
       where: { id: args.id },
       data: { releaseStatus: "PUBLIC", releasedAt: new Date() },
@@ -115,16 +136,13 @@ export const Mutation = {
   createAnnouncement: async (
     _: unknown,
     args: { input: Record<string, unknown> },
-    ctx: Context
+    ctx: Context,
   ) => {
     const communityId = args.input.communityId as string;
-    await ctx.requireCommunityRole(communityId, [
-      "ORGANIZER",
-      "ADMIN",
-      "STEWARD",
-      "MODERATOR",
-    ]);
-    const user = ctx.requireAuth();
+    const user = await ctx.requirePermission(
+      "announcement:create",
+      communityId,
+    );
     return ctx.prisma.announcement.create({
       data: {
         ...(args.input as any),
@@ -137,16 +155,12 @@ export const Mutation = {
   publishAnnouncement: async (
     _: unknown,
     args: { id: string },
-    ctx: Context
+    ctx: Context,
   ) => {
     const ann = await ctx.prisma.announcement.findUniqueOrThrow({
       where: { id: args.id },
     });
-    await ctx.requireCommunityRole(ann.communityId, [
-      "ORGANIZER",
-      "ADMIN",
-      "STEWARD",
-    ]);
+    await ctx.requirePermission("announcement:publish", ann.communityId);
     return ctx.prisma.announcement.update({
       where: { id: args.id },
       data: { releaseStatus: "PUBLIC", releasedAt: new Date() },
@@ -156,9 +170,9 @@ export const Mutation = {
   subscribeToCommunity: async (
     _: unknown,
     args: { communityId: string; input?: Record<string, unknown> },
-    ctx: Context
+    ctx: Context,
   ) => {
-    const user = ctx.requireAuth();
+    const user = ctx.requireEmailVerified();
     return ctx.prisma.subscription.upsert({
       where: {
         userId_communityId: { userId: user.id, communityId: args.communityId },
@@ -180,7 +194,7 @@ export const Mutation = {
   unsubscribeFromCommunity: async (
     _: unknown,
     args: { communityId: string },
-    ctx: Context
+    ctx: Context,
   ) => {
     const user = ctx.requireAuth();
     await ctx.prisma.subscription.update({
@@ -195,7 +209,7 @@ export const Mutation = {
   updateSubscription: async (
     _: unknown,
     args: { communityId: string; input: Record<string, unknown> },
-    ctx: Context
+    ctx: Context,
   ) => {
     const user = ctx.requireAuth();
     return ctx.prisma.subscription.update({
@@ -209,7 +223,7 @@ export const Mutation = {
   rsvpToEvent: async (
     _: unknown,
     args: { eventId: string; status: string },
-    ctx: Context
+    ctx: Context,
   ) => {
     const user = ctx.requireAuth();
     const rsvpStatus = args.status as "GOING" | "INTERESTED" | "NOT_GOING";
@@ -238,7 +252,7 @@ export const Mutation = {
   postComment: async (
     _: unknown,
     args: { input: Record<string, unknown> },
-    ctx: Context
+    ctx: Context,
   ) => {
     const user = ctx.requireAuth();
     return ctx.prisma.comment.create({
@@ -261,17 +275,12 @@ export const Mutation = {
   moderateComment: async (
     _: unknown,
     args: { id: string; status: string },
-    ctx: Context
+    ctx: Context,
   ) => {
     const comment = await ctx.prisma.comment.findUniqueOrThrow({
       where: { id: Number(args.id) },
     });
-    await ctx.requireCommunityRole(comment.communityId, [
-      "MODERATOR",
-      "ORGANIZER",
-      "ADMIN",
-      "STEWARD",
-    ]);
+    await ctx.requirePermission("comment:moderate", comment.communityId);
     return ctx.prisma.comment.update({
       where: { id: Number(args.id) },
       data: {

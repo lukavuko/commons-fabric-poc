@@ -6,10 +6,27 @@ import { typeDefs } from "./graphql/schema.js";
 import { resolvers } from "./graphql/resolvers/index.js";
 import { buildContext } from "./graphql/context.js";
 import { logger } from "./lib/logger.js";
+import { prisma } from "@cfp/db";
+import { roles } from "@cfp/defaults";
 
 const PORT = Number(process.env.PORT ?? 4000);
 
+async function ensureDefaultRoles() {
+  for (const role of roles) {
+    const existing = await prisma.role.findFirst({
+      where: { name: role.name, isDefault: true },
+    });
+    if (!existing) {
+      await prisma.role.create({
+        data: { name: role.name, isDefault: true },
+      });
+      logger.info(`Seeded default role: ${role.name}`);
+    }
+  }
+}
+
 async function main() {
+  await ensureDefaultRoles();
   const app = express();
   const server = new ApolloServer({ typeDefs, resolvers });
   await server.start();
@@ -20,7 +37,7 @@ async function main() {
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => buildContext(req),
-    })
+    }),
   );
 
   app.get("/health", (_req, res) => {

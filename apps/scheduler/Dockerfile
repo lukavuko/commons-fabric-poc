@@ -5,7 +5,7 @@ COPY package.json package-lock.json ./
 COPY packages/db/package.json ./packages/db/
 COPY apps/scheduler/package.json ./apps/scheduler/
 
-RUN npm ci --workspace=apps/scheduler --workspace=packages/db
+RUN npm ci --workspace=apps/scheduler --workspace=packages/db --include-workspace-root
 
 COPY packages/db/ ./packages/db/
 COPY apps/scheduler/ ./apps/scheduler/

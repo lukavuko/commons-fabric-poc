@@ -66,7 +66,7 @@ Table user {
 
 Table sessions {
   id cuid [pk]
-  user_id cuid [not null, ref: > user.id]
+  user_id cuid [not null]
   refresh_token varchar [unique, not null, note: 'SHA-256 hash of the raw refresh JWT']
   expires_at timestamp [not null]
   created_at timestamp [default: `now()`]
@@ -86,17 +86,19 @@ Ref: sessions.user_id > user.id [delete: cascade]
 // (community or hub). Stewards can define custom roles beyond defaults.
 
 Table user_role {
-  user_id cuid [not null, ref: > user.id]
+  user_id cuid [not null]
   entity_type RoleEntityType [not null]
   entity_id cuid [not null, note: 'No FK — polymorphic ref to hub.id or community.id']
-  role_id integer [not null, ref: > role.id]
+  role_id integer [not null]
 
   indexes {
     (user_id, entity_id) [pk, unique, note: 'One role per entity per user']
     (entity_type, entity_id) [name: 'idx_user_role_entity']
   }
 
-  Note: 'CHECK: entity_type IN (''HUB'', ''COMMUNITY'')'
+  checks {
+    `entity_type IN ('HUB', 'COMMUNITY')` [name: 'chk_valid_user_role_entity_type']
+  }
 }
 
 Enum RoleEntityType {
@@ -111,14 +113,16 @@ Table role {
   is_default bool [not null, note: 'true = platform default, false = community custom']
   entity_id cuid [note: 'NULL for default roles; scoped to a hub/community for custom']
   entity_type RoleEntityType
-  creator_id cuid [ref: > user.id]
+  creator_id cuid
 
-  Note: 'CHECK: is_default = (entity_id IS NULL)'
+  checks {
+    `is_default = (entity_id IS NULL)` [name: 'chk_role_scope_must_be_entity_linked_if_not_default']
+  }
 }
 
 Table role_permissions {
-  role_id integer [not null, ref: > role.id]
-  permission_id integer [not null, ref: > permission.id]
+  role_id integer [not null]
+  permission_id integer [not null]
 
   indexes {
     (role_id, permission_id) [pk]
@@ -147,7 +151,7 @@ Table hub {
   type HubType [not null]
   name varchar [not null]
   description text [not null]
-  creator_id cuid [ref: > user.id]
+  creator_id cuid
   address varchar
   latitude "double precision" [note: 'Agglomerated average; CHECK: BETWEEN -90 AND 90']
   longitude "double precision" [note: 'Agglomerated average; CHECK: BETWEEN -180 AND 180']
@@ -161,8 +165,8 @@ Enum HubType {
 }
 
 Table hub_communities {
-  hub_id cuid [not null, ref: > hub.id]
-  community_id cuid [not null, ref: > community.id]
+  hub_id cuid [not null]
+  community_id cuid [not null]
 
   indexes {
     (hub_id, community_id) [pk]
@@ -187,7 +191,7 @@ Table community {
   country varchar [not null]
 
   settings jsonb
-  creator_id cuid [ref: > user.id]
+  creator_id cuid
   verified_email bool [default: false]
   verified_externally bool [default: false]
   created_at timestamp [default: `now()`]
@@ -210,9 +214,9 @@ Ref: community.creator_id > user.id [delete: set null]
 
 Table event {
   id cuid [pk]
-  community_id cuid [not null, ref: > community.id]
-  creator_id cuid [ref: > user.id, note: 'Nullable — preserved as null if user deleted']
-  announcement_id cuid [ref: > announcement.id]
+  community_id cuid [not null]
+  creator_id cuid [note: 'Nullable — preserved as null if user deleted']
+  announcement_id cuid
 
   release_status ReleaseStatus [not null]
   event_type EventType
@@ -239,6 +243,10 @@ Table event {
     recurring [name: 'idx_event_recurring']
   }
 }
+
+Ref: event.community_id > community.id [delete: cascade]
+Ref: event.creator_id > user.id [delete: set null]
+Ref: event.announcement_id > announcement.id [delete: set null]
 
 Enum ReleaseStatus {
   DRAFT
@@ -273,8 +281,8 @@ Enum Day {
 
 Table announcement {
   id cuid [pk]
-  community_id cuid [not null, ref: > community.id]
-  author_id cuid [ref: > user.id]
+  community_id cuid [not null]
+  author_id cuid
   release_status ReleaseStatus [not null]
 
   title varchar [not null]
@@ -293,11 +301,14 @@ Table announcement {
     (community_id, release_status, released_at) [name: 'idx_announcement_community_feed']
   }
 }
+Ref: announcement.community_id > community.id [delete: cascade]
+Ref: announcement.author_id > user.id [delete: set null]
+
 
 Table comment {
   id integer [pk, increment]
-  community_id cuid [not null, ref: > community.id]
-  author_id cuid [ref: > user.id]
+  community_id cuid [not null]
+  author_id cuid
   comment_status CommentStatus [not null]
   content text [not null]
   ts timestamp [default: `now()`]
@@ -312,8 +323,13 @@ Table comment {
     parent_comment_id [name: 'idx_comments_thread']
   }
 
-  Note: 'CHECK: parent_entity_type IN (''ANNOUNCEMENT'', ''EVENT'')'
+  checks {
+    `parent_entity_type IN ('ANNOUNCEMENT','EVENT')` [name: 'chk_valid_comment_parent_entity']
+  }
 }
+
+Ref: comment.community_id > community.id [delete: cascade]
+Ref: comment.author_id > user.id [delete: set null]
 
 Enum CommentEntityType {
   ANNOUNCEMENT
@@ -328,13 +344,8 @@ Enum CommentStatus {
   LOCKED
 }
 
-Ref: event.community_id > community.id [delete: cascade]
-Ref: event.creator_id > user.id [delete: set null]
-Ref: event.announcement_id > announcement.id [delete: set null]
-Ref: announcement.community_id > community.id [delete: cascade]
-Ref: announcement.author_id > user.id [delete: set null]
-Ref: comment.community_id > community.id [delete: cascade]
-Ref: comment.author_id > user.id [delete: set null]
+
+
 
 
 // -------------------------------------------------------
@@ -345,12 +356,12 @@ Ref: comment.author_id > user.id [delete: set null]
 
 Table subscription {
   id integer [pk, increment]
-  user_id cuid [not null, ref: > user.id]
-  community_id cuid [not null, ref: > community.id]
+  user_id cuid [not null]
+  community_id cuid [not null]
 
   is_active bool [not null]
   ts_subscribed timestamp [default: `now()`]
-  ts_unsubscribed timestamp [note: 'CHECK: is_active OR ts_unsubscribed IS NOT NULL']
+  ts_unsubscribed timestamp [note: 'CHECK: either user is_active or ts_unsubscribed is not NULL']
 
   calendar_freq CommunicationFrequency
   calendar_preferred_time time [note: 'Stored as HH:MM']
@@ -364,7 +375,14 @@ Table subscription {
     (user_id, community_id) [unique]
     (community_id, is_active) [name: 'idx_subscription_community']
   }
+
+  checks {
+    `is_active OR ts_unsubscribed IS NOT NULL)` [name: 'chk_valid_unsubscribed_ts']
+  }
+
 }
+Ref: subscription.user_id > user.id [delete: cascade]
+Ref: subscription.community_id > community.id [delete: cascade]
 
 Enum CommunicationFrequency {
   NEVER
@@ -382,8 +400,8 @@ Enum CommunicationMethod {
 
 Table user_event {
   id integer [pk, increment]
-  user_id cuid [not null, ref: > user.id]
-  event_id cuid [not null, ref: > event.id]
+  user_id cuid [not null]
+  event_id cuid [not null]
   rsvp_status RSVPStatus [not null]
 
   indexes {
@@ -397,8 +415,6 @@ Enum RSVPStatus {
   NOT_GOING
 }
 
-Ref: subscription.user_id > user.id [delete: cascade]
-Ref: subscription.community_id > community.id [delete: cascade]
 Ref: user_event.user_id > user.id [delete: cascade]
 Ref: user_event.event_id > event.id [delete: cascade]
 

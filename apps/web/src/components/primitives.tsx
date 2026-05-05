@@ -1,4 +1,10 @@
-import { ReactNode, ButtonHTMLAttributes } from "react";
+import {
+  ReactNode,
+  ButtonHTMLAttributes,
+  InputHTMLAttributes,
+  TextareaHTMLAttributes,
+  useId,
+} from "react";
 import { Link, type LinkProps } from "react-router-dom";
 
 type TagTone = "sage" | "clay" | "neutral";
@@ -28,10 +34,7 @@ export function Tag({
 export function VerifiedBadge({ label = "Verified" }: { label?: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 text-xs text-sage-deep font-medium">
-      <span
-        aria-hidden
-        className="w-1.5 h-1.5 rounded-cf-pill bg-sage-deep"
-      />
+      <span aria-hidden className="w-1.5 h-1.5 rounded-cf-pill bg-sage-deep" />
       {label}
     </span>
   );
@@ -60,8 +63,7 @@ export function StateBadge({
 type Variant = "primary" | "secondary" | "ghost";
 
 const variantClass: Record<Variant, string> = {
-  primary:
-    "bg-sage-deep text-surface hover:bg-[#3E4D38] active:bg-[#3E4D38]",
+  primary: "bg-sage-deep text-surface hover:bg-[#3E4D38] active:bg-[#3E4D38]",
   secondary:
     "bg-transparent text-ink shadow-[inset_0_0_0_1px_rgba(80,101,72,0.32)] hover:bg-[rgba(80,101,72,0.06)]",
   ghost:
@@ -94,6 +96,79 @@ export function LinkButton({
       className={`${baseClass} ${variantClass[variant]} ${className}`}
       {...rest}
     />
+  );
+}
+
+const inputBase =
+  "w-full bg-page rounded-cf-md px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-subtle " +
+  "shadow-[inset_0_0_0_1px_var(--cf-hairline)] " +
+  "focus:shadow-[inset_0_0_0_1px_rgba(80,101,72,0.45)] " +
+  "transition-shadow disabled:opacity-50 disabled:cursor-not-allowed";
+
+export function Input({
+  className = "",
+  ...rest
+}: InputHTMLAttributes<HTMLInputElement>) {
+  return <input className={`${inputBase} ${className}`} {...rest} />;
+}
+
+export function Textarea({
+  className = "",
+  ...rest
+}: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+  return (
+    <textarea
+      className={`${inputBase} resize-y min-h-[80px] ${className}`}
+      {...rest}
+    />
+  );
+}
+
+export function FormField({
+  label,
+  hint,
+  error,
+  children,
+}: {
+  label: string;
+  hint?: string;
+  error?: string;
+  children: (props: { id: string }) => ReactNode;
+}) {
+  const id = useId();
+  return (
+    <div className="flex flex-col gap-1.5">
+      <label
+        htmlFor={id}
+        className="text-xs font-medium text-ink-muted tracking-wide"
+      >
+        {label}
+      </label>
+      {children({ id })}
+      {hint && !error && <p className="text-xs text-ink-muted">{hint}</p>}
+      {error && (
+        <p className="text-xs text-[color:var(--cf-danger)]">{error}</p>
+      )}
+    </div>
+  );
+}
+
+export function Alert({
+  tone = "danger",
+  children,
+}: {
+  tone?: "danger" | "info" | "success";
+  children: ReactNode;
+}) {
+  const palette = {
+    danger: "bg-[rgba(181,80,63,0.08)] text-[color:var(--cf-danger)]",
+    info: "bg-[rgba(80,101,72,0.08)] text-sage-deep",
+    success: "bg-[rgba(80,101,72,0.10)] text-sage-deep",
+  }[tone];
+  return (
+    <div className={`${palette} text-sm rounded-cf-md px-3.5 py-2.5`}>
+      {children}
+    </div>
   );
 }
 

@@ -18,14 +18,14 @@ This readme summarizes what's in the Proof-of-Concept repo and some things you'l
 
 ## Prerequisites
 
-| Tool | Version | Notes |
-|---|---|---|
-| **Node.js** | 22+ | |
-| **npm** | 10+ | |
-| **Docker + Compose** | Latest | Required for the full local stack |
-| **PostgreSQL** | 16+ | Aiven, Neon, or local — needs a **direct** (non-pooled) URL for migrations |
-| **Pulumi CLI** | 3+ | `npm install -g pulumi` — only needed for infra management |
-| **SendGrid API key** | — | Optional for local dev, required in production |
+| Tool                 | Version | Notes                                                                      |
+| -------------------- | ------- | -------------------------------------------------------------------------- |
+| **Node.js**          | 22+     |                                                                            |
+| **npm**              | 10+     |                                                                            |
+| **Docker + Compose** | Latest  | Required for the full local stack                                          |
+| **PostgreSQL**       | 16+     | Aiven, Neon, or local — needs a **direct** (non-pooled) URL for migrations |
+| **Pulumi CLI**       | 3+      | `npm install -g pulumi` — only needed for infra management                 |
+| **SendGrid API key** | —       | Optional for local dev, required in production                             |
 
 ---
 
@@ -80,6 +80,7 @@ docker compose up --build
 ```
 
 Services come up at:
+
 - Frontend → http://localhost:5173
 - GraphQL API → http://localhost:4000/api/graphql
 - Auth → http://localhost:4001
@@ -93,7 +94,7 @@ cp .env.example .env
 npm install
 
 # Run the DB migration (requires a direct, non-pooled DATABASE_URL)
-cd packages/db && npx prisma migrate dev --name init && cd ../..
+cd db && npx prisma migrate dev --name init && cd ../..
 
 # Start everything concurrently
 npm run dev
@@ -103,7 +104,7 @@ npm run dev
 
 ```bash
 # Database
-cd packages/db
+cd db
 npx prisma migrate dev --name <description>   # new migration after schema change
 npx prisma generate                            # regenerate types (auto-runs after migrate)
 npx prisma studio                              # browse the DB in a UI
@@ -130,4 +131,4 @@ Register a new handler in `apps/executioner/handlers/index.ts` under a `serviceN
 
 ---
 
-*Commons Fabric PoC — April 2026*
+_Commons Fabric PoC — April 2026_

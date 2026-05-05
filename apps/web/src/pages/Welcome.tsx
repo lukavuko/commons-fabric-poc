@@ -32,7 +32,10 @@ export default function Welcome() {
             </div>
             <p className="text-xs text-ink-muted mt-4">
               No account required to browse.{" "}
-              <Link to="/explore" className="underline underline-offset-2 hover:text-sage-deep">
+              <Link
+                to="/explore"
+                className="underline underline-offset-2 hover:text-sage-deep"
+              >
                 Skip ahead
               </Link>
               .

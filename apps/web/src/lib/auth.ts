@@ -5,19 +5,35 @@ export interface AuthTokens {
   refreshToken: string;
 }
 
-export async function register(email: string, password: string): Promise<void> {
+export interface RegisterInput {
+  email: string;
+  password: string;
+  displayName: string;
+  firstname?: string;
+  lastname?: string;
+  postalCode?: string;
+  city?: string;
+  phone?: string;
+}
+
+export async function register(input: RegisterInput): Promise<void> {
   const res = await fetch(`${AUTH_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify(input),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error((body as { error?: string }).error ?? "Registration failed");
+    throw new Error(
+      (body as { error?: string }).error ?? "Registration failed",
+    );
   }
 }
 
-export async function login(email: string, password: string): Promise<AuthTokens> {
+export async function login(
+  email: string,
+  password: string,
+): Promise<AuthTokens> {
   const res = await fetch(`${AUTH_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -62,4 +78,30 @@ export async function refreshAccessToken(): Promise<string | null> {
 
 export function getAccessToken(): string | null {
   return localStorage.getItem("access_token");
+}
+
+export async function verifyEmail(token: string): Promise<void> {
+  const res = await fetch(
+    `${AUTH_URL}/auth/verify-email/${encodeURIComponent(token)}`,
+  );
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(
+      (body as { error?: string }).error ?? "Verification failed",
+    );
+  }
+}
+
+export async function resendVerification(email: string): Promise<void> {
+  const res = await fetch(`${AUTH_URL}/auth/resend-verification`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(
+      (body as { error?: string }).error ?? "Could not resend verification",
+    );
+  }
 }

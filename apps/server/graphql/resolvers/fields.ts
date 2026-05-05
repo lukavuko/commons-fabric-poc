@@ -132,7 +132,9 @@ export const Hub = {
       where: { hubId: parent.id as string },
     });
     return ctx.prisma.community.findMany({
-      where: { id: { in: links.map((l: { communityId: string }) => l.communityId) } },
+      where: {
+        id: { in: links.map((l: { communityId: string }) => l.communityId) },
+      },
     });
   },
 };

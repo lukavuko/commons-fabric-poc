@@ -4,7 +4,7 @@
 
 **Goal:** Restructure the single-package repo into an npm workspaces monorepo with five apps (web, server, auth, scheduler, executioner) and one shared package (db), with full Docker Compose local dev support and a minimal in-house auth service.
 
-**Architecture:** npm workspaces with `apps/` and `packages/` directories. `packages/db` owns Prisma and exports a shared `PrismaClient`. All services communicate only through Postgres — no inter-service HTTP calls. A `migrator` Docker service runs `prisma migrate deploy` and must complete before any app starts.
+**Architecture:** npm workspaces with `apps/` and `packages/` directories. `db` owns Prisma and exports a shared `PrismaClient`. All services communicate only through Postgres — no inter-service HTTP calls. A `migrator` Docker service runs `prisma migrate deploy` and must complete before any app starts.
 
 **Tech Stack:** npm workspaces, Prisma 7, Express 5, `jose` 5 (JWT HS256), `bcryptjs` (password hashing), Node.js built-in `crypto` (token hashing), `node-cron`, `vitest`, Docker Compose, Caddy 2.
 
@@ -13,6 +13,7 @@
 ## File Map
 
 ### Root
+
 - Modify: `package.json` — workspaces config, shared devDeps only
 - Modify: `tsconfig.json` — base config only (no app-specific paths)
 - Create: `docker-compose.yml`
@@ -20,16 +21,18 @@
 - Create: `.env.example`
 - Delete: `prisma.config.ts`, `prisma/`, `server/`, `src/`, `vite.config.ts`, `tsconfig.node.json`, `index.html`, `dist/`
 
-### packages/db
-- `packages/db/package.json`
-- `packages/db/tsconfig.json`
-- `packages/db/index.ts` — exports `prisma` client instance + re-exports Prisma types
-- `packages/db/prisma.config.ts` — moved from root, simplified to `DATABASE_URL`
-- `packages/db/prisma/schema.prisma` — moved from root + `Session` + `JobQueue` + User auth fields
-- `packages/db/prisma/migrations/` — moved from root
-- `packages/db/Dockerfile` — runs `prisma migrate deploy`
+### db
+
+- `db/package.json`
+- `db/tsconfig.json`
+- `db/index.ts` — exports `prisma` client instance + re-exports Prisma types
+- `db/prisma.config.ts` — moved from root, simplified to `DATABASE_URL`
+- `db/prisma/schema.prisma` — moved from root + `Session` + `JobQueue` + User auth fields
+- `db/prisma/migrations/` — moved from root
+- `db/Dockerfile` — runs `prisma migrate deploy`
 
 ### apps/web
+
 - `apps/web/package.json`
 - `apps/web/tsconfig.json`
 - `apps/web/tsconfig.node.json`
@@ -43,6 +46,7 @@
 - `apps/web/Caddyfile` — Caddy config: static + reverse proxy
 
 ### apps/server
+
 - `apps/server/package.json`
 - `apps/server/tsconfig.json`
 - `apps/server/index.ts` — moved from `server/index.ts`
@@ -55,6 +59,7 @@
 - DELETE: `apps/server/lib/supabase.ts`
 
 ### apps/auth
+
 - `apps/auth/package.json`
 - `apps/auth/tsconfig.json`
 - `apps/auth/index.ts`
@@ -67,6 +72,7 @@
 - `apps/auth/tests/jwt.test.ts`
 
 ### apps/scheduler
+
 - `apps/scheduler/package.json`
 - `apps/scheduler/tsconfig.json`
 - `apps/scheduler/index.ts`
@@ -75,6 +81,7 @@
 - `apps/scheduler/tests/promote.test.ts`
 
 ### apps/executioner
+
 - `apps/executioner/package.json`
 - `apps/executioner/tsconfig.json`
 - `apps/executioner/index.ts`
@@ -85,18 +92,19 @@
 
 ---
 
-## Task 1: Set up npm workspaces root and packages/db
+## Task 1: Set up npm workspaces root and db
 
 **Files:**
+
 - Modify: `package.json`
 - Modify: `tsconfig.json`
-- Create: `packages/db/package.json`
-- Create: `packages/db/tsconfig.json`
-- Create: `packages/db/index.ts`
-- Create: `packages/db/prisma.config.ts`
-- Move: `prisma/schema.prisma` → `packages/db/prisma/schema.prisma` (with additions)
-- Move: `prisma/migrations/` → `packages/db/prisma/migrations/`
-- Create: `packages/db/Dockerfile`
+- Create: `db/package.json`
+- Create: `db/tsconfig.json`
+- Create: `db/index.ts`
+- Create: `db/prisma.config.ts`
+- Move: `prisma/schema.prisma` → `db/prisma/schema.prisma` (with additions)
+- Move: `prisma/migrations/` → `db/prisma/migrations/`
+- Create: `db/Dockerfile`
 - Create: `.env.example`
 
 ---
@@ -139,7 +147,7 @@
 }
 ```
 
-- [ ] **Step 1.3: Create `packages/db/package.json`**
+- [ ] **Step 1.3: Create `db/package.json`**
 
 ```json
 {
@@ -169,7 +177,7 @@
 }
 ```
 
-- [ ] **Step 1.4: Create `packages/db/tsconfig.json`**
+- [ ] **Step 1.4: Create `db/tsconfig.json`**
 
 ```json
 {
@@ -182,7 +190,7 @@
 }
 ```
 
-- [ ] **Step 1.5: Create `packages/db/index.ts`**
+- [ ] **Step 1.5: Create `db/index.ts`**
 
 ```typescript
 import { PrismaClient } from "@prisma/client";
@@ -195,7 +203,7 @@ export const prisma = new PrismaClient({ adapter });
 export * from "@prisma/client";
 ```
 
-- [ ] **Step 1.6: Create `packages/db/prisma.config.ts`**
+- [ ] **Step 1.6: Create `db/prisma.config.ts`**
 
 Remove the Supabase-specific `externalTables` config and use `DATABASE_URL`:
 
@@ -217,13 +225,13 @@ export default defineConfig({
 - [ ] **Step 1.7: Move Prisma files**
 
 ```bash
-mkdir -p packages/db/prisma
-cp -r prisma/migrations packages/db/prisma/migrations
-cp prisma/schema.prisma packages/db/prisma/schema.prisma
-cp prisma/schema.dbml packages/db/prisma/schema.dbml
+mkdir -p db/prisma
+cp -r prisma/migrations db/prisma/migrations
+cp prisma/schema.prisma db/prisma/schema.prisma
+cp prisma/schema.dbml db/prisma/schema.dbml
 ```
 
-- [ ] **Step 1.8: Add auth fields to `User` model in `packages/db/prisma/schema.prisma`**
+- [ ] **Step 1.8: Add auth fields to `User` model in `db/prisma/schema.prisma`**
 
 Locate the `User` model and add these three fields before the closing `}`. Also add the `sessions` relation:
 
@@ -263,7 +271,7 @@ model User {
 }
 ```
 
-- [ ] **Step 1.9: Add `JobStatus` enum and `Session` + `JobQueue` models to `packages/db/prisma/schema.prisma`**
+- [ ] **Step 1.9: Add `JobStatus` enum and `Session` + `JobQueue` models to `db/prisma/schema.prisma`**
 
 Append to the end of the file:
 
@@ -315,20 +323,20 @@ model JobQueue {
 }
 ```
 
-- [ ] **Step 1.10: Create `packages/db/Dockerfile` (migrator)**
+- [ ] **Step 1.10: Create `db/Dockerfile` (migrator)**
 
 ```dockerfile
 FROM node:22-alpine
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY packages/db/package.json ./packages/db/
+COPY db/package.json ./db/
 
-RUN npm ci --workspace=packages/db
+RUN npm ci --workspace=db
 
-COPY packages/db/ ./packages/db/
+COPY db/ ./db/
 
-WORKDIR /app/packages/db
+WORKDIR /app/db
 CMD ["npx", "prisma", "migrate", "deploy"]
 ```
 
@@ -349,16 +357,16 @@ APP_URL=http://localhost:5173
 npm install
 ```
 
-Expected: `node_modules/@cfp/db` symlinks to `packages/db`.
+Expected: `node_modules/@cfp/db` symlinks to `db`.
 
 - [ ] **Step 1.13: Generate Prisma client and create migration**
 
 ```bash
-cd packages/db
+cd db
 npx prisma migrate dev --name add-auth-and-job-queue
 ```
 
-Expected: migration file created under `packages/db/prisma/migrations/`, `@prisma/client` regenerated with `Session`, `JobQueue`, `JobStatus`, and the new `User` fields.
+Expected: migration file created under `db/prisma/migrations/`, `@prisma/client` regenerated with `Session`, `JobQueue`, `JobStatus`, and the new `User` fields.
 
 - [ ] **Step 1.14: Delete root-level Prisma files**
 
@@ -369,8 +377,8 @@ rm -rf prisma prisma.config.ts
 - [ ] **Step 1.15: Commit**
 
 ```bash
-git add packages/ .env.example package.json tsconfig.json
-git commit -m "feat: set up npm workspaces and move Prisma to packages/db"
+git add .
+git commit -m "feat: set up npm workspaces and move Prisma to db"
 ```
 
 ---
@@ -378,6 +386,7 @@ git commit -m "feat: set up npm workspaces and move Prisma to packages/db"
 ## Task 2: Migrate apps/server
 
 **Files:**
+
 - Create: `apps/server/package.json`
 - Create: `apps/server/tsconfig.json`
 - Move+Modify: `apps/server/index.ts`
@@ -477,7 +486,7 @@ async function main() {
     express.json(),
     expressMiddleware(server, {
       context: async ({ req }) => buildContext(req),
-    })
+    }),
   );
 
   app.get("/health", (_req, res) => {
@@ -513,7 +522,10 @@ export type Context = {
   user: AuthUser | null;
   prisma: typeof prisma;
   requireAuth: () => AuthUser;
-  requireCommunityRole: (communityId: string, allowedRoles: string[]) => Promise<AuthUser>;
+  requireCommunityRole: (
+    communityId: string,
+    allowedRoles: string[],
+  ) => Promise<AuthUser>;
 };
 
 export async function buildContext(req: Request): Promise<Context> {
@@ -547,16 +559,20 @@ export async function buildContext(req: Request): Promise<Context> {
 
   const requireCommunityRole = async (
     communityId: string,
-    allowedRoles: string[]
+    allowedRoles: string[],
   ): Promise<AuthUser> => {
     const authedUser = requireAuth();
     const userRole = await prisma.userRole.findUnique({
-      where: { userId_entityId: { userId: authedUser.id, entityId: communityId } },
+      where: {
+        userId_entityId: { userId: authedUser.id, entityId: communityId },
+      },
       include: { role: true },
     });
     const roleName = userRole?.role.name.toUpperCase() ?? "";
     if (!allowedRoles.map((r) => r.toUpperCase()).includes(roleName)) {
-      throw new GraphQLError("Not authorized", { extensions: { code: "FORBIDDEN" } });
+      throw new GraphQLError("Not authorized", {
+        extensions: { code: "FORBIDDEN" },
+      });
     }
     return authedUser;
   };
@@ -570,6 +586,7 @@ export async function buildContext(req: Request): Promise<Context> {
 In each file under `apps/server/graphql/resolvers/` and `apps/server/graphql/schema.ts`, update any relative imports that referenced `../lib/prisma` or `../lib/supabase` to use `@cfp/db`. Also add `.js` extensions to all relative imports (required for NodeNext module resolution).
 
 Run this grep to find affected lines:
+
 ```bash
 grep -rn "lib/prisma\|lib/supabase\|from '\." apps/server/
 ```
@@ -584,15 +601,15 @@ FROM node:22-alpine
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY packages/db/package.json ./packages/db/
+COPY db/package.json ./db/
 COPY apps/server/package.json ./apps/server/
 
-RUN npm ci --workspace=apps/server --workspace=packages/db
+RUN npm ci --workspace=apps/server --workspace=db
 
-COPY packages/db/ ./packages/db/
+COPY db/ ./db/
 COPY apps/server/ ./apps/server/
 
-RUN cd packages/db && npx prisma generate
+RUN cd db && npx prisma generate
 
 WORKDIR /app/apps/server
 ENV PORT=4000
@@ -627,6 +644,7 @@ git commit -m "feat: migrate server to apps/server, replace Supabase auth with j
 ## Task 3: Migrate apps/web
 
 **Files:**
+
 - Create: `apps/web/package.json`
 - Create: `apps/web/tsconfig.json`
 - Create: `apps/web/tsconfig.node.json`
@@ -741,7 +759,10 @@ export async function register(email: string, password: string): Promise<void> {
   }
 }
 
-export async function login(email: string, password: string): Promise<AuthTokens> {
+export async function login(
+  email: string,
+  password: string,
+): Promise<AuthTokens> {
   const res = await fetch(`${AUTH_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -794,11 +815,12 @@ export function getAccessToken(): string | null {
 Read the access token from `localStorage` automatically instead of requiring callers to pass it:
 
 ```typescript
-const GQL_URL = import.meta.env.VITE_GRAPHQL_URL ?? "http://localhost:4000/api/graphql";
+const GQL_URL =
+  import.meta.env.VITE_GRAPHQL_URL ?? "http://localhost:4000/api/graphql";
 
 export async function gqlFetch<T = unknown>(
   query: string,
-  variables?: Record<string, unknown>
+  variables?: Record<string, unknown>,
 ): Promise<T> {
   const token = localStorage.getItem("access_token");
   const res = await fetch(GQL_URL, {
@@ -918,6 +940,7 @@ git commit -m "feat: migrate frontend to apps/web, replace Supabase auth client"
 ## Task 4: Implement apps/auth
 
 **Files:**
+
 - `apps/auth/package.json`
 - `apps/auth/tsconfig.json`
 - `apps/auth/lib/hash.ts`
@@ -1029,7 +1052,10 @@ export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, ROUNDS);
 }
 
-export async function verifyPassword(password: string, hash: string): Promise<boolean> {
+export async function verifyPassword(
+  password: string,
+  hash: string,
+): Promise<boolean> {
   return bcrypt.compare(password, hash);
 }
 
@@ -1056,7 +1082,12 @@ import { describe, it, expect } from "vitest";
 process.env.JWT_SECRET = "test-secret-that-is-long-enough-32ch";
 process.env.JWT_REFRESH_SECRET = "test-refresh-secret-long-enough-32c";
 
-import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from "../lib/jwt.js";
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+} from "../lib/jwt.js";
 
 describe("access tokens", () => {
   it("signs and verifies an access token", async () => {
@@ -1094,7 +1125,8 @@ Expected: FAIL — `../lib/jwt.js` not found.
 import { SignJWT, jwtVerify } from "jose";
 
 const accessSecret = () => new TextEncoder().encode(process.env.JWT_SECRET!);
-const refreshSecret = () => new TextEncoder().encode(process.env.JWT_REFRESH_SECRET!);
+const refreshSecret = () =>
+  new TextEncoder().encode(process.env.JWT_REFRESH_SECRET!);
 
 export async function signAccessToken(userId: string): Promise<string> {
   return new SignJWT({ sub: userId })
@@ -1112,13 +1144,17 @@ export async function signRefreshToken(userId: string): Promise<string> {
     .sign(refreshSecret());
 }
 
-export async function verifyAccessToken(token: string): Promise<{ sub: string }> {
+export async function verifyAccessToken(
+  token: string,
+): Promise<{ sub: string }> {
   const { payload } = await jwtVerify(token, accessSecret());
   if (!payload.sub) throw new Error("Missing sub claim");
   return { sub: payload.sub };
 }
 
-export async function verifyRefreshToken(token: string): Promise<{ sub: string }> {
+export async function verifyRefreshToken(
+  token: string,
+): Promise<{ sub: string }> {
   const { payload } = await jwtVerify(token, refreshSecret());
   if (!payload.sub) throw new Error("Missing sub claim");
   return { sub: payload.sub };
@@ -1143,7 +1179,10 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
 const FROM_EMAIL = process.env.FROM_EMAIL ?? "noreply@commonsfabric.app";
 const APP_URL = process.env.APP_URL ?? "http://localhost:5173";
 
-export async function sendVerificationEmail(to: string, token: string): Promise<void> {
+export async function sendVerificationEmail(
+  to: string,
+  token: string,
+): Promise<void> {
   const link = `${APP_URL}/verify-email?token=${token}`;
   await sgMail.send({
     to,
@@ -1162,7 +1201,11 @@ import { Router } from "express";
 import { randomBytes } from "crypto";
 import { prisma } from "@cfp/db";
 import { hashPassword, verifyPassword, hashToken } from "../lib/hash.js";
-import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../lib/jwt.js";
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyRefreshToken,
+} from "../lib/jwt.js";
 import { sendVerificationEmail } from "../lib/email.js";
 
 export const authRouter = Router();
@@ -1174,7 +1217,8 @@ authRouter.post("/register", async (req, res) => {
   }
 
   const existing = await prisma.user.findUnique({ where: { email } });
-  if (existing) return res.status(409).json({ error: "Email already registered" });
+  if (existing)
+    return res.status(409).json({ error: "Email already registered" });
 
   const passwordHash = await hashPassword(password);
   const emailVerificationToken = randomBytes(32).toString("hex");
@@ -1195,7 +1239,8 @@ authRouter.post("/login", async (req, res) => {
   }
 
   const user = await prisma.user.findUnique({ where: { email } });
-  if (!user?.passwordHash) return res.status(401).json({ error: "Invalid credentials" });
+  if (!user?.passwordHash)
+    return res.status(401).json({ error: "Invalid credentials" });
 
   const valid = await verifyPassword(password, user.passwordHash);
   if (!valid) return res.status(401).json({ error: "Invalid credentials" });
@@ -1221,7 +1266,8 @@ authRouter.post("/login", async (req, res) => {
 
 authRouter.post("/refresh", async (req, res) => {
   const { refreshToken } = req.body;
-  if (!refreshToken) return res.status(400).json({ error: "refreshToken is required" });
+  if (!refreshToken)
+    return res.status(400).json({ error: "refreshToken is required" });
 
   let userId: string;
   try {
@@ -1232,7 +1278,9 @@ authRouter.post("/refresh", async (req, res) => {
   }
 
   const tokenHash = hashToken(refreshToken);
-  const session = await prisma.session.findUnique({ where: { refreshToken: tokenHash } });
+  const session = await prisma.session.findUnique({
+    where: { refreshToken: tokenHash },
+  });
 
   if (!session || session.userId !== userId || session.expiresAt < new Date()) {
     return res.status(401).json({ error: "Session not found or expired" });
@@ -1291,15 +1339,15 @@ FROM node:22-alpine
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY packages/db/package.json ./packages/db/
+COPY db/package.json ./db/
 COPY apps/auth/package.json ./apps/auth/
 
-RUN npm ci --workspace=apps/auth --workspace=packages/db
+RUN npm ci --workspace=apps/auth --workspace=db
 
-COPY packages/db/ ./packages/db/
+COPY db/ ./db/
 COPY apps/auth/ ./apps/auth/
 
-RUN cd packages/db && npx prisma generate
+RUN cd db && npx prisma generate
 
 WORKDIR /app/apps/auth
 ENV PORT=4001
@@ -1315,6 +1363,7 @@ cd apps/auth && npx tsx index.ts
 ```
 
 In a second terminal:
+
 ```bash
 curl -s -X POST http://localhost:4001/health
 ```
@@ -1333,6 +1382,7 @@ git commit -m "feat: implement minimal auth service (register, login, refresh, l
 ## Task 5: Implement apps/scheduler
 
 **Files:**
+
 - `apps/scheduler/package.json`
 - `apps/scheduler/tsconfig.json`
 - `apps/scheduler/lib/promote.ts`
@@ -1489,15 +1539,15 @@ FROM node:22-alpine
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY packages/db/package.json ./packages/db/
+COPY db/package.json ./db/
 COPY apps/scheduler/package.json ./apps/scheduler/
 
-RUN npm ci --workspace=apps/scheduler --workspace=packages/db
+RUN npm ci --workspace=apps/scheduler --workspace=db
 
-COPY packages/db/ ./packages/db/
+COPY db/ ./db/
 COPY apps/scheduler/ ./apps/scheduler/
 
-RUN cd packages/db && npx prisma generate
+RUN cd db && npx prisma generate
 
 WORKDIR /app/apps/scheduler
 CMD ["node", "--import=tsx/esm", "index.ts"]
@@ -1524,6 +1574,7 @@ git commit -m "feat: implement scheduler service with job promotion loop"
 ## Task 6: Implement apps/executioner
 
 **Files:**
+
 - `apps/executioner/package.json`
 - `apps/executioner/tsconfig.json`
 - `apps/executioner/handlers/index.ts`
@@ -1601,7 +1652,12 @@ const mockFailHandler = vi.fn().mockRejectedValue(new Error("boom"));
 
 vi.mock("@cfp/db", () => ({
   prisma: { jobQueue: { findMany: mockFindMany, update: mockUpdate } },
-  JobStatus: { READY: "READY", RUNNING: "RUNNING", COMPLETE: "COMPLETE", FAILED: "FAILED" },
+  JobStatus: {
+    READY: "READY",
+    RUNNING: "RUNNING",
+    COMPLETE: "COMPLETE",
+    FAILED: "FAILED",
+  },
 }));
 
 vi.mock("../handlers/index.js", () => ({
@@ -1611,7 +1667,14 @@ vi.mock("../handlers/index.js", () => ({
 const { pollAndExecute } = await import("../lib/poll.js");
 
 const makeJob = (overrides: Partial<JobQueue> = {}): JobQueue =>
-  ({ id: "j1", serviceName: "ok-job", payload: {}, retryCount: 0, maxRetries: 3, ...overrides } as JobQueue);
+  ({
+    id: "j1",
+    serviceName: "ok-job",
+    payload: {},
+    retryCount: 0,
+    maxRetries: 3,
+    ...overrides,
+  }) as JobQueue;
 
 describe("pollAndExecute", () => {
   beforeEach(() => {
@@ -1630,38 +1693,53 @@ describe("pollAndExecute", () => {
     mockFindMany.mockResolvedValue([makeJob()]);
     await pollAndExecute();
     expect(mockUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ status: "RUNNING" }) })
+      expect.objectContaining({
+        data: expect.objectContaining({ status: "RUNNING" }),
+      }),
     );
     expect(mockUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ status: "COMPLETE" }) })
+      expect.objectContaining({
+        data: expect.objectContaining({ status: "COMPLETE" }),
+      }),
     );
   });
 
   it("requeues as READY when failure and retries remain", async () => {
-    mockFindMany.mockResolvedValue([makeJob({ serviceName: "bad-job", retryCount: 0, maxRetries: 3 })]);
+    mockFindMany.mockResolvedValue([
+      makeJob({ serviceName: "bad-job", retryCount: 0, maxRetries: 3 }),
+    ]);
     await pollAndExecute();
     expect(mockUpdate).toHaveBeenCalledWith(
-      expect.objectContaining({ data: expect.objectContaining({ status: "READY", retryCount: 1 }) })
+      expect.objectContaining({
+        data: expect.objectContaining({ status: "READY", retryCount: 1 }),
+      }),
     );
   });
 
   it("marks FAILED when retry count reaches max", async () => {
-    mockFindMany.mockResolvedValue([makeJob({ serviceName: "bad-job", retryCount: 2, maxRetries: 3 })]);
+    mockFindMany.mockResolvedValue([
+      makeJob({ serviceName: "bad-job", retryCount: 2, maxRetries: 3 }),
+    ]);
     await pollAndExecute();
     expect(mockUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        data: expect.objectContaining({ status: "FAILED", errorMessage: "boom" }),
-      })
+        data: expect.objectContaining({
+          status: "FAILED",
+          errorMessage: "boom",
+        }),
+      }),
     );
   });
 
   it("marks FAILED with message for unknown service", async () => {
-    mockFindMany.mockResolvedValue([makeJob({ serviceName: "unknown", retryCount: 2, maxRetries: 3 })]);
+    mockFindMany.mockResolvedValue([
+      makeJob({ serviceName: "unknown", retryCount: 2, maxRetries: 3 }),
+    ]);
     await pollAndExecute();
     expect(mockUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({ status: "FAILED" }),
-      })
+      }),
     );
   });
 });
@@ -1696,7 +1774,10 @@ export async function pollAndExecute(): Promise<void> {
 
     try {
       const handler = handlers[job.serviceName];
-      if (!handler) throw new Error(`No handler registered for service: ${job.serviceName}`);
+      if (!handler)
+        throw new Error(
+          `No handler registered for service: ${job.serviceName}`,
+        );
       await handler(job.payload);
       await prisma.jobQueue.update({
         where: { id: job.id },
@@ -1708,12 +1789,21 @@ export async function pollAndExecute(): Promise<void> {
       if (newRetryCount < job.maxRetries) {
         await prisma.jobQueue.update({
           where: { id: job.id },
-          data: { status: JobStatus.READY, retryCount: newRetryCount, errorMessage },
+          data: {
+            status: JobStatus.READY,
+            retryCount: newRetryCount,
+            errorMessage,
+          },
         });
       } else {
         await prisma.jobQueue.update({
           where: { id: job.id },
-          data: { status: JobStatus.FAILED, retryCount: newRetryCount, errorMessage, completedAt: new Date() },
+          data: {
+            status: JobStatus.FAILED,
+            retryCount: newRetryCount,
+            errorMessage,
+            completedAt: new Date(),
+          },
         });
       }
     }
@@ -1759,15 +1849,15 @@ FROM node:22-alpine
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-COPY packages/db/package.json ./packages/db/
+COPY db/package.json ./db/
 COPY apps/executioner/package.json ./apps/executioner/
 
-RUN npm ci --workspace=apps/executioner --workspace=packages/db
+RUN npm ci --workspace=apps/executioner --workspace=db
 
-COPY packages/db/ ./packages/db/
+COPY db/ ./db/
 COPY apps/executioner/ ./apps/executioner/
 
-RUN cd packages/db && npx prisma generate
+RUN cd db && npx prisma generate
 
 WORKDIR /app/apps/executioner
 CMD ["node", "--import=tsx/esm", "index.ts"]
@@ -1794,6 +1884,7 @@ git commit -m "feat: implement executioner service with poll loop, retry logic, 
 ## Task 7: Wire Docker Compose
 
 **Files:**
+
 - `docker-compose.yml`
 - `docker-compose.prod.yml`
 
@@ -1822,7 +1913,7 @@ services:
   migrator:
     build:
       context: .
-      dockerfile: packages/db/Dockerfile
+      dockerfile: db/Dockerfile
     environment:
       DATABASE_URL: ${DATABASE_URL}
     depends_on:
@@ -1932,6 +2023,7 @@ cp .env.example .env
 ```
 
 Edit `.env`:
+
 ```
 DATABASE_URL=postgresql://cfp:cfp@postgres:5432/cfp_dev
 JWT_SECRET=local-dev-secret-change-for-production
@@ -1958,6 +2050,7 @@ docker compose up
 ```
 
 Expected output sequence:
+
 1. `postgres` becomes healthy
 2. `migrator` runs and exits with code 0
 3. `auth`, `server`, `scheduler`, `executioner` start
@@ -1992,25 +2085,25 @@ git commit -m "feat: wire Docker Compose for full local stack (postgres, migrato
 
 **Spec coverage check:**
 
-| Spec requirement | Task |
-|---|---|
-| npm workspaces, no Turborepo | Task 1 |
-| packages/db owns Prisma, exports client | Task 1 |
-| Session model (auth refresh tokens) | Task 1.9 |
-| JobQueue model with all columns | Task 1.9 |
-| User auth fields (passwordHash, emailVerificationToken) | Task 1.8 |
-| apps/server migrated, Supabase removed | Task 2 |
-| apps/server JWT verified with jose | Task 2.5 |
-| apps/web migrated | Task 3 |
-| apps/web auth client (localStorage tokens) | Task 3.5 |
-| apps/auth: register, login, refresh, logout, verify-email | Task 4.12 |
-| JWT access tokens expire in 3h | Task 4.9 |
-| Refresh tokens stored as SHA-256 hash | Task 4.5, 4.12 |
-| apps/scheduler: SCHEDULED→PENDING→READY promotion | Task 5 |
-| apps/executioner: poll READY, retry on failure, FAILED after max retries | Task 6 |
-| Docker Compose: postgres + migrator + all services | Task 7 |
-| Migrator gates all service starts | Task 7.1 |
-| Caddy as production static + reverse proxy | Task 3.9, 3.10 |
-| Caddy routing: /auth/* → auth:4001, /api/graphql → server:4000 | Task 3.10 |
-| docker-compose.prod.yml overrides | Task 7.2 |
-| .env.example | Task 1.11 |
+| Spec requirement                                                         | Task           |
+| ------------------------------------------------------------------------ | -------------- |
+| npm workspaces, no Turborepo                                             | Task 1         |
+| db owns Prisma, exports client                                           | Task 1         |
+| Session model (auth refresh tokens)                                      | Task 1.9       |
+| JobQueue model with all columns                                          | Task 1.9       |
+| User auth fields (passwordHash, emailVerificationToken)                  | Task 1.8       |
+| apps/server migrated, Supabase removed                                   | Task 2         |
+| apps/server JWT verified with jose                                       | Task 2.5       |
+| apps/web migrated                                                        | Task 3         |
+| apps/web auth client (localStorage tokens)                               | Task 3.5       |
+| apps/auth: register, login, refresh, logout, verify-email                | Task 4.12      |
+| JWT access tokens expire in 3h                                           | Task 4.9       |
+| Refresh tokens stored as SHA-256 hash                                    | Task 4.5, 4.12 |
+| apps/scheduler: SCHEDULED→PENDING→READY promotion                        | Task 5         |
+| apps/executioner: poll READY, retry on failure, FAILED after max retries | Task 6         |
+| Docker Compose: postgres + migrator + all services                       | Task 7         |
+| Migrator gates all service starts                                        | Task 7.1       |
+| Caddy as production static + reverse proxy                               | Task 3.9, 3.10 |
+| Caddy routing: /auth/\* → auth:4001, /api/graphql → server:4000          | Task 3.10      |
+| docker-compose.prod.yml overrides                                        | Task 7.2       |
+| .env.example                                                             | Task 1.11      |

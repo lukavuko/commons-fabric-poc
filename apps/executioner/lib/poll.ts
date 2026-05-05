@@ -16,7 +16,10 @@ export async function pollAndExecute(): Promise<void> {
 
     try {
       const handler = handlers[job.serviceName];
-      if (!handler) throw new Error(`No handler registered for service: ${job.serviceName}`);
+      if (!handler)
+        throw new Error(
+          `No handler registered for service: ${job.serviceName}`,
+        );
       await handler(job.payload);
       await prisma.jobQueue.update({
         where: { id: job.id },
@@ -28,12 +31,21 @@ export async function pollAndExecute(): Promise<void> {
       if (newRetryCount < job.maxRetries) {
         await prisma.jobQueue.update({
           where: { id: job.id },
-          data: { status: JobStatus.READY, retryCount: newRetryCount, errorMessage },
+          data: {
+            status: JobStatus.READY,
+            retryCount: newRetryCount,
+            errorMessage,
+          },
         });
       } else {
         await prisma.jobQueue.update({
           where: { id: job.id },
-          data: { status: JobStatus.FAILED, retryCount: newRetryCount, errorMessage, completedAt: new Date() },
+          data: {
+            status: JobStatus.FAILED,
+            retryCount: newRetryCount,
+            errorMessage,
+            completedAt: new Date(),
+          },
         });
       }
     }

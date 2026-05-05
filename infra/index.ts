@@ -44,9 +44,11 @@ const bootstrap = new command.remote.Command("bootstrap", {
 // ─── Deploy ────────────────────────────────────────────────────────────────
 // Pulls latest main, rebuilds containers, and restarts the stack.
 // Caddy handles TLS automatically on first run — no cert management needed.
-const deploy = new command.remote.Command("deploy", {
-  connection,
-  create: pulumi.interpolate`
+const deploy = new command.remote.Command(
+  "deploy",
+  {
+    connection,
+    create: pulumi.interpolate`
     set -e
     cd ${appDir}
     git fetch origin main
@@ -55,9 +57,11 @@ const deploy = new command.remote.Command("deploy", {
     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build --remove-orphans
     docker system prune -f
   `,
-  // Increment this string to force a redeploy on next `pulumi up`
-  triggers: ["v1"],
-}, { dependsOn: bootstrap });
+    // Increment this string to force a redeploy on next `pulumi up`
+    triggers: ["v1"],
+  },
+  { dependsOn: bootstrap },
+);
 
 // ─── DNS via Cloudflare ────────────────────────────────────────────────────
 // Uncomment once the domain and zone ID are confirmed.

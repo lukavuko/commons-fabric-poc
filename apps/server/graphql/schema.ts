@@ -7,17 +7,69 @@ export const typeDefs = gql`
   # Enums
   # -------------------------------------------------------
 
-  enum RoleEntityType { HUB, COMMUNITY }
-  enum CommentEntityType { ANNOUNCEMENT, EVENT }
-  enum HubType { REGISTERED, AGGLOMERATE }
-  enum ReleaseStatus { DRAFT, PENDING, HIDDEN, PUBLIC, ARCHIVED }
-  enum EventType { SOCIAL, INFORMATIONAL }
-  enum RecurrenceSchedule { DAILY, WEEKLY, BIWEEKLY, MONTHLY, ANNUAL }
-  enum Day { MON, TUE, WED, THU, FRI, SAT, SUN }
-  enum CommentStatus { PENDING, APPROVED, REJECTED, HIDDEN, LOCKED }
-  enum CommunicationFrequency { NEVER, REALTIME, DAILY, WEEKLY, BIWEEKLY, MONTHLY }
-  enum CommunicationMethod { EMAIL, SMS }
-  enum RSVPStatus { GOING, INTERESTED, NOT_GOING }
+  enum RoleEntityType {
+    HUB
+    COMMUNITY
+  }
+  enum CommentEntityType {
+    ANNOUNCEMENT
+    EVENT
+  }
+  enum HubType {
+    REGISTERED
+    AGGLOMERATE
+  }
+  enum ReleaseStatus {
+    DRAFT
+    PENDING
+    HIDDEN
+    PUBLIC
+    ARCHIVED
+  }
+  enum EventType {
+    SOCIAL
+    INFORMATIONAL
+  }
+  enum RecurrenceSchedule {
+    DAILY
+    WEEKLY
+    BIWEEKLY
+    MONTHLY
+    ANNUAL
+  }
+  enum Day {
+    MON
+    TUE
+    WED
+    THU
+    FRI
+    SAT
+    SUN
+  }
+  enum CommentStatus {
+    PENDING
+    APPROVED
+    REJECTED
+    HIDDEN
+    LOCKED
+  }
+  enum CommunicationFrequency {
+    NEVER
+    REALTIME
+    DAILY
+    WEEKLY
+    BIWEEKLY
+    MONTHLY
+  }
+  enum CommunicationMethod {
+    EMAIL
+    SMS
+  }
+  enum RSVPStatus {
+    GOING
+    INTERESTED
+    NOT_GOING
+  }
 
   # -------------------------------------------------------
   # Types
@@ -26,6 +78,7 @@ export const typeDefs = gql`
   type User {
     id: ID!
     username: String!
+    displayName: String
     email: String!
     phone: String
     firstname: String
@@ -182,6 +235,14 @@ export const typeDefs = gql`
   # Inputs
   # -------------------------------------------------------
 
+  input UpdateUserInput {
+    firstname: String
+    lastname: String
+    phone: String
+    username: String
+    displayName: String
+  }
+
   input CommunityFilter {
     city: String
     province: String
@@ -296,15 +357,27 @@ export const typeDefs = gql`
     event(id: ID!): Event
     announcements(communityId: ID!): [Announcement!]!
     announcement(id: ID!): Announcement
-    comments(parentEntityType: CommentEntityType!, parentEntityId: ID!): [Comment!]!
+    comments(
+      parentEntityType: CommentEntityType!
+      parentEntityId: ID!
+    ): [Comment!]!
     myFeed: Feed!
     mySubscriptions: [UserSubscription!]!
+    """
+    Returns the resolved permission names the current user holds for a given
+    entity (community or hub). Falls back to the ANYONE implicit set when the
+    user has no UserRole for the entity. Returns [] when unauthenticated.
+    """
+    myPermissions(entityId: ID!, entityType: RoleEntityType!): [String!]!
   }
 
   type Mutation {
     signUp(email: String!, password: String!, username: String!): AuthPayload!
     signIn(email: String!, password: String!): AuthPayload!
     signOut: Boolean!
+
+    updateMe(input: UpdateUserInput!): User!
+    deleteMe: Boolean!
 
     createCommunity(input: CreateCommunityInput!): Community!
     updateCommunity(id: ID!, input: UpdateCommunityInput!): Community!
@@ -317,9 +390,15 @@ export const typeDefs = gql`
     createAnnouncement(input: CreateAnnouncementInput!): Announcement!
     publishAnnouncement(id: ID!): Announcement!
 
-    subscribeToCommunity(communityId: ID!, input: UpdateSubscriptionInput): UserSubscription!
+    subscribeToCommunity(
+      communityId: ID!
+      input: UpdateSubscriptionInput
+    ): UserSubscription!
     unsubscribeFromCommunity(communityId: ID!): Boolean!
-    updateSubscription(communityId: ID!, input: UpdateSubscriptionInput!): UserSubscription!
+    updateSubscription(
+      communityId: ID!
+      input: UpdateSubscriptionInput!
+    ): UserSubscription!
 
     rsvpToEvent(eventId: ID!, status: RSVPStatus!): UserEvent!
     cancelRsvp(eventId: ID!): Boolean!

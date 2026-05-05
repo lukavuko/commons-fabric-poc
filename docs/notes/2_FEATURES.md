@@ -2,12 +2,12 @@
 
 ## The Value Proposition
 
-*What does our web-app intend to solve?*
+_What does our web-app intend to solve?_
 
 <u>a. For Community Stewards</u>
 
-- Easily communicate across a fragmented communication landscape 
-- Increase localized community discovery 
+- Easily communicate across a fragmented communication landscape
+- Increase localized community discovery
 - Flexible governance and autonomy
 
 <u>b. For Community Members</u>
@@ -47,7 +47,7 @@ This means each will have a slightly different usage pattern. This usage pattern
 5. As they come across a community they like, they click on the pin which queries that communities information.
 6. A **community popup expands** to reveal basic community information. The user can either close the popup if it's not what they were looking for, or continue reading by visit the **complete community page** linked within the popup.
 7. On the community page they can read more about the description, events, announcements, happenings that the community organizes, as well as their website links/social media pages, and wiki links.
-8. If the user would like to stay informed, they can either "**subscribe**" or "**join**" which provide slightly different functions. Subscriptions are merely observant and do not provide a means to interact within the community (only keep users informed). Joining a community automatically subscribes you, but is also a little more committing and may require additional information from the user (like their name for instance) so the community can be protected from bad actors in case it requires that type of governance. Users who join and are approved or auto-approved can additionally **RSVP** and **Comment** on events and announcements created by the community and/or other community members. These subtle settings (subscribe/join) are saved as a **community-role-tag**  and are how users are provisioned the correct **role-based access controls** for interacting with communities.
+8. If the user would like to stay informed, they can either "**subscribe**" or "**join**" which provide slightly different functions. Subscriptions are merely observant and do not provide a means to interact within the community (only keep users informed). Joining a community automatically subscribes you, but is also a little more committing and may require additional information from the user (like their name for instance) so the community can be protected from bad actors in case it requires that type of governance. Users who join and are approved or auto-approved can additionally **RSVP** and **Comment** on events and announcements created by the community and/or other community members. These subtle settings (subscribe/join) are saved as a **community-role-tag** and are how users are provisioned the correct **role-based access controls** for interacting with communities.
 9. Regardless of whether you join or subscribe, these community events will automatically populate your **calendar** and their community **announcements** will automatically populate your feed. At this point, the user can decide:
    - What **events** they'd like to keep in their calendar (filter by tag/type)
    - What **announcements** they'd like to keep in their feed (filter by tag/type)
@@ -60,15 +60,15 @@ This means each will have a slightly different usage pattern. This usage pattern
 
 ---
 
-> I've been a part of my local neighborhood community for months but the website is dead and the only way we get updates on local events are through printed pamphlets that the councilor has to go around and stick onto everyone's doors. Recently, a steward started a community group on Commons Fabric and set things up for members like myself to follow. 
+> I've been a part of my local neighborhood community for months but the website is dead and the only way we get updates on local events are through printed pamphlets that the councilor has to go around and stick onto everyone's doors. Recently, a steward started a community group on Commons Fabric and set things up for members like myself to follow.
 
 ---
 
 1. I created an account and went to the explore page to try and find my neighbourhood. I was able to look it up with a search bar but I could also drag the map around to find the pin based on my current location.
-2. I opened the community popup to make sure it was the right onw, and proceeded to request to join the group. I was prompted by my steward to answer some questions after the "request to join" where I provide some information about myself for them to validate. 
-3. Upon entry (auto-approved or manually after a few days), I receive a member badge for being a part of my neighbourhood. I can now see all the events that are posted to the calendar as well as any announcements and any discussion threads taking place in the announcement forum. 
-4. I can RSVP to events by clicking on the them in the calendar, on the calendar page, and also comment on them in case I need something clarified. 
-5. I often forget to check the website so I opt to receive a monthly email and SMS text message on the happenings associated with the community group, like requests for volunteers or city hall meetings, and so forth. 
+2. I opened the community popup to make sure it was the right onw, and proceeded to request to join the group. I was prompted by my steward to answer some questions after the "request to join" where I provide some information about myself for them to validate.
+3. Upon entry (auto-approved or manually after a few days), I receive a member badge for being a part of my neighbourhood. I can now see all the events that are posted to the calendar as well as any announcements and any discussion threads taking place in the announcement forum.
+4. I can RSVP to events by clicking on the them in the calendar, on the calendar page, and also comment on them in case I need something clarified.
+5. I often forget to check the website so I opt to receive a monthly email and SMS text message on the happenings associated with the community group, like requests for volunteers or city hall meetings, and so forth.
 6. I like that the interface is simple, I can see other members, and can even see what roles they have (ie. volunteer member, co-steward, moderator, steward) who take on somewhat more responsibility to help make my community's activities become a reality.
 
 ### 3. The Steward Journey
@@ -81,43 +81,47 @@ This means each will have a slightly different usage pattern. This usage pattern
 
 1. I create an account and find the community hub on the explore page.
 1. Since I don't see my community registered yet, I go ahead and request to create a new community.
-1. I fill in a bunch of information related to it, such as the name, the website link, a description, some tags, the community's contact information (I can either fill it out manually or check a checkbox that says "I am the main contact for this community", in which case all that information is pre-filled), the address, the city, maybe an image, and so forth. 
+1. I fill in a bunch of information related to it, such as the name, the website link, a description, some tags, the community's contact information (I can either fill it out manually or check a checkbox that says "I am the main contact for this community", in which case all that information is pre-filled), the address, the city, maybe an image, and so forth.
 1. One thing required to ensure integrity, is the requirement to use a community contact email that has the same domain as the website it's hosted on. This way, only people who have access to the community email inbox can actually verify the creation and adoption of a new community group.
 1. I then get presented a settings page on how I'd like to govern the community. This includes a section on membership requirements which can be custom questions related to why a person wants to join, if they are a member of the neighbouring areas, their name (users can be anonymous so for my community I want to ensure that only users who have chosen to share their name are permitted to join), and also what permissions are associated with each special "badge" a community member can have (volunteer, moderator, co-steward).
 1. Once created, the group creation request is automatically and conditionally approved, but manual review will still take place within a day or two to ensure it's not spam or anything like that. Once it passes manual verification, and I verify my email as well as the community's email contact, I will see a verified badge appear on the community page.
-1. I start by creating an event in our calendar to share a kickoff social 2 weeks from now. I fill in the event's information and click on a checkbox that allows me to post the event as an announcement. This will also create a post for it on the announcement page. In addition, I select all communication channels for dissemination (email, SMS, whatsapp, messenger, signal) and select the real-time publish button. This ensures that the notification is sent in real-time to all users who are subscribed and have notifications turned on for my community group. For users who have opted for a weekly/biweekly/monthly notification protocol, this announcement will sit in their "notification queue" until the cycle time is reached, then they will be notified. 
+1. I start by creating an event in our calendar to share a kickoff social 2 weeks from now. I fill in the event's information and click on a checkbox that allows me to post the event as an announcement. This will also create a post for it on the announcement page. In addition, I select all communication channels for dissemination (email, SMS, whatsapp, messenger, signal) and select the real-time publish button. This ensures that the notification is sent in real-time to all users who are subscribed and have notifications turned on for my community group. For users who have opted for a weekly/biweekly/monthly notification protocol, this announcement will sit in their "notification queue" until the cycle time is reached, then they will be notified.
 1. In the following days I see some members are RSVPing to the social event, some new subscribers are requesting to join to become members, and one member has asked for some clarifying information on the event page which I'll respond to to clarify.
 
 ## Pages, Features, Functions, Phases
 
 Phase 1 is targeted for stewards only, testing and debugging, and all user-role permissions will be preset. Phase 2 will expand on the user functionality, add an additional page (settings and dashboard) and connect new endpoints and backend logic to help make the app work better. Phase 3 will be the final PoC phase and will establish the final two pages for exploration (geographic) and community announcements page seen on a specific community page.
 
-| Phase | Page                          | Features                                                     |
-| ----- | ----------------------------- | ------------------------------------------------------------ |
-| 1     | Welcome                       | Brief introduction to how to use the website, what it's for  |
-| 1     | Login                         | Your everyday login page                                     |
-| 1     | Sign Up                       | Your everyday sign up page                                   |
-| 1     | Exploration (Gallery)         | Search Bar - Tag Filtering - Gallery View - Sort by (alphabetical, most/least members) - Filter by Verified Only - |
-| 3     | Exploration (Geographic)      | Map centered on current location (ask for permission) - Map pins coloured by community type - Map pins sized by community size - Map pins are star shaped if you're a part of them - Map pins aggregated into hubs as you zoom out - Clickable pins to open a popup - Tag filtering - Verified Only filtering - Search bar filtering |
-| 1     | Exploration Popup Views       | Clickable pin opens a brief information popup - Community Image, Name, Address, Description, Website link, Wiki link, Contact info, Member count, Announcement Page Link, Calendar Page Link, Subscribe button, Join button |
-| 1     | Community Home Page           | Notification Preferences (schedule & method on the right hand side) - Your status with the community (Nothing/Subscriber/Member/Volunteer/Moderator/Co-steward/Steward) |
-| 1     | Community Calendar            | Calendar page with only the current community's events - Ability to RSVP to events if you are a member - Ability to comment and interact with the calendar module as if it was the personal calendar, except you can only create events if you have a steward badge (you run the community) |
-| 2     | Hub Calendar                  | Calendar page viewable by Hub-Comm Stewards - Hub Stewards can sync it to an existing Calendar hosted elsewhere (ie. Wordpress, Google, Microsoft, etc.) |
+| Phase | Page                          | Features                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| ----- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | Welcome                       | Brief introduction to how to use the website, what it's for                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 1     | Login                         | Your everyday login page                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| 1     | Sign Up                       | Your everyday sign up page                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 1     | Email Verification            | One-time-token landing page that activates the account - Resend option for expired/invalid tokens - Unverified accounts can browse but cannot subscribe, create communities, or create events                                                                                                                                                                                                                                                                                                                                             |
+| 1     | Exploration (Gallery)         | Search Bar - Tag Filtering - Gallery View - Sort by (alphabetical, most/least members) - Filter by Verified Only -                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| 3     | Exploration (Geographic)      | Map centered on current location (ask for permission) - Map pins coloured by community type - Map pins sized by community size - Map pins are star shaped if you're a part of them - Map pins aggregated into hubs as you zoom out - Clickable pins to open a popup - Tag filtering - Verified Only filtering - Search bar filtering                                                                                                                                                                                                      |
+| 1     | Exploration Popup Views       | Clickable pin opens a brief information popup - Community Image, Name, Address, Description, Website link, Wiki link, Contact info, Member count, Announcement Page Link, Calendar Page Link, Subscribe button, Join button                                                                                                                                                                                                                                                                                                               |
+| 1     | Community Home Page           | Notification Preferences (schedule & method on the right hand side) - Your status with the community (Nothing/Subscriber/Member/Volunteer/Moderator/Co-steward/Steward)                                                                                                                                                                                                                                                                                                                                                                   |
+| 1     | Community Calendar            | Calendar page with only the current community's events - Ability to RSVP to events if you are a member - Ability to comment and interact with the calendar module as if it was the personal calendar, except you can only create events if you have a steward badge (you run the community)                                                                                                                                                                                                                                               |
+| 2     | Hub Calendar                  | Calendar page viewable by Hub-Comm Stewards - Hub Stewards can sync it to an existing Calendar hosted elsewhere (ie. Wordpress, Google, Microsoft, etc.)                                                                                                                                                                                                                                                                                                                                                                                  |
 | 3     | Community Announcements/Forum | An information feed of a given community's latest announcements, sorted chronologically with the ability to pin certain announcements to the top - Clicking on an announcement opens a preview popup where all the information is displayed - The Preview Popup also has a save to my mail button which allows a user to email themselves the announcement to save it for later if they don't want to navigate through the website again - Announcements are automatically archived after 30 days or after an associated event has passed |
-| 2     | Personal Dashboard            | My Subscriptions, Communities, & Badges - Information Feed - Tag Filtering - Community Filtering - Announcement Popup |
-| 1     | Personal Calendar             | Tag Filtering - Community Filtering - RSVPing - Event Popup  |
-| 2     | Personal Settings             | Account Settings - TBD                                       |
+| 2     | Personal Dashboard            | My Subscriptions, Communities, & Badges - Information Feed - Tag Filtering - Community Filtering - Announcement Popup                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| 1     | Personal Calendar             | Tag Filtering - Community Filtering - RSVPing - Event Popup                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| 2     | Personal Settings             | Account Settings - TBD                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| 1     | Create/Edit Community Form    | Form to register or edit a community (name, description, address, tags, contact email, image) - Auto-approved during PoC; manual review deferred - Edit/delete available to any user during PoC, gated to stewards post-PoC                                                                                                                                                                                                                                                                                                               |
+| 1     | Create/Edit Event Form        | Form to add or edit an event on a community calendar (title, description, date/time, location, optional announcement post) - Saved events appear immediately on Per-Community and Personal Calendar - Edit/delete available to any user during PoC                                                                                                                                                                                                                                                                                        |
+| 1     | Event Detail Popup            | Clickable from any calendar tile - Full event information - Download .ics - Email .ics to self - RSVP and full calendar sync deferred (require membership functions)                                                                                                                                                                                                                                                                                                                                                                      |
 
+## Feature Roadmap
 
+> See the **MVP Feature List** section below for the authoritative scope of the first demonstrable build. The roadmap below remains the long-form working list of features across phases.
 
-##  Feature Roadmap
-
-| Feature                                     | Status     | Notes                                 |
-| ------------------------------------------- | ---------- | ------------------------------------- |
+| Feature                                     | Status      | Notes                                 |
+| ------------------------------------------- | ----------- | ------------------------------------- |
 | React + Vite + Prisma + Apollo Server setup | ✅ Done     |                                       |
 | Database schema + migrations                | ✅ Done     |                                       |
 | GraphQL resolvers (basic)                   | ✅ Done     |                                       |
-| User authentication (email + OAuth)         | ⬜ Todo     | Supabase Auth                         |
+| User authentication (email)                 | ✅ Todo     | Built in Auth                         |
 | Community CRUD (organizer)                  | ⬜ Todo     |                                       |
 | Event creation and display                  | ⬜ Todo     |                                       |
 | RSVP mutations                              | ⬜ Todo     |                                       |
@@ -136,8 +140,6 @@ Phase 1 is targeted for stewards only, testing and debugging, and all user-role 
 | Full calendar sync (Google/Outlook API)     | ⬜ Deferred | Post-PoC                              |
 | Additional notification channels            | ⬜ Deferred | SMS, WhatsApp, etc.                   |
 
-
-
 ## Server-side Aspirations
 
 **Community Matching Algorithm**
@@ -149,10 +151,10 @@ This feature is deferred until after the PoC is validated. The intent is to surf
 - A weighted score: `match_score = 0.6 × geographic + 0.4 × tag_similarity`
 - Hierarchical groupings stored in an adjacency list table for efficient querying
 
-**AI Automation and Integration** 
+**AI Automation and Integration**
 
 - AI Agent Community Scraper Pipeline for Onboarding new groups
-- Automated Community to Hub Aggregation 
+- Automated Community to Hub Aggregation
 - Automated Discover of implied Communities
 
 **Verification Processes**
@@ -176,8 +178,79 @@ This feature is deferred until after the PoC is validated. The intent is to surf
 - Optional personal profile photo
 - Mediated invitations to connect so email and other information can be mutually shared
 
+## MVP Feature List
 
+The MVP is scoped to a single demonstrable end-to-end loop: a user creates an account, verifies their email, finds or creates a community, subscribes, configures notification preferences, creates an event, and sees it on a shared calendar — receiving the event by email per their chosen schedule and medium.
 
+**Permission model.** Every authenticated user is granted steward-level capabilities for the duration of the PoC: any user can create, edit, and delete any community or event, regardless of authorship. Role-based access controls (per `3_ROLES&PERMS.md`) are layered on after the PoC is validated; the matrix in that document remains the target end state. The only gate preserved in MVP is **email verification** — unverified accounts can log in and browse the gallery but cannot subscribe, create communities, or create events.
+
+**Visual language.** All MVP pages follow the locked Soft Botanical tokens defined in `5_STYLING.md` — cream surfaces, no hard borders, lightness-shift separation, generous spacing.
+
+### Pages (MVP scope)
+
+| Page                     | Notes                                                                                                                                                                                                                   |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Welcome                  | Minimal landing page with a Login / Sign Up CTA. Skipping advances to the gallery. No marketing copy required for the demo.                                                                                             |
+| Sign Up                  | Email + password registration. On submit, dispatches verification email through the transactional email service.                                                                                                        |
+| Email Verification       | Token-handling landing page that activates the account. Expired or invalid tokens surface a resend option.                                                                                                              |
+| Login                    | Email + password sign-in. Custom-built (see Auth section). Redirects to the user's calendar on success, or the gallery if no subscriptions yet.                                                                         |
+| Community Gallery        | Minimal list/grid of registered communities with a free-form keyword search across name and tags. No map, no advanced filters. **Subscribe is not available from this surface** — clicking a card opens the popup.      |
+| Community Popup          | Lightweight detail card opened from a gallery tile. Shows description, image, member count, primary tags, and a link to the full Community Page. **Subscribe button lives here.** Join button is rendered but disabled. |
+| Community Page           | Full description, contact info, links, and an embedded calendar. Subscribe and Join (disabled) buttons present here as well.                                                                                            |
+| Per-Community Calendar   | Calendar surface scoped to a single community's events. Subscribe button is also present here.                                                                                                                          |
+| Personal Calendar        | Aggregated calendar showing events from all subscribed communities plus communities the user has created. The primary demo surface — styled per Soft Botanical, low-contrast, few borders.                              |
+| Event Detail Popup       | Opens from any clickable calendar tile. Displays full event info, allows `.ics` download, and self-email of the `.ics`. RSVP and full calendar sync are deferred (require membership).                                  |
+| Create / Edit Community  | Form for registering a new community or editing an existing one. Any authenticated and verified user can create or edit any community for the PoC. Auto-approved; manual review deferred.                               |
+| Create / Edit Event      | Form for adding or editing events on a community calendar. Any authenticated and verified user can create or edit events on any community during PoC.                                                                   |
+| Notification Preferences | Per-subscription panel reachable from the Community Page or Calendar. Controls **delivery schedule** (real-time, daily, weekly, monthly) and **medium** (email only for MVP).                                           |
+
+### Subscribe entry points
+
+- Community Popup (primary)
+- Community Page
+- Per-Community Calendar
+
+The gallery card is intentionally not a subscribe entry point — users see at least a popup of context before subscribing.
+
+### Notifications
+
+Both notification paths are part of MVP, sharing the same email medium:
+
+- **Real-time**: when a steward publishes an event/announcement with the real-time flag, an email is dispatched immediately to subscribers whose preference is real-time. Simple, immediate, easy to verify in the demo.
+- **Digest**: a scheduled backend job batches outbound notifications into daily / weekly / monthly cycles per subscriber preference.
+
+The digest backend must consolidate the matrix between **how a community wants to communicate** (real-time push, scheduled batch, etc.) and **how each user wants to receive** (frequency × medium). This consolidation logic — queueing, deduplication, per-user windowing — is the non-trivial architectural work in MVP and should be designed up front to scale to many communities × many subscribers.
+
+Additional mediums (SMS, WhatsApp, Signal, Messenger) are deferred.
+
+### Authentication
+
+Custom-built email + password authentication. We do **not** rely on Supabase Auth — user data must remain on systems we control. Supabase Auth would only be revisited if its email-verification path could be used without externalizing user identity records, which is not the case for MVP.
+
+### Infrastructure
+
+| Item                            | Notes                                                                                                                                                |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Transactional email integration | Required for verification emails, real-time notifications, digest emails, and the self-email-event-as-ics action. Provider TBD (Resend or Sendgrid). |
+| Notification digest job         | Scheduled backend job; runs against a queue of pending notifications; respects per-subscription cadence.                                             |
+| `.ics` generation               | Per-event server-side generation for download and email-to-self actions.                                                                             |
+| Custom auth + session handling  | Email/password, hashed credentials, session/token storage on our database.                                                                           |
+
+### Out of scope for MVP
+
+- Join / membership approval flow and member-only behaviors (RSVP, comments, viewing private events, member lists)
+- Role-based access controls (Subscriber / Member / Custom / Steward / Hub Manager) — all users are steward-equivalent for PoC
+- Geographic / map-based explore view; community matching algorithm; hub aggregation
+- SMS, WhatsApp, Signal, Messenger, and other notification channels
+- Community Announcements / forum page
+- Personal Dashboard, Personal Settings beyond verification
+- Hub Calendar and any hub-level entities
+- Full calendar sync (Google / Outlook API) and "Add to calendar" deep links
+- Manual community verification badge / governance configuration
+- Comment system on events and announcements
+- Unverified-user cleanup TTL job (post-MVP hardening)
+
+---
 
 ## Funding Streams
 

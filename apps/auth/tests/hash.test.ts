@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { hashPassword, verifyPassword, hashToken } from "../lib/hash.js";
+import { hashPassword, verifyPassword, hashToken } from "@cfp/auth-tokens";
 
 describe("hashPassword / verifyPassword", () => {
   it("hashes a password and verifies correctly", async () => {

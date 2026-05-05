@@ -15,6 +15,7 @@ Our answer is a calendar-first, subscription-driven app where communities can pu
 **Founding principles:** autonomy (user and community), visibility (bridging local discovery gaps), governance (integrity of community management), and accessibility through simplicity (low barrier to get value).
 
 **Hard constraints:**
+
 - All data hosted in Canada
 - No dependence on highly centralized, profit-seeking services
 - $0 budget — free tiers only
@@ -66,7 +67,7 @@ Our answer is a calendar-first, subscription-driven app where communities can pu
  ╔══════════════════════════════════════════════════════════════════════╗
  ║                        PostgreSQL Database                           ║
  ║                                                                      ║
- ║  packages/db  ──  single shared Prisma client across all services   ║
+ ║  db  ──  single shared Prisma client across all services   ║
  ║                                                                      ║
  ║  Core data:  User · Community · Hub · Event · Announcement          ║
  ║              Comment · Subscription · UserEvent · Session           ║
@@ -110,28 +111,28 @@ Our answer is a calendar-first, subscription-driven app where communities can pu
 
 ### Current Stack Table
 
-| Layer | Technology | Version | Status |
-|---|---|---|---|
-| **Frontend** | React + Vite (CSR/SPA) | React 19.2, Vite 6.0 | ✅ |
-| **Routing** | React Router DOM | 7.1.1 | ✅ |
-| **Styling** | Tailwind CSS v4 | 4.1 | ✅ |
-| **GraphQL Client** | Raw `gqlFetch` (no Apollo Client lib yet) | — | ⚠️ Partial |
-| **API server** | Express 5 + Apollo Server 5 | 5.1 / 5.5 | ✅ |
-| **API layer** | GraphQL `/api/graphql` | graphql 16 | ✅ |
-| **ORM** | Prisma 7 + `@prisma/adapter-pg` | 7.7 | ✅ |
-| **Database** | PostgreSQL | — | ✅ |
-| **Auth service** | In-house Express (jose + bcryptjs) | — | ✅ |
-| **Email** | SendGrid | 8.1.6 | ⚠️ Wired in auth, not in executioner handlers yet |
-| **Scheduler** | node-cron | 3.x | ✅ Running, no jobs inserted yet |
-| **Executioner** | setInterval poll | — | ✅ Running, no handlers wired yet |
-| **Job queue** | `job_queue` Postgres table | — | ✅ Schema ready, migration pending |
-| **Logging** | Pino + pino-pretty | 10.3 | ✅ |
-| **Monorepo** | npm workspaces | — | ✅ |
-| **Local dev orchestration** | Docker Compose | — | ✅ |
-| **Production proxy** | Caddy 2 | — | ✅ Config ready |
-| **RBAC enforcement** | Schema defined, resolvers not enforcing yet | — | ⚠️ Partial |
-| **ICS export** | Not implemented | — | ⬜ |
-| **GraphQL codegen** | Not set up | — | ⬜ |
+| Layer                       | Technology                                  | Version              | Status                                            |
+| --------------------------- | ------------------------------------------- | -------------------- | ------------------------------------------------- |
+| **Frontend**                | React + Vite (CSR/SPA)                      | React 19.2, Vite 6.0 | ✅                                                |
+| **Routing**                 | React Router DOM                            | 7.1.1                | ✅                                                |
+| **Styling**                 | Tailwind CSS v4                             | 4.1                  | ✅                                                |
+| **GraphQL Client**          | Raw `gqlFetch` (no Apollo Client lib yet)   | —                    | ⚠️ Partial                                        |
+| **API server**              | Express 5 + Apollo Server 5                 | 5.1 / 5.5            | ✅                                                |
+| **API layer**               | GraphQL `/api/graphql`                      | graphql 16           | ✅                                                |
+| **ORM**                     | Prisma 7 + `@prisma/adapter-pg`             | 7.7                  | ✅                                                |
+| **Database**                | PostgreSQL                                  | —                    | ✅                                                |
+| **Auth service**            | In-house Express (jose + bcryptjs)          | —                    | ✅                                                |
+| **Email**                   | SendGrid                                    | 8.1.6                | ⚠️ Wired in auth, not in executioner handlers yet |
+| **Scheduler**               | node-cron                                   | 3.x                  | ✅ Running, no jobs inserted yet                  |
+| **Executioner**             | setInterval poll                            | —                    | ✅ Running, no handlers wired yet                 |
+| **Job queue**               | `job_queue` Postgres table                  | —                    | ✅ Schema ready, migration pending                |
+| **Logging**                 | Pino + pino-pretty                          | 10.3                 | ✅                                                |
+| **Monorepo**                | npm workspaces                              | —                    | ✅                                                |
+| **Local dev orchestration** | Docker Compose                              | —                    | ✅                                                |
+| **Production proxy**        | Caddy 2                                     | —                    | ✅ Config ready                                   |
+| **RBAC enforcement**        | Schema defined, resolvers not enforcing yet | —                    | ⚠️ Partial                                        |
+| **ICS export**              | Not implemented                             | —                    | ⬜                                                |
+| **GraphQL codegen**         | Not set up                                  | —                    | ⬜                                                |
 
 ---
 
@@ -167,9 +168,10 @@ Resolvers handle all business logic: data access via Prisma, auth checks via con
 
 **Prisma 7** handles schema-as-code (`schema.prisma`), generates TypeScript types, builds migration files, and provides a type-safe query builder. One schema file is the source of truth — edit it, run `prisma migrate dev`, done.
 
-The Prisma client lives in `packages/db` and is shared across all services (`@cfp/db`). No service maintains its own connection pool or client instance.
+The Prisma client lives in `db` and is shared across all services (`@cfp/db`). No service maintains its own connection pool or client instance.
 
 **Key design decisions in the schema:**
+
 - CUIDs on all public-facing models; integer PKs on internal/junction tables
 - Polymorphic associations on `UserRole` and `Comment` (no DB FK — enforced via CHECK constraints added manually in migrations)
 - `onDelete: Cascade` on personal data; `onDelete: SetNull` on community content (preserves history when a user leaves)
@@ -181,6 +183,7 @@ The Prisma client lives in `packages/db` and is shared across all services (`@cf
 `apps/auth` is a minimal Express service handling the full auth lifecycle. We built this ourselves instead of relying on Supabase Auth to satisfy the **Canadian data residency** requirement and remove a third-party dependency from a core trust surface.
 
 **How it works:**
+
 - **Registration:** bcrypt-hash the password, generate a random email verification token, store both on the User, send a verification email via SendGrid
 - **Login:** verify password hash → issue a short-lived JWT access token (3h, signed with `JWT_SECRET`) + a long-lived refresh token (30d, signed with `JWT_REFRESH_SECRET`) → store SHA-256 hash of the refresh token in the `sessions` table
 - **Token refresh:** verify refresh token JWT signature → look up SHA-256 hash in sessions → issue new access token
@@ -225,14 +228,14 @@ The scheduler inserts `job_queue` rows with `status = SCHEDULED` and a `fireAt` 
 
 **Job lifecycle:**
 
-| Status | Meaning |
-|---|---|
-| `SCHEDULED` | Registered, but not for today's 24 hour window (ie. fires tomorrow or later) |
-| `PENDING` | To be launched at some point today, within the next 24h — scheduler is watching |
-| `READY` | Current time has passed the `fireAt` time and is now awaiting the executioner |
-| `RUNNING` | Executioner has picked it up and started the job |
-| `COMPLETE` | Job finished successfully |
-| `FAILED` | Job failed after exhausting retries if more than 1 specified |
+| Status      | Meaning                                                                         |
+| ----------- | ------------------------------------------------------------------------------- |
+| `SCHEDULED` | Registered, but not for today's 24 hour window (ie. fires tomorrow or later)    |
+| `PENDING`   | To be launched at some point today, within the next 24h — scheduler is watching |
+| `READY`     | Current time has passed the `fireAt` time and is now awaiting the executioner   |
+| `RUNNING`   | Executioner has picked it up and started the job                                |
+| `COMPLETE`  | Job finished successfully                                                       |
+| `FAILED`    | Job failed after exhausting retries if more than 1 specified                    |
 
 On failure: `retryCount` increments, status resets to `READY` if `retryCount < maxRetries`. Final failure records the `errorMessage` for debugging.
 
@@ -243,6 +246,7 @@ On failure: `retryCount` increments, status resets to `READY` if `retryCount < m
 Every service ships as a Docker container. `docker-compose.yml` at the repo root orchestrates the full stack locally and in production.
 
 **Startup order is enforced:**
+
 ```
 postgres (healthcheck: pg_isready)
   └─► migrator (prisma migrate deploy, exits 0)
@@ -253,6 +257,7 @@ postgres (healthcheck: pg_isready)
 The migrator service runs `prisma migrate deploy` on every `docker compose up` and must exit successfully before any application service starts. This guarantees the schema is always up to date before code runs.
 
 **Production override** (`docker-compose.prod.yml`):
+
 - Swaps the Vite dev server for a Caddy container (pre-built static files + reverse proxy + automatic TLS)
 - Sets `NODE_ENV=production` across all services
 
@@ -260,12 +265,12 @@ The migrator service runs `prisma migrate deploy` on every `docker compose up` a
 
 ### Hosting
 
-| Service | Target | Rationale |
-|---|---|---|
-| **All containers** | Oracle Cloud Free (Montreal/Toronto) or Fly.io (Toronto) | Always-on, Canadian region, free tier |
-| **Database** | Aiven (CA region) or self-hosted on Oracle Cloud | Canadian residency, free tier available |
-| **Email** | SendGrid | 100 emails/day free; swap for Resend (3k/month) when limits hit |
-| **Frontend (alternative)** | Cloudflare Pages / Netlify | If we want CDN-distributed static hosting separately from the VPS |
+| Service                    | Target                                                   | Rationale                                                         |
+| -------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------- |
+| **All containers**         | Oracle Cloud Free (Montreal/Toronto) or Fly.io (Toronto) | Always-on, Canadian region, free tier                             |
+| **Database**               | Aiven (CA region) or self-hosted on Oracle Cloud         | Canadian residency, free tier available                           |
+| **Email**                  | SendGrid                                                 | 100 emails/day free; swap for Resend (3k/month) when limits hit   |
+| **Frontend (alternative)** | Cloudflare Pages / Netlify                               | If we want CDN-distributed static hosting separately from the VPS |
 
 ---
 
@@ -276,11 +281,13 @@ Infrastructure is managed with **Pulumi (TypeScript)** in the `infra/` directory
 **Why Pulumi?** Same language as the rest of the stack. No HCL, no YAML DSL — just TypeScript. Providers exist for every service we need (Oracle Cloud, Fly.io, Cloudflare, Aiven). State is stored in Pulumi Cloud (free for individuals/small teams) or any S3-compatible backend.
 
 **What it manages:**
+
 - **Bootstrap** — installs Docker on the VPS, clones the repo into `/opt/cfp`
 - **Deploy** — pulls latest `main`, rebuilds containers, runs `docker compose up --build` with the prod override
 - **DNS** (Cloudflare) — commented out until the domain is confirmed, then uncomment and `pulumi up`
 
 **First-time setup:**
+
 ```bash
 cd infra
 npm install
@@ -306,8 +313,9 @@ Migrations are applied in two complementary places to prevent schema drift from 
 2. **CI/CD pipeline** (GitHub Actions) — a migration step runs `prisma migrate deploy` against the production DB before rolling out new containers. Failed migration = no deploy.
 
 **Development workflow:**
+
 ```bash
-cd packages/db
+cd db
 npx prisma migrate dev --name <description>   # generate + apply migration
 npx prisma generate                            # regenerate client types
 ```
@@ -319,13 +327,14 @@ Changes to `schema.prisma` need a migration before any service can use new field
 ## Development Workflow
 
 **First-time setup:**
+
 ```bash
 git clone <repo>
 cd commons-fabric-poc
 cp .env.example .env        # fill in DATABASE_URL, JWT_SECRET, etc.
 npm install
 
-cd packages/db
+cd db
 npx prisma migrate dev --name init   # requires a direct (non-pooled) DB URL
 npx prisma generate
 cd ../..
@@ -334,10 +343,11 @@ npm run dev    # starts all 5 services concurrently
 ```
 
 **Adding a database field:**
+
 ```bash
-# 1. Edit packages/db/prisma/schema.prisma
+# 1. Edit db/prisma/schema.prisma
 # 2. Generate and apply migration
-cd packages/db && npx prisma migrate dev --name <description>
+cd db && npx prisma migrate dev --name <description>
 # 3. Types regenerate automatically — import from @cfp/db
 ```
 
@@ -348,12 +358,14 @@ Edit `apps/server/graphql/schema.ts` for the type definition, then add the resol
 Register the handler function in `apps/executioner/handlers/index.ts` under a `serviceName` key. Insertions into `job_queue` with that `serviceName` will be routed to it automatically.
 
 **Running tests:**
+
 ```bash
 npm run test                              # all workspaces
 npm run test --workspace=apps/auth        # single service
 ```
 
 **Full Docker stack locally:**
+
 ```bash
 docker compose up --build
 # postgres → migrator → auth/server/scheduler/executioner → web
@@ -363,20 +375,20 @@ docker compose up --build
 
 ## Back Pocket Alternatives
 
-| Decision | Current Choice | Alternative | Switch When |
-|---|---|---|---|
-| **Database host** | Supabase / self-host | **Neon.tech** or **Aiven (CA)** | Canadian residency becomes a hard legal requirement |
-| **Auth** | In-house (jose + bcryptjs) | **Auth.js / Lucia** | Need OAuth providers or more complex session management |
-| **Email** | SendGrid (100/day free) | **Resend** (3,000/month free) | Free tier limits are hit in testing |
-| **Backend runtime** | Express 5 + Node.js | **Fastify** | Hit Express performance ceiling or want built-in schema validation |
-| **GraphQL transport** | Apollo Server | **tRPC** | Team goes TypeScript-only and wants end-to-end types without codegen. High switching cost — greenfield decision only |
-| **GraphQL client** | Raw `gqlFetch` | **@apollo/client** | UI state complexity grows (optimistic updates, caching, subscriptions) |
-| **Monorepo tooling** | npm workspaces | **Turborepo** | CI build times become painful (adds incremental build caching) |
-| **Static hosting** | Caddy on VPS | **Cloudflare Pages / Netlify** | Want global CDN distribution without managing the proxy |
-| **Job queue** | Postgres `job_queue` table | **BullMQ (Redis)** | Job volume grows large enough that Postgres polling becomes a bottleneck |
-| **IaC** | Pulumi (TypeScript) | **OpenTofu** (OSS Terraform fork, HCL) | Team has prior Terraform experience or needs a provider not yet in Pulumi's ecosystem |
-| **IaC** | Pulumi (TypeScript) | **Ansible** | Configuration management over a fleet of VMs rather than cloud resource provisioning |
-| **IaC** | Pulumi (TypeScript) | **Kamal** (Shopify) | Simplest possible Docker-to-VPS deploy — single YAML config, zero-downtime rolling restarts via SSH, no resource provisioning needed |
+| Decision              | Current Choice             | Alternative                            | Switch When                                                                                                                          |
+| --------------------- | -------------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| **Database host**     | Supabase / self-host       | **Neon.tech** or **Aiven (CA)**        | Canadian residency becomes a hard legal requirement                                                                                  |
+| **Auth**              | In-house (jose + bcryptjs) | **Auth.js / Lucia**                    | Need OAuth providers or more complex session management                                                                              |
+| **Email**             | SendGrid (100/day free)    | **Resend** (3,000/month free)          | Free tier limits are hit in testing                                                                                                  |
+| **Backend runtime**   | Express 5 + Node.js        | **Fastify**                            | Hit Express performance ceiling or want built-in schema validation                                                                   |
+| **GraphQL transport** | Apollo Server              | **tRPC**                               | Team goes TypeScript-only and wants end-to-end types without codegen. High switching cost — greenfield decision only                 |
+| **GraphQL client**    | Raw `gqlFetch`             | **@apollo/client**                     | UI state complexity grows (optimistic updates, caching, subscriptions)                                                               |
+| **Monorepo tooling**  | npm workspaces             | **Turborepo**                          | CI build times become painful (adds incremental build caching)                                                                       |
+| **Static hosting**    | Caddy on VPS               | **Cloudflare Pages / Netlify**         | Want global CDN distribution without managing the proxy                                                                              |
+| **Job queue**         | Postgres `job_queue` table | **BullMQ (Redis)**                     | Job volume grows large enough that Postgres polling becomes a bottleneck                                                             |
+| **IaC**               | Pulumi (TypeScript)        | **OpenTofu** (OSS Terraform fork, HCL) | Team has prior Terraform experience or needs a provider not yet in Pulumi's ecosystem                                                |
+| **IaC**               | Pulumi (TypeScript)        | **Ansible**                            | Configuration management over a fleet of VMs rather than cloud resource provisioning                                                 |
+| **IaC**               | Pulumi (TypeScript)        | **Kamal** (Shopify)                    | Simplest possible Docker-to-VPS deploy — single YAML config, zero-downtime rolling restarts via SSH, no resource provisioning needed |
 
 ---
 
