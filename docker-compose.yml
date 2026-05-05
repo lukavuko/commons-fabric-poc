@@ -71,6 +71,12 @@ services:
       dockerfile: apps/web/Dockerfile
     ports:
       - "5173:5173"
+    volumes:
+      - ./apps/web/src:/app/apps/web/src
+      - ./apps/web/index.html:/app/apps/web/index.html
+      - ./apps/web/vite.config.ts:/app/apps/web/vite.config.ts
+      - ./apps/web/tsconfig.json:/app/apps/web/tsconfig.json
+      - ./apps/web/tsconfig.node.json:/app/apps/web/tsconfig.node.json
     depends_on:
       - server
       - auth
