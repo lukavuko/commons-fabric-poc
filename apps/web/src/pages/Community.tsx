@@ -613,7 +613,6 @@ function SubscribeBlock({
   isVerified,
   canSubscribe,
   isLoadingMe,
-  isLoadingScope,
   access,
   busy,
   error,
@@ -627,8 +626,7 @@ function SubscribeBlock({
   isVerified: boolean;
   canSubscribe: boolean;
   isLoadingMe: boolean;
-  isLoadingScope: boolean;
-  access: CommunityAccessState;
+  access: CommunityAccessState | null;
   busy: boolean;
   error: string;
   showPrefs: boolean;
@@ -637,7 +635,7 @@ function SubscribeBlock({
   onTogglePrefs: () => void;
   communityId: string;
 }) {
-  if (isLoadingMe || isLoadingScope) return null;
+  if (isLoadingMe || access === null) return null;
   const { isSubscribed, scope } = access;
   const hasInheritedSubscription = scope === "MEMBER" || scope === "STEWARD";
 
@@ -731,12 +729,7 @@ export default function Community() {
   const [activeTab, setActiveTab] = useState<Tab>("information");
   const [popup, setPopup] = useState<EventRow | null>(null);
 
-  const [access, setAccess] = useState<CommunityAccessState>({
-    scope: "PUBLIC",
-    isSubscribed: false,
-    roleName: null,
-  });
-  const [accessLoading, setAccessLoading] = useState(false);
+  const [access, setAccess] = useState<CommunityAccessState | null>(null);
   const [subBusy, setSubBusy] = useState(false);
   const [subError, setSubError] = useState("");
   const [showPrefs, setShowPrefs] = useState(false);
@@ -777,26 +770,19 @@ export default function Community() {
   }, [id, searchParams]);
 
   useEffect(() => {
-    if (!id) {
-      setAccess({ scope: "PUBLIC", isSubscribed: false, roleName: null });
-      return;
-    }
+    setAccess(null);
+    if (!id) return;
     let cancelled = false;
-    setAccessLoading(true);
-    gqlFetch<{ communityAccess: CommunityAccessState }>(COMMUNITY_ACCESS_QUERY, {
-      communityId: id,
-    })
+    gqlFetch<{ communityAccess: CommunityAccessState }>(
+      COMMUNITY_ACCESS_QUERY,
+      { communityId: id },
+    )
       .then((d) => {
-        if (cancelled) return;
-        setAccess(d.communityAccess);
+        if (!cancelled) setAccess(d.communityAccess);
       })
       .catch(() => {
-        if (!cancelled) {
+        if (!cancelled)
           setAccess({ scope: "PUBLIC", isSubscribed: false, roleName: null });
-        }
-      })
-      .finally(() => {
-        if (!cancelled) setAccessLoading(false);
       });
     return () => {
       cancelled = true;
@@ -809,11 +795,15 @@ export default function Community() {
     setSubError("");
     try {
       await gqlFetch(SUBSCRIBE, { communityId: id });
-      setAccess((current) => ({
-        ...current,
-        isSubscribed: true,
-        scope: current.scope === "PUBLIC" ? "SUBSCRIBER" : current.scope,
-      }));
+      setAccess((current) =>
+        current
+          ? {
+              ...current,
+              isSubscribed: true,
+              scope: current.scope === "PUBLIC" ? "SUBSCRIBER" : current.scope,
+            }
+          : current,
+      );
       setShowPrefs(true);
     } catch (err) {
       if (
@@ -835,11 +825,11 @@ export default function Community() {
     setSubError("");
     try {
       await gqlFetch(UNSUBSCRIBE, { communityId: id });
-      setAccess((current) => ({
-        ...current,
-        isSubscribed: false,
-        scope: "PUBLIC",
-      }));
+      setAccess((current) =>
+        current
+          ? { ...current, isSubscribed: false, scope: "PUBLIC" }
+          : current,
+      );
       setShowPrefs(false);
     } catch (err) {
       setSubError(err instanceof Error ? err.message : "Could not unsubscribe");
@@ -906,9 +896,8 @@ export default function Community() {
                   <h1 className="font-display text-4xl font-medium text-ink tracking-tight">
                     {community.name}
                   </h1>
-                  {(community.verifiedEmail || community.verifiedExternally) && (
-                    <VerifiedBadge />
-                  )}
+                  {(community.verifiedEmail ||
+                    community.verifiedExternally) && <VerifiedBadge />}
                 </div>
                 <p className="text-ink-muted text-sm">
                   {community.city}, {community.province} ·{" "}
@@ -917,8 +906,8 @@ export default function Community() {
               </div>
               <div className="shrink-0 sm:pt-1">
                 <ScopeBadge
-                  scope={access.scope}
-                  loading={me.loading || accessLoading}
+                  scope={access?.scope ?? "PUBLIC"}
+                  loading={me.loading || access === null}
                 />
               </div>
             </div>
@@ -940,7 +929,6 @@ export default function Community() {
               isVerified={me.isVerified}
               canSubscribe={can("community:subscribe")}
               isLoadingMe={me.loading}
-              isLoadingScope={accessLoading}
               access={access}
               busy={subBusy}
               error={subError}

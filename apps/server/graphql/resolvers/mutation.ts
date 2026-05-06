@@ -6,8 +6,9 @@ const updateUserFields = [
   "firstname",
   "lastname",
   "phone",
-  "username",
   "displayName",
+  "postalCode",
+  "city",
 ] as const;
 
 const communityFields = [
@@ -88,7 +89,7 @@ function pickInput<const T extends readonly string[]>(
 export const Mutation = {
   signUp: async (
     _: unknown,
-    _args: { email: string; password: string; username: string },
+    _args: { email: string; password: string },
     _ctx: Context,
   ) => {
     throw new GraphQLError("signUp is handled by the auth service", {

@@ -83,12 +83,13 @@ export const typeDefs = gql`
 
   type User {
     id: ID!
-    username: String!
     displayName: String
     email: String!
     phone: String
     firstname: String
     lastname: String
+    postalCode: String
+    city: String
     emailVerifiedAt: DateTime
     phoneVerifiedAt: DateTime
     createdAt: DateTime!
@@ -251,8 +252,9 @@ export const typeDefs = gql`
     firstname: String
     lastname: String
     phone: String
-    username: String
     displayName: String
+    postalCode: String
+    city: String
   }
 
   input CommunityFilter {
@@ -385,7 +387,7 @@ export const typeDefs = gql`
   }
 
   type Mutation {
-    signUp(email: String!, password: String!, username: String!): AuthPayload!
+    signUp(email: String!, password: String!): AuthPayload!
     signIn(email: String!, password: String!): AuthPayload!
     signOut: Boolean!
 

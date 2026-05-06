@@ -1,6 +1,6 @@
 # Doc Archive
 
-*A doc graveyard so we know what we left behind.*
+_A doc graveyard so we know what we left behind._
 
 Format is layered with the following general template. The most recent archives inserted at the top, older notes towards the bottom.
 
@@ -17,7 +17,4 @@ Archived Content/Ideas:
 
 ---
 
-
-
 ## Insert Below Me!
-

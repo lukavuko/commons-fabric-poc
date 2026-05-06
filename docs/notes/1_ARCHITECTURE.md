@@ -111,28 +111,28 @@ Our answer is a calendar-first, subscription-driven app where communities can pu
 
 ### Current Stack Table
 
-| Layer                       | Technology                                  | Version              | Status                                            |
-| --------------------------- | ------------------------------------------- | -------------------- | ------------------------------------------------- |
-| **Frontend**                | React + Vite (CSR/SPA)                      | React 19.2, Vite 6.0 | ✅                                                |
-| **Routing**                 | React Router DOM                            | 7.1.1                | ✅                                                |
-| **Styling**                 | Tailwind CSS v4                             | 4.1                  | ✅                                                |
-| **GraphQL Client**          | Raw `gqlFetch` (no Apollo Client lib yet)   | —                    | ⚠️ Partial                                        |
-| **API server**              | Express 5 + Apollo Server 5                 | 5.1 / 5.5            | ✅                                                |
-| **API layer**               | GraphQL `/api/graphql`                      | graphql 16           | ✅                                                |
-| **ORM**                     | Prisma 7 + `@prisma/adapter-pg`             | 7.7                  | ✅                                                |
-| **Database**                | PostgreSQL                                  | —                    | ✅                                                |
-| **Auth service**            | In-house Express (jose + bcryptjs)          | —                    | ✅                                                |
-| **Email**                   | SendGrid                                    | 8.1.6                | ⚠️ Wired in auth, not in executioner handlers yet |
-| **Scheduler**               | node-cron                                   | 3.x                  | ✅ Running, no jobs inserted yet                  |
-| **Executioner**             | setInterval poll                            | —                    | ✅ Running, no handlers wired yet                 |
-| **Job queue**               | `job_queue` Postgres table                  | —                    | ✅ Schema ready, migration pending                |
-| **Logging**                 | Pino + pino-pretty                          | 10.3                 | ✅                                                |
-| **Monorepo**                | npm workspaces                              | —                    | ✅                                                |
-| **Local dev orchestration** | Docker Compose                              | —                    | ✅                                                |
-| **Production proxy**        | Caddy 2                                     | —                    | ✅ Config ready                                   |
-| **RBAC enforcement**        | Schema defined, resolvers not enforcing yet | —                    | ⚠️ Partial                                        |
-| **ICS export**              | Not implemented                             | —                    | ⬜                                                |
-| **GraphQL codegen**         | Not set up                                  | —                    | ⬜                                                |
+| Layer                       | Technology                                                                       | Version              | Status                                            |
+| --------------------------- | -------------------------------------------------------------------------------- | -------------------- | ------------------------------------------------- |
+| **Frontend**                | React + Vite (CSR/SPA)                                                           | React 19.2, Vite 6.0 | ✅                                                |
+| **Routing**                 | React Router DOM                                                                 | 7.1.1                | ✅                                                |
+| **Styling**                 | Tailwind CSS v4                                                                  | 4.1                  | ✅                                                |
+| **GraphQL Client**          | Raw `gqlFetch` (no Apollo Client lib yet)                                        | —                    | ⚠️ Partial                                        |
+| **API server**              | Express 5 + Apollo Server 5                                                      | 5.1 / 5.5            | ✅                                                |
+| **API layer**               | GraphQL `/api/graphql`                                                           | graphql 16           | ✅                                                |
+| **ORM**                     | Prisma 7 + `@prisma/adapter-pg`                                                  | 7.7                  | ✅                                                |
+| **Database**                | PostgreSQL                                                                       | —                    | ✅                                                |
+| **Auth service**            | In-house Express (jose + bcryptjs)                                               | —                    | ✅                                                |
+| **Email**                   | SendGrid                                                                         | 8.1.6                | ⚠️ Wired in auth, not in executioner handlers yet |
+| **Scheduler**               | node-cron                                                                        | 3.x                  | ✅ Running, no jobs inserted yet                  |
+| **Executioner**             | setInterval poll                                                                 | —                    | ✅ Running, no handlers wired yet                 |
+| **Job queue**               | `job_queue` Postgres table                                                       | —                    | ✅ Schema ready, migration pending                |
+| **Logging**                 | Pino + pino-pretty                                                               | 10.3                 | ✅                                                |
+| **Monorepo**                | npm workspaces                                                                   | —                    | ✅                                                |
+| **Local dev orchestration** | Docker Compose                                                                   | —                    | ✅                                                |
+| **Production proxy**        | Caddy 2                                                                          | —                    | ✅ Config ready                                   |
+| **RBAC enforcement**        | `requirePermission()` enforced on community/event/announcement/comment mutations | —                    | ✅                                                |
+| **ICS export**              | Not implemented                                                                  | —                    | ⬜                                                |
+| **GraphQL codegen**         | Not set up                                                                       | —                    | ⬜                                                |
 
 ---
 
@@ -409,5 +409,5 @@ Rolling your own auth means owning the security. The current implementation cove
 **Data residency**
 The constraint is Canadian hosting. Oracle Cloud (Montreal/Toronto) and Aiven (CA region) satisfy this. Fly.io has a Toronto region for the backend. Verify any new service's region before wiring it in.
 
-**RBAC not yet enforced**
-The role/permission schema exists but resolvers only call `requireAuth()` — they don't check `UserRole`/`Permission`. Any authenticated user can currently mutate anything. Enforcement must be in place before community steward features are exposed.
+**RBAC enforcement**
+`requirePermission()` is implemented in `apps/server/graphql/context.ts` and enforced on all community/event/announcement/comment mutations. Create operations (community, event) are gated by `requireEmailVerified()` per MVP PoC scope — role-based create restrictions are deferred to post-PoC. Unsubscribing is blocked for MEMBER and STEWARD roles (subscription is inherited through the role).

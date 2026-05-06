@@ -65,9 +65,11 @@ This design handles custom roles correctly: if a Steward creates a custom ORGANI
 
 ### Subscriber is Not a Role
 
-Anyone (authenticated or not) can subscribe to a community to receive public notifications. Subscribing adds a row to the `Subscription` table and increments the community's subscriber count, but grants no `UserRole`. There is no SUBSCRIBER role in the database.
+Any authenticated and email-verified user can subscribe to a community to receive public notifications. Subscribing adds a row to the `Subscription` table but grants no `UserRole`. There is no SUBSCRIBER role in the database.
 
-Email verification is a separate server-side precondition for `subscribeToCommunity` (not a permission). The RBAC layer sees `community:subscribe` as available to ANYONE; the resolver enforces `emailVerifiedAt` independently.
+Email verification is a server-side precondition enforced by the `subscribeToCommunity` resolver via `requireEmailVerified()`. The RBAC layer sees `community:subscribe` as available to any verified user.
+
+**Subscription inheritance:** MEMBER and STEWARD roles inherit subscription access — holders of these roles cannot voluntarily unsubscribe. The `unsubscribeFromCommunity` resolver enforces this by throwing `FORBIDDEN` if the user holds either role for that community. When a community is created, the creator is automatically assigned the STEWARD role and a `Subscription` row in the same atomic transaction.
 
 ### Permission Scope
 

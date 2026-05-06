@@ -4,27 +4,25 @@ This registry tracks the parity between high-level documentation and the actual 
 
 ## 🚦 Status Definitions
 
-| **State** | **Designation** | **Definition**                                               |
-| --------- | --------------- | ------------------------------------------------------------ |
-| 🟢        | **Healthy**     | Documentation and codebase are in acceptable/good core alignment. |
-| 🟡        | **NeedsReview** | It has been some time since the last review. It would be a good time to check for any minor deviations. |
-| 🟠        | **Degraded**    | **Sync Required.** Drift detected; terminology has changed; logic has evolved, and documentation is partially misleading.  Documentation may contradict the current repo or database truth and needs to be updated. |
+| **State** | **Designation** | **Definition**                                                                                                                                                                                                                                                                                                                  |
+| --------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 🟢        | **Healthy**     | Documentation and codebase are in acceptable/good core alignment.                                                                                                                                                                                                                                                               |
+| 🟡        | **NeedsReview** | It has been some time since the last review. It would be a good time to check for any minor deviations.                                                                                                                                                                                                                         |
+| 🟠        | **Degraded**    | **Sync Required.** Drift detected; terminology has changed; logic has evolved, and documentation is partially misleading. Documentation may contradict the current repo or database truth and needs to be updated.                                                                                                              |
 | 🔴        | **Blocked**     | **Sync Required but Blocked.** Requires operator or advisor input to validate the ground truth for the sync or to address any other blocker first. This is where we need to identify and address existing uncertainty, confirm assumptions and procedure, and then proceed to ensure the sync is done correctly the first time. |
-
 
 ## 📁Doc Status Tracker
 
 | Document                                  | Last Updated | Discrepencies with Repo State | Status |
 | ----------------------------------------- | :----------- | ----------------------------- | :----: |
-| [Core Philosophy](./../dev-philosophy.md) | 2026-05-05   |                               |   🟢    |
-| [Architecture](./1_ARCHITECTURE.md)       | ?            |                               |   🟡    |
-| [Features](./2_FEATURES.mc)               | 2026-04-22   |                               |   🟡    |
-| [Roles & Permissions](./3_ROLES&PERMS.md) | 2026-05-02   |                               |   🟡    |
-| [PoC Discussion](./4_PoC_Discussion.md)   | ?            |                               |   🟡    |
-| [UI/UX Styling](./5_STYLING.md)           | ?            |                               |   🟡    |
-| [Questions]((./6_QUESTIONS.md))           | ?            |                               |   🟡    |
-| [MVP Slice Plan](./7_MVP_SLICE_PLAN.md)   | 2026-05-03   |                               |   🟡    |
-
+| [Core Philosophy](./../dev-philosophy.md) | 2026-05-05   |                               |   🟢   |
+| [Architecture](./1_ARCHITECTURE.md)       | 2026-05-05   |                               |   🟢   |
+| [Features](./2_FEATURES.md)               | 2026-05-05   |                               |   🟢   |
+| [Roles & Permissions](./3_ROLES&PERMS.md) | 2026-05-05   |                               |   🟢   |
+| [PoC Discussion](./4_PoC_Discussion.md)   |              |                               |   🟡   |
+| [UI/UX Styling](./5_STYLING.md)           | 2026-05-05   |                               |   🟢   |
+| [Questions](./6_QUESTIONS.md)             |              |                               |   🟡   |
+| [MVP Slice Plan](./7_MVP_SLICE_PLAN.md)   | 2026-05-05   |                               |   🟢   |
 
 ## 🛠️ Resolution Protocol
 

@@ -5,7 +5,6 @@ import { getAccessToken, refreshAccessToken } from "./auth";
 export interface MeUser {
   id: string;
   email: string;
-  username: string;
   displayName: string | null;
   emailVerifiedAt: string | null;
   firstname: string | null;
@@ -18,7 +17,6 @@ const ME_QUERY = `
     me {
       id
       email
-      username
       displayName
       emailVerifiedAt
       firstname

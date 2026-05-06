@@ -1,12 +1,14 @@
-import { useEffect, useState } from "react";
-import { SiteNav } from "@/components/SiteNav";
+import { Button, LinkButton } from "@/components";
 import {
   CommunityCard,
   type CommunityCardData,
 } from "@/components/CommunityCard";
-import { LinkButton } from "@/components";
+import { SiteNav } from "@/components/SiteNav";
 import { gqlFetch } from "@/lib/graphql";
 import { useMe } from "@/lib/useMe";
+import { useEffect, useState } from "react";
+
+// ─── GraphQL ─────────────────────────────────────────────────────────────────
 
 const COMMUNITIES_QUERY = `
   query {
@@ -24,6 +26,38 @@ const COMMUNITIES_QUERY = `
   }
 `;
 
+const MY_SUBSCRIBED_IDS = `
+  query {
+    me {
+      subscriptions { community { id } isActive }
+    }
+  }
+`;
+
+const COMMUNITY_ACCESS_QUERY = `
+  query CommunityAccess($communityId: ID!) {
+    communityAccess(communityId: $communityId) {
+      scope
+      isSubscribed
+      roleName
+    }
+  }
+`;
+
+const SUBSCRIBE = `
+  mutation Subscribe($communityId: ID!) {
+    subscribeToCommunity(communityId: $communityId) { id }
+  }
+`;
+
+const UNSUBSCRIBE = `
+  mutation Unsubscribe($communityId: ID!) {
+    unsubscribeFromCommunity(communityId: $communityId)
+  }
+`;
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
 type RawCommunity = {
   id: string;
   name: string;
@@ -36,8 +70,14 @@ type RawCommunity = {
   subscriberCount: number;
 };
 
-// Seeded sample data so the Explore page renders cleanly while the backend is
-// still being wired up. Drops to live data the moment the resolver returns.
+type CommunityAccessState = {
+  scope: string;
+  isSubscribed: boolean;
+  roleName: string | null;
+};
+
+// ─── Sample data ─────────────────────────────────────────────────────────────
+
 const SAMPLE: CommunityCardData[] = [
   {
     id: "sample-1",
@@ -133,11 +173,178 @@ function toCardData(c: RawCommunity): CommunityCardData {
   };
 }
 
+// ─── Popup ───────────────────────────────────────────────────────────────────
+
+function CommunityPopup({
+  community,
+  isSubscribed: initialSubscribed,
+  onClose,
+  onSubscribeChange,
+  isAuthenticated,
+}: {
+  community: CommunityCardData;
+  isSubscribed: boolean;
+  onClose: () => void;
+  onSubscribeChange: (id: string, subscribed: boolean) => void;
+  isAuthenticated: boolean;
+}) {
+  const [access, setAccess] = useState<CommunityAccessState | null>(null);
+  const [subscribeBusy, setSubscribeBusy] = useState(false);
+  const [subscribeError, setSubscribeError] = useState("");
+
+  const isSubscribed = access?.isSubscribed ?? initialSubscribed;
+  const isMemberOrHigher =
+    access?.roleName === "MEMBER" || access?.roleName === "STEWARD";
+  const viewerStatus =
+    access?.roleName === "STEWARD"
+      ? ("steward" as const)
+      : access?.roleName === "MEMBER"
+        ? ("member" as const)
+        : ("none" as const);
+
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    gqlFetch<{ communityAccess: CommunityAccessState }>(
+      COMMUNITY_ACCESS_QUERY,
+      { communityId: community.id },
+    )
+      .then((d) => setAccess(d.communityAccess))
+      .catch(() => {});
+  }, [community.id, isAuthenticated]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const handleSubscribeToggle = async () => {
+    setSubscribeError("");
+    setSubscribeBusy(true);
+    try {
+      if (isSubscribed) {
+        await gqlFetch(UNSUBSCRIBE, { communityId: community.id });
+        onSubscribeChange(community.id, false);
+        setAccess((a) => (a ? { ...a, isSubscribed: false } : a));
+      } else {
+        await gqlFetch(SUBSCRIBE, { communityId: community.id });
+        onSubscribeChange(community.id, true);
+        setAccess((a) => (a ? { ...a, isSubscribed: true } : a));
+      }
+    } catch (err) {
+      setSubscribeError(err instanceof Error ? err.message : "Action failed.");
+    } finally {
+      setSubscribeBusy(false);
+    }
+  };
+
+  const showSubscribeAction = !isMemberOrHigher;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[rgba(47,53,44,0.55)] animate-[fadeIn_200ms_ease-out]"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="relative bg-surface rounded-cf-xl max-w-[520px] w-full max-h-[90vh] min-h-[400px] overflow-y-auto animate-[scaleIn_250ms_ease-out]"
+        style={{ boxShadow: "var(--cf-shadow-popup)" }}
+      >
+        {/* Close X */}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute top-3 right-3 z-10 p-1.5 rounded-cf-md text-ink-subtle hover:text-ink hover:bg-surface-sunken transition-colors"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+        </button>
+
+        <CommunityCard
+          community={community}
+          variant="popup"
+          viewerStatus={viewerStatus}
+          isSubscribed={isSubscribed}
+        />
+
+        {subscribeError && (
+          <p className="text-xs text-[color:var(--cf-danger)] px-5 -mt-2 pb-2">
+            {subscribeError}
+          </p>
+        )}
+
+        <div className="px-5 py-3.5 flex gap-2 justify-end border-t border-[var(--cf-hairline)]">
+          <LinkButton
+            variant="primary"
+            className="w-30 text-center rounded-cf-xg"
+            to={`/communities/${community.id}`}
+            onClick={onClose}
+          >
+            Visit Page
+          </LinkButton>
+
+          {showSubscribeAction &&
+            (isAuthenticated ? (
+              <Button
+                variant="secondary"
+                className="w-30"
+                onClick={!subscribeBusy ? handleSubscribeToggle : undefined}
+                disabled={subscribeBusy}
+              >
+                {subscribeBusy
+                  ? "Working…"
+                  : isSubscribed
+                    ? "Unsubscribe"
+                    : "+ Subscribe"}
+              </Button>
+            ) : (
+              <LinkButton
+                variant="secondary"
+                className="w-30 text-center"
+                to="/auth"
+              >
+                + Subscribe
+              </LinkButton>
+            ))}
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-20 py-1 rounded-cf-lg text-sm font-small border border-[var(--cf-danger)] text-[var(--cf-danger)] bg-transparent hover:bg-[rgba(181,80,63,0.06)] transition-colors cursor-pointer"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Page ─────────────────────────────────────────────────────────────────────
+
 export default function Explore() {
   const me = useMe();
   const [communities, setCommunities] = useState<CommunityCardData[]>(SAMPLE);
   const [usingSample, setUsingSample] = useState(true);
+  const [popupCommunity, setPopupCommunity] =
+    useState<CommunityCardData | null>(null);
+  const [subscribedIds, setSubscribedIds] = useState<Set<string>>(new Set());
 
+  // Load communities
   useEffect(() => {
     let cancelled = false;
     gqlFetch<{ communities: RawCommunity[] }>(COMMUNITIES_QUERY)
@@ -157,13 +364,37 @@ export default function Explore() {
     };
   }, []);
 
+  // Pre-fetch subscribed IDs when authenticated
+  useEffect(() => {
+    if (!me.isAuthenticated) return;
+    gqlFetch<{
+      me: { subscriptions: { community: { id: string }; isActive: boolean }[] };
+    }>(MY_SUBSCRIBED_IDS)
+      .then((d) => {
+        const ids = new Set(
+          d.me.subscriptions
+            .filter((s) => s.isActive)
+            .map((s) => s.community.id),
+        );
+        setSubscribedIds(ids);
+      })
+      .catch(() => {});
+  }, [me.isAuthenticated]);
+
+  const handleSubscribeChange = (id: string, subscribed: boolean) => {
+    setSubscribedIds((prev) => {
+      const next = new Set(prev);
+      if (subscribed) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
   return (
     <div className="max-w-[1200px] w-full mx-auto px-8 flex-1 flex flex-col">
       <SiteNav />
 
       <main className="flex-1">
-        {/* Z-trace: title top-left → toolbar (search + filters) top-right of toolbar
-            → gallery body → CTAs bottom-right of every card. */}
         <header className="mb-8">
           <div className="flex items-start justify-between gap-4">
             <div>
@@ -188,7 +419,7 @@ export default function Explore() {
           )}
         </header>
 
-        {/* Toolbar: search left, filters right */}
+        {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-4 mb-10">
           <label className="flex-1 min-w-[280px] bg-surface rounded-cf-lg px-5 py-3 flex items-center gap-2.5 shadow-cf-card focus-within:shadow-cf-card-hover">
             <svg
@@ -246,7 +477,17 @@ export default function Explore() {
         >
           {communities.map((c) => (
             <li key={c.id} className="contents">
-              <CommunityCard community={c} />
+              <button
+                type="button"
+                className="text-left w-full cursor-pointer"
+                onClick={() => setPopupCommunity(c)}
+                aria-label={`Open details for ${c.name}`}
+              >
+                <CommunityCard
+                  community={c}
+                  isSubscribed={subscribedIds.has(c.id)}
+                />
+              </button>
             </li>
           ))}
         </ul>
@@ -256,6 +497,17 @@ export default function Explore() {
           {communities.length === 1 ? "community" : "communities"}.
         </footer>
       </main>
+
+      {/* Popup */}
+      {popupCommunity && (
+        <CommunityPopup
+          community={popupCommunity}
+          isSubscribed={subscribedIds.has(popupCommunity.id)}
+          onClose={() => setPopupCommunity(null)}
+          onSubscribeChange={handleSubscribeChange}
+          isAuthenticated={me.isAuthenticated}
+        />
+      )}
     </div>
   );
 }

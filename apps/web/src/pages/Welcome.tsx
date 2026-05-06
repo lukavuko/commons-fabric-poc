@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { SiteNav } from "@/components/SiteNav";
 import { LinkButton } from "@/components/primitives";
+import { useMe } from "@/lib/useMe";
 
 export default function Welcome() {
+  const me = useMe();
+
   return (
     <div className="max-w-[1200px] w-full mx-auto px-8 flex-1 flex flex-col">
       <SiteNav />
@@ -26,20 +29,24 @@ export default function Welcome() {
               <LinkButton variant="primary" to="/explore">
                 Explore communities
               </LinkButton>
-              <LinkButton variant="secondary" to="/auth">
-                Create an account
-              </LinkButton>
+              {!me.isAuthenticated && (
+                <LinkButton variant="secondary" to="/auth">
+                  Create an account
+                </LinkButton>
+              )}
             </div>
-            <p className="text-xs text-ink-muted mt-4">
-              No account required to browse.{" "}
-              <Link
-                to="/explore"
-                className="underline underline-offset-2 hover:text-sage-deep"
-              >
-                Skip ahead
-              </Link>
-              .
-            </p>
+            {!me.isAuthenticated && (
+              <p className="text-xs text-ink-muted mt-4">
+                No account required to browse.{" "}
+                <Link
+                  to="/explore"
+                  className="underline underline-offset-2 hover:text-sage-deep"
+                >
+                  Skip ahead
+                </Link>
+                .
+              </p>
+            )}
           </div>
 
           {/* Decorative botanical composition — purely cosmetic */}

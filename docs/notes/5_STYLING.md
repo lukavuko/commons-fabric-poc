@@ -1,6 +1,6 @@
 # Stylistic Description
 
-> **Status — 2026-04-28.** Vote complete. **Soft Botanical (Style 3)** is the locked direction. Tokens are implemented in `src/app/globals.css` and `src/app/layout.tsx` loads Fraunces + Inter via `next/font`. See the _Locked Tokens_ and _Accessibility Audit_ sections at the bottom of this document for the production palette.
+> **Status — 2026-04-28.** Vote complete. **Soft Botanical (Style 3)** is the locked direction. Tokens are implemented in `apps/web/src/styles/globals.css` and Fraunces + Inter are loaded via `<link>` in `apps/web/index.html`. See the _Locked Tokens_ and _Accessibility Audit_ sections at the bottom of this document for the production palette.
 
 > **Purpose.** This document proposes four visual directions for the Commons Fabric PoC web app. Each candidate satisfies the same fixed brief — cream/paper-white base, minimal contrast and borders, rounded corners, light/soft palette, predictable Z-flow, accessibility and simplicity as first-class values — but expresses it through a different design personality. The four are intentionally distinct enough that a vote produces a clear directive for the React build, not a compromise.
 >

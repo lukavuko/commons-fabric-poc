@@ -83,12 +83,16 @@ export function CommunityCard({
       </div>
 
       <h3 className="font-display text-lg font-medium text-ink mb-1.5">
-        <Link
-          to={detailHref}
-          className="hover:text-sage-deep focus:outline-none rounded-cf-xs"
-        >
-          {community.name}
-        </Link>
+        {compact ? (
+          community.name
+        ) : (
+          <Link
+            to={detailHref}
+            className="hover:text-sage-deep focus:outline-none rounded-cf-xs"
+          >
+            {community.name}
+          </Link>
+        )}
       </h3>
 
       {(community.city || community.province) && (
@@ -98,7 +102,7 @@ export function CommunityCard({
       )}
 
       <p
-        className={`text-sm text-ink-muted mb-4 ${compact ? "line-clamp-2" : "line-clamp-3"}`}
+        className={`text-sm text-ink-muted mb-4 ${compact ? "" : "line-clamp-3"}`}
       >
         {community.description}
       </p>
@@ -125,32 +129,23 @@ export function CommunityCard({
         )}
       </div>
 
-      <div className="flex gap-2 justify-end">
-        {/* Subscribe lives on popup variant + Community detail page only (MVP spec).
-            Gallery cards are browse-only. */}
-        {compact && !isMember && (
-          <Button
-            variant="secondary"
-            onClick={onSubscribe ? () => onSubscribe(community.id) : undefined}
-            aria-label={`${isSubscribed ? "Unsubscribe from" : "Subscribe to"} ${community.name}`}
-          >
-            {isSubscribed ? "Unsubscribe" : "Subscribe"}
-          </Button>
-        )}
-        {!isMember ? (
-          <Button
-            variant="primary"
-            onClick={onJoin ? () => onJoin(community.id) : undefined}
-            aria-label={`Join ${community.name}`}
-          >
-            Join
-          </Button>
-        ) : (
-          <LinkButton variant="primary" to={detailHref}>
-            Open
-          </LinkButton>
-        )}
-      </div>
+      {!compact && (
+        <div className="flex gap-2 justify-end">
+          {!isMember ? (
+            <Button
+              variant="primary"
+              onClick={onJoin ? () => onJoin(community.id) : undefined}
+              aria-label={`Join ${community.name}`}
+            >
+              Join
+            </Button>
+          ) : (
+            <LinkButton variant="primary" to={detailHref}>
+              Open
+            </LinkButton>
+          )}
+        </div>
+      )}
     </Card>
   );
 }

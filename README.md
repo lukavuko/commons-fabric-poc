@@ -1,31 +1,21 @@
 # Commons Fabric — PoC
 
-> A federated community-building platform where local groups publish events and announcements, and members receive curated updates on their own schedule, through their preferred channels, with zero noise. We're here to connect local communities across fragmented platforms — one calendar at a time.
-
-This readme summarizes what's in the Proof-of-Concept repo and some things you'll need for development!
+> A federated community-building platform where local groups publish events and announcements, and members receive curated updates on their own schedule, through their preferred channels, with zero noise.
 
 ---
 
-## Contents
+## Tech Stack
 
-- [Prerequisites](#prerequisites)
-- [Repo Structure](#repo-structure)
-- [Architecture](#architecture)
-- [Development](#development)
-- [Contact](#contact)
-
----
-
-## Prerequisites
-
-| Tool                 | Version | Notes                                                                      |
-| -------------------- | ------- | -------------------------------------------------------------------------- |
-| **Node.js**          | 22+     |                                                                            |
-| **npm**              | 10+     |                                                                            |
-| **Docker + Compose** | Latest  | Required for the full local stack                                          |
-| **PostgreSQL**       | 16+     | Aiven, Neon, or local — needs a **direct** (non-pooled) URL for migrations |
-| **Pulumi CLI**       | 3+      | `npm install -g pulumi` — only needed for infra management                 |
-| **SendGrid API key** | —       | Optional for local dev, required in production                             |
+| Layer         | Technology                                |
+| ------------- | ----------------------------------------- |
+| Frontend      | React 19, Vite 6, Tailwind CSS 4          |
+| API           | Apollo Server 5, GraphQL, Express 5       |
+| Auth          | Express 5, JWT (access + refresh)         |
+| Database      | PostgreSQL 16, Prisma 7                   |
+| Job System    | node-cron scheduler + poll-based executor |
+| Notifications | SendGrid (email)                          |
+| Infra         | Docker Compose, Pulumi, Caddy             |
+| Language      | TypeScript 5 (ESM throughout)             |
 
 ---
 
@@ -34,101 +24,133 @@ This readme summarizes what's in the Proof-of-Concept repo and some things you'l
 ```
 commons-fabric-poc/
 │
-├── apps/                         # Independently deployable services
-│   ├── auth/                     # Auth service — register, login, refresh, logout
-│   ├── executioner/              # Job runner — polls job_queue, dispatches handlers
-│   ├── scheduler/                # Job scheduler — promotes job_queue row statuses
-│   ├── server/                   # GraphQL API — Apollo Server + Express
-│   └── web/                      # React + Vite SPA
+├── apps/
+│   ├── auth/               # Auth service — register, login, refresh, logout (Express, :4001)
+│   ├── executioner/        # Job runner — polls job_queue, dispatches handlers (SendGrid, pino)
+│   ├── scheduler/          # Job scheduler — promotes job_queue rows on cron (node-cron, pino)
+│   ├── server/             # GraphQL API — queries, mutations, auth context (Apollo, :4000)
+│   └── web/                # SPA — React + Vite + Tailwind (:5173)
 │
-├── packages/
-│   └── db/                       # Shared Prisma client + schema (imported as @cfp/db)
-│       └── prisma/
-│           ├── schema.prisma     # Source of truth for the database
-│           ├── schema.dbml       # Visualization-ready copy (dbdiagram.io)
-│           └── migrations/       # Versioned SQL migrations
-│
-├── infra/                        # Pulumi IaC — VPS bootstrap, deploy, DNS
+├── design-system/
+│   └── MASTER.md           # Design system reference (colors, typography, components)
 │
 ├── docs/
-│   └── notes/                    # Architecture, features, roles & perms, Q&A
+│   ├── notes/              # Architecture, features, roles, styling, MVP slices
+│   ├── misc/               # CLI commands reference
+│   ├── superpowers/        # Migration plans and design specs
+│   ├── dev-philosophy.md   # Engineering principles
+│   └── next-steps.md       # Current priorities and open issues
+├── infra/                  # Pulumi IaC — VPS bootstrap, deploy, DNS
 │
-├── mockups/                      # UI mockups and design references
+├── packages/
+│   ├── auth-tokens/        # Shared JWT signing/verification + password hashing (@cfp/auth-tokens)
+│   ├── defaults/           # Shared constants and defaults (@cfp/defaults)
+│   └── db/                 # Prisma client + schema + migrations (@cfp/db)
+│       └── prisma/
+│           ├── schema.prisma       # Source of truth for the database
+│           └── migrations/         # Versioned SQL migrations
 │
-├── docker-compose.yml            # Local dev stack
-├── docker-compose.prod.yml       # Production overrides (Caddy, NODE_ENV=production)
-└── .env.example                  # Environment variable template
+├── scripts/                # Manual test/verification scripts (test-slice-*.sh)
+│
+├── docker-compose.yml      # Local dev stack (7 services)
+└── docker-compose.prod.yml # Production overrides (Caddy, NODE_ENV=production)
 ```
 
 ---
 
-## Architecture
+## Documentation Map
 
-Full technical details — stack diagram, service responsibilities, job queue design, hosting options, IaC, and CI/CD — live in [`docs/notes/1_ARCHITECTURE.md`](docs/notes/1_ARCHITECTURE.md).
+| Document                                                           | Purpose                                                        |
+| ------------------------------------------------------------------ | -------------------------------------------------------------- |
+| [`docs/notes/1_ARCHITECTURE.md`](docs/notes/1_ARCHITECTURE.md)     | Stack diagram, service responsibilities, hosting, CI/CD        |
+| [`docs/notes/2_FEATURES.md`](docs/notes/2_FEATURES.md)             | Feature specs and planned capabilities                         |
+| [`docs/notes/3_ROLES&PERMS.md`](docs/notes/3_ROLES&PERMS.md)       | Role hierarchy, permission model                               |
+| [`docs/notes/5_STYLING.md`](docs/notes/5_STYLING.md)               | UI conventions, Tailwind usage, design tokens                  |
+| [`docs/notes/7_MVP_SLICE_PLAN.md`](docs/notes/7_MVP_SLICE_PLAN.md) | MVP breakdown into implementable slices                        |
+| [`docs/dev-philosophy.md`](docs/dev-philosophy.md)                 | Engineering principles (DB as truth, minimalism, transparency) |
+| [`docs/next-steps.md`](docs/next-steps.md)                         | Current priorities and open issues                             |
+| [`docs/misc/commands.md`](docs/misc/commands.md)                   | Useful CLI commands and workflows                              |
+| [`design-system/MASTER.md`](design-system/MASTER.md)               | Design system master reference                                 |
 
 ---
 
-## Development
+---
 
-### Option A — Docker Compose (recommended)
+## Quick Start (Docker Compose)
 
-The closest thing to production you can run locally. All five services + Postgres start in the right order, migrations run automatically.
+### Development Prerequisites
+
+| Tool                 | Version | Notes                                                    |
+| -------------------- | ------- | -------------------------------------------------------- |
+| **Node.js**          | 22+     | [nodejs.org/en/download](https://nodejs.org/en/download) |
+| **npm**              | 10+     | Ships with Node.                                         |
+| **Docker + Compose** | Latest  | [docs.docker.com/get-docker](https://docs.docker.com/get-docker/) installed in wsl2 if using Windows |
+| **PostgreSQL**       | 16+     | [postgresql.org/download](https://www.postgresql.org/download/) — needs a **direct** (non-pooled) URL for migrations |
+
+Create your env file, fill in values (see Environment Variables below), and start docker in wsl. All services + Postgres start in dependency order; migrations run automatically.
 
 ```bash
-cp .env.example .env          # fill in your values
-docker compose up --build
+wsl docker compose up --build
 ```
 
-Services come up at:
+Boot order: `postgres` → `migrator` → [`auth`, `server`, `scheduler`, `executioner`] → `web`
 
-- Frontend → http://localhost:5173
-- GraphQL API → http://localhost:4000/api/graphql
-- Auth → http://localhost:4001
+### Service URLs
 
-### Option B — Local (no Docker)
+| Service     | URL                               |
+| ----------- | --------------------------------- |
+| Frontend    | http://localhost:5173             |
+| GraphQL API | http://localhost:4000/api/graphql |
+| Auth        | http://localhost:4001             |
 
-Run services individually when you want faster iteration on a single service.
+<details>
+<summary><strong>Local without Docker</strong></summary>
 
 ```bash
 cp .env.example .env
 npm install
 
-# Run the DB migration (requires a direct, non-pooled DATABASE_URL)
-cd db && npx prisma migrate dev --name init && cd ../..
+# Run migrations (requires direct DATABASE_URL)
+cd packages/db && npx prisma migrate dev --name init && cd ../..
 
-# Start everything concurrently
+# Start all services concurrently
 npm run dev
 ```
 
-### Common tasks
+</details>
+
+---
+
+## Environment Variables
+
+| Variable           | Required | Notes                                                   |
+| ------------------ | -------- | ------------------------------------------------------- |
+| `DATABASE_URL`     | Yes      | Direct (non-pooled) Postgres connection                 |
+| `JWT_SECRET`       | Yes      | Signs access + refresh tokens                           |
+| `SENDGRID_API_KEY` | Prod     | Optional locally; required for email jobs               |
+| `EMAIL_TRANSPORT`  | Yes      | `console` if API_KEY not provided, otherwise `sendgrid` |
+
+
+---
+
+## Common Commands
 
 ```bash
-# Database
-cd db
-npx prisma migrate dev --name <description>   # new migration after schema change
-npx prisma generate                            # regenerate types (auto-runs after migrate)
-npx prisma studio                              # browse the DB in a UI
+# Development
+npm run dev                          # Start all 5 services concurrently
+npm run test                         # Run tests across all workspaces
 
-# Tests
-npm run test                                   # all workspaces
-npm run test --workspace=apps/auth             # single service
+# Database (run from packages/db/)
+npx prisma migrate dev --name <desc> # New migration after schema change
+npx prisma generate                  # Regenerate client types
+npx prisma studio                    # Browse DB in browser UI
+npx prisma migrate reset             # Nuke + recreate (destructive)
 
-# Infrastructure (from infra/)
-pulumi preview                                 # dry run
-pulumi up                                      # apply to VPS
+# Single service
+npm run dev --workspace=apps/web     # Just the frontend
+npm run test --workspace=apps/auth   # Just auth tests
 ```
 
-### Adding a notification handler
-
-Register a new handler in `apps/executioner/handlers/index.ts` under a `serviceName` key. Any `job_queue` row inserted with that `serviceName` will be routed to it automatically.
-
 ---
 
-## Contact
-
-- **Project site** → [commonsfabric.ca](https://commonsfabric.ca/?referrer=luma)
-- **Dev log & pins** → [lukavuko.github.io/cfp.github.io](https://lukavuko.github.io/cfp.github.io/)
-
----
-
-_Commons Fabric PoC — April 2026_
+_Commons Fabric PoC — May 2026_

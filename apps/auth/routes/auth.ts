@@ -86,7 +86,6 @@ authRouter.post("/register", async (req, res) => {
 
     const passwordHash = await hashPassword(password);
     const emailVerificationToken = randomBytes(32).toString("hex");
-    const username = email.split("@")[0];
 
     const trimOrNull = (v?: string) => {
       const t = v?.trim();
@@ -96,7 +95,6 @@ authRouter.post("/register", async (req, res) => {
     const user = await prisma.user.create({
       data: {
         email,
-        username,
         displayName: displayName.trim(),
         passwordHash,
         emailVerificationToken,
@@ -113,7 +111,9 @@ authRouter.post("/register", async (req, res) => {
     return res.status(201).json({ message: "Verification email sent" });
   } catch (error) {
     if (createdUserId) {
-      await prisma.user.delete({ where: { id: createdUserId } }).catch(() => {});
+      await prisma.user
+        .delete({ where: { id: createdUserId } })
+        .catch(() => {});
     }
     if (isPrismaKnownError(error, "P2002")) {
       return res.status(409).json({ error: "Email already registered" });

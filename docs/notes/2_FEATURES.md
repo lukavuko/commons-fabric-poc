@@ -121,7 +121,7 @@ Phase 1 is targeted for stewards only, testing and debugging, and all user-role 
 | React + Vite + Prisma + Apollo Server setup | ✅ Done     |                                       |
 | Database schema + migrations                | ✅ Done     |                                       |
 | GraphQL resolvers (basic)                   | ✅ Done     |                                       |
-| User authentication (email)                 | ✅ Todo     | Built in Auth                         |
+| User authentication (email)                 | ✅ Done     | Built in Auth                         |
 | Community CRUD (organizer)                  | ⬜ Todo     |                                       |
 | Event creation and display                  | ⬜ Todo     |                                       |
 | RSVP mutations                              | ⬜ Todo     |                                       |

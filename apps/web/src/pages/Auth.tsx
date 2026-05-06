@@ -2,8 +2,51 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AuthShell, Button, FormField, Input } from "../components";
 import { login, register } from "../lib/auth";
+import { invalidateMe } from "../lib/useMe";
 
 type Mode = "signin" | "signup";
+
+function SegmentedControl({
+  value,
+  onChange,
+}: {
+  value: Mode;
+  onChange: (v: Mode) => void;
+}) {
+  return (
+    <div className="relative inline-flex w-full bg-[rgba(47,53,44,0.06)] rounded-cf-pill p-1">
+      <div
+        className="absolute top-1 bottom-1 rounded-cf-pill transition-transform duration-200"
+        style={{
+          width: "calc(50% - 4px)",
+          background: "var(--cf-clay)",
+          transform:
+            value === "signin"
+              ? "translateX(0)"
+              : "translateX(calc(100% + 8px))",
+        }}
+      />
+      <button
+        type="button"
+        onClick={() => onChange("signin")}
+        className={`relative z-10 flex-1 py-2 text-sm font-medium rounded-cf-pill transition-colors ${
+          value === "signin" ? "text-surface" : "text-ink-muted hover:text-ink"
+        }`}
+      >
+        Sign in
+      </button>
+      <button
+        type="button"
+        onClick={() => onChange("signup")}
+        className={`relative z-10 flex-1 py-2 text-sm font-medium rounded-cf-pill transition-colors ${
+          value === "signup" ? "text-surface" : "text-ink-muted hover:text-ink"
+        }`}
+      >
+        Create account
+      </button>
+    </div>
+  );
+}
 
 interface SignupFields {
   displayName: string;
@@ -63,6 +106,7 @@ export default function Auth() {
         setSignupComplete(true);
       } else {
         await login(email, password);
+        invalidateMe();
         navigate("/");
       }
     } catch (err) {
@@ -119,7 +163,7 @@ export default function Auth() {
         {isSignup && (
           <FormField
             label="Display name"
-            hint="How others will see you in the community."
+            hint="Optional non-unique display name — you can change this later or leave it blank"
           >
             {({ id }) => (
               <Input
@@ -161,7 +205,15 @@ export default function Auth() {
             </summary>
             <div className="flex flex-col gap-4 mt-4">
               <div className="grid grid-cols-2 gap-3">
-                <FormField label="First name">
+                <FormField
+                  label="First name"
+                  hint={
+                    signupFields.lastname === "" &&
+                    signupFields.firstname === ""
+                      ? "Some communities require you to identify yourself prior to joining, though it remains optional for registration"
+                      : undefined
+                  }
+                >
                   {({ id }) => (
                     <Input
                       id={id}
@@ -185,7 +237,14 @@ export default function Auth() {
                 </FormField>
               </div>
               <div className="grid grid-cols-[1fr_2fr] gap-3">
-                <FormField label="Postal code">
+                <FormField
+                  label="Postal code"
+                  hint={
+                    signupFields.city === "" && signupFields.postalCode === ""
+                      ? "This is used to better help you find communities in your area"
+                      : undefined
+                  }
+                >
                   {({ id }) => (
                     <Input
                       id={id}
@@ -232,29 +291,8 @@ export default function Auth() {
         </Button>
       </form>
 
-      <div className="flex gap-3 mt-6">
-        <button
-          type="button"
-          onClick={() => switchMode("signin")}
-          className={`flex-1 px-4 py-2.5 rounded-cf-pill text-sm font-medium transition-colors ${
-            !isSignup
-              ? "bg-sage-deep text-surface"
-              : "text-ink shadow-[inset_0_0_0_1px_rgba(80,101,72,0.32)] hover:bg-[rgba(80,101,72,0.06)]"
-          }`}
-        >
-          Sign in
-        </button>
-        <button
-          type="button"
-          onClick={() => switchMode("signup")}
-          className={`flex-1 px-4 py-2.5 rounded-cf-pill text-sm font-medium transition-colors ${
-            isSignup
-              ? "bg-sage-deep text-surface"
-              : "text-ink shadow-[inset_0_0_0_1px_rgba(80,101,72,0.32)] hover:bg-[rgba(80,101,72,0.06)]"
-          }`}
-        >
-          Create account
-        </button>
+      <div className="mt-6">
+        <SegmentedControl value={mode} onChange={switchMode} />
       </div>
     </AuthShell>
   );
