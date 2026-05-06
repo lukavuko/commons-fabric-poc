@@ -9,7 +9,7 @@ import {
   StateBadge,
   Tag,
   VerifiedBadge,
-} from "@/components";
+} from "@/components/primitives";
 import { gqlFetch } from "@/lib/graphql";
 import { useMe, invalidateMe } from "@/lib/useMe";
 import { logout, resendVerification } from "@/lib/auth";

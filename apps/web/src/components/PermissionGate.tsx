@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { usePermissions } from "../lib/usePermissions";
+import { usePermissions } from "@/lib/usePermissions";
 
 /**
  * Renders children only when the current user holds the given permission

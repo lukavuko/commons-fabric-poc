@@ -168,6 +168,32 @@ export const Query = {
     return { upcomingEvents, recentAnnouncements };
   },
 
+  myCalendar: async (
+    _: unknown,
+    args: { fromDate?: string; toDate?: string },
+    ctx: Context,
+  ) => {
+    const user = ctx.requireAuth();
+    const subscriptions = await ctx.prisma.subscription.findMany({
+      where: { userId: user.id, isActive: true },
+      select: { communityId: true },
+    });
+    const communityIds = subscriptions.map(
+      (s: { communityId: string }) => s.communityId,
+    );
+    return ctx.prisma.event.findMany({
+      where: {
+        communityId: { in: communityIds },
+        releaseStatus: "PUBLIC",
+        ...(args.fromDate
+          ? { startsAt: { gte: new Date(args.fromDate) } }
+          : {}),
+        ...(args.toDate ? { startsAt: { lte: new Date(args.toDate) } } : {}),
+      },
+      orderBy: { startsAt: "asc" },
+    });
+  },
+
   mySubscriptions: async (_: unknown, __: unknown, ctx: Context) => {
     const user = ctx.requireAuth();
     await syncRoleBackedSubscriptions(ctx, user.id);

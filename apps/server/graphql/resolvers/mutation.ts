@@ -188,6 +188,12 @@ export const Mutation = {
     });
   },
 
+  deleteCommunity: async (_: unknown, args: { id: string }, ctx: Context) => {
+    await ctx.requirePermission("community:archive", args.id);
+    await ctx.prisma.community.delete({ where: { id: args.id } });
+    return true;
+  },
+
   createEvent: async (
     _: unknown,
     args: { input: Record<string, unknown> },

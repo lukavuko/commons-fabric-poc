@@ -383,6 +383,7 @@ export const typeDefs = gql`
     entity (community or hub). Falls back to the ANYONE implicit set when the
     user has no UserRole for the entity. Returns [] when unauthenticated.
     """
+    myCalendar(fromDate: DateTime, toDate: DateTime): [Event!]!
     myPermissions(entityId: ID!, entityType: RoleEntityType!): [String!]!
   }
 
@@ -396,6 +397,7 @@ export const typeDefs = gql`
 
     createCommunity(input: CreateCommunityInput!): Community!
     updateCommunity(id: ID!, input: UpdateCommunityInput!): Community!
+    deleteCommunity(id: ID!): Boolean!
 
     createEvent(input: CreateEventInput!): Event!
     updateEvent(id: ID!, input: UpdateEventInput!): Event!

@@ -108,6 +108,12 @@ export const roles: RoleDefinition[] = [
       "hub:community-reject",
     ],
   },
+  {
+    name: "ADMIN",
+    entityType: "COMMUNITY",
+    isDefault: true,
+    ownPermissions: permissions.map((p) => p.name),
+  },
 ];
 
 // -------------------------------------------------------

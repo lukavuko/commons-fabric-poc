@@ -1,4 +1,4 @@
-import { Button, LinkButton } from "@/components";
+import { Button, LinkButton } from "@/components/primitives";
 import {
   CommunityCard,
   type CommunityCardData,
@@ -324,7 +324,7 @@ function CommunityPopup({
           <button
             type="button"
             onClick={onClose}
-            className="w-20 py-1 rounded-cf-lg text-sm font-small border border-[var(--cf-danger)] text-[var(--cf-danger)] bg-transparent hover:bg-[rgba(181,80,63,0.06)] transition-colors cursor-pointer"
+            className="w-20 py-1 rounded-cf-lg text-sm font-small border border-[var(--cf-hairline)] text-ink-muted bg-transparent hover:bg-surface-sunken transition-colors cursor-pointer"
           >
             Close
           </button>

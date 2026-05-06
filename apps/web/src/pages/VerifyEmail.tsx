@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Alert, AuthShell, Button, FormField, Input } from "../components";
-import { resendVerification, verifyEmail } from "../lib/auth";
+import { Alert, Button, FormField, Input } from "@/components/primitives";
+import { AuthShell } from "@/components/AuthShell";
+import { resendVerification, verifyEmail } from "@/lib/auth";
 
 type Status = "verifying" | "success" | "error" | "missing-token";
 

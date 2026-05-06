@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Alert, AuthShell, Button, FormField, Input } from "../components";
-import { login, register } from "../lib/auth";
-import { invalidateMe } from "../lib/useMe";
+import { Alert, Button, FormField, Input } from "@/components/primitives";
+import { AuthShell } from "@/components/AuthShell";
+import { login, register } from "@/lib/auth";
+import { invalidateMe } from "@/lib/useMe";
 
 type Mode = "signin" | "signup";
 

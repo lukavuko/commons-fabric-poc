@@ -13,6 +13,7 @@
     "@cfp/auth-tokens": "*",
     "@cfp/db": "*",
     "@cfp/defaults": "*",
+    "@cfp/ical": "*",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "graphql": "^16.13.2",

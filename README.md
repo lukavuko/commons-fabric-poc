@@ -1,6 +1,6 @@
 # Commons Fabric — PoC
 
-> A federated community-building platform where local groups publish events and announcements, and members receive curated updates on their own schedule, through their preferred channels, with zero noise.
+> A federated community-building platform for local groups to publish events/announcements with their members and subscribers who receive curated updates on their own schedule, through their preferred channels, with zero noise.
 
 ---
 
@@ -74,17 +74,15 @@ commons-fabric-poc/
 
 ---
 
----
-
 ## Quick Start (Docker Compose)
 
 ### Development Prerequisites
 
-| Tool                 | Version | Notes                                                    |
-| -------------------- | ------- | -------------------------------------------------------- |
-| **Node.js**          | 22+     | [nodejs.org/en/download](https://nodejs.org/en/download) |
-| **npm**              | 10+     | Ships with Node.                                         |
-| **Docker + Compose** | Latest  | [docs.docker.com/get-docker](https://docs.docker.com/get-docker/) installed in wsl2 if using Windows |
+| Tool                 | Version | Notes                                                                                                                |
+| -------------------- | ------- | -------------------------------------------------------------------------------------------------------------------- |
+| **Node.js**          | 22+     | [nodejs.org/en/download](https://nodejs.org/en/download)                                                             |
+| **npm**              | 10+     | Ships with Node.                                                                                                     |
+| **Docker + Compose** | Latest  | [docs.docker.com/get-docker](https://docs.docker.com/get-docker/) installed in wsl2 if using Windows                 |
 | **PostgreSQL**       | 16+     | [postgresql.org/download](https://www.postgresql.org/download/) — needs a **direct** (non-pooled) URL for migrations |
 
 Create your env file, fill in values (see Environment Variables below), and start docker in wsl. All services + Postgres start in dependency order; migrations run automatically.
@@ -129,7 +127,6 @@ npm run dev
 | `JWT_SECRET`       | Yes      | Signs access + refresh tokens                           |
 | `SENDGRID_API_KEY` | Prod     | Optional locally; required for email jobs               |
 | `EMAIL_TRANSPORT`  | Yes      | `console` if API_KEY not provided, otherwise `sendgrid` |
-
 
 ---
 

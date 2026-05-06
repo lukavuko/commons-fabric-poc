@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
-import { Card, Tag, StateBadge, Button } from "./primitives";
-
-export type RSVPStatus = "GOING" | "INTERESTED" | "NOT_GOING" | null;
+import { Card, Tag, StateBadge, Button } from "@/components/primitives";
+import type { RSVPStatus } from "@/lib/types";
 
 export type EventCardData = {
   id: string;

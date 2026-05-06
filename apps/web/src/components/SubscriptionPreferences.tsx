@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { gqlFetch } from "../lib/graphql";
-import { Alert, Button, FormField, Input } from "./primitives";
+import { gqlFetch } from "@/lib/graphql";
+import { Alert, Button, FormField, Input } from "@/components/primitives";
 
 type Frequency =
   | "NEVER"

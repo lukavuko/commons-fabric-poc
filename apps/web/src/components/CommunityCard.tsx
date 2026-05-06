@@ -5,8 +5,7 @@ import {
   VerifiedBadge,
   StateBadge,
   LinkButton,
-  Button,
-} from "./primitives";
+} from "@/components/primitives";
 
 /**
  * Role-based display state for the viewer. "subscriber" is intentionally
@@ -37,7 +36,6 @@ type Props = {
   /** Layout variant: gallery card (default) vs map popup (compact). */
   variant?: "gallery" | "popup";
   onSubscribe?: (id: string) => void;
-  onJoin?: (id: string) => void;
 };
 
 const blobByAccent: Record<NonNullable<CommunityCardData["accent"]>, string> = {
@@ -58,7 +56,6 @@ export function CommunityCard({
   isSubscribed = false,
   variant = "gallery",
   onSubscribe,
-  onJoin,
 }: Props) {
   const isMember = viewerStatus !== "none";
   const blob = blobByAccent[community.accent ?? "sage"];
@@ -129,21 +126,11 @@ export function CommunityCard({
         )}
       </div>
 
-      {!compact && (
+      {!compact && isMember && (
         <div className="flex gap-2 justify-end">
-          {!isMember ? (
-            <Button
-              variant="primary"
-              onClick={onJoin ? () => onJoin(community.id) : undefined}
-              aria-label={`Join ${community.name}`}
-            >
-              Join
-            </Button>
-          ) : (
-            <LinkButton variant="primary" to={detailHref}>
-              Open
-            </LinkButton>
-          )}
+          <LinkButton variant="primary" to={detailHref}>
+            Open
+          </LinkButton>
         </div>
       )}
     </Card>

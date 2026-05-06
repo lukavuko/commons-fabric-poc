@@ -7,6 +7,7 @@ import Community from "./pages/Community";
 import CreateCommunity from "./pages/CreateCommunity";
 import EditCommunity from "./pages/EditCommunity";
 import CreateEvent from "./pages/CreateEvent";
+import Calendar from "./pages/Calendar";
 import You from "./pages/You";
 import NotFound from "./pages/NotFound";
 
@@ -21,6 +22,7 @@ export default function App() {
       <Route path="/communities/:id/edit" element={<EditCommunity />} />
       <Route path="/communities/:id/events/new" element={<CreateEvent />} />
       <Route path="/communities/:id" element={<Community />} />
+      <Route path="/calendar" element={<Calendar />} />
       <Route path="/you" element={<You />} />
       <Route path="*" element={<NotFound />} />
     </Routes>

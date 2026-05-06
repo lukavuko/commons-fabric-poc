@@ -56,11 +56,24 @@ export async function buildContext(req: Request): Promise<Context> {
     return authedUser;
   };
 
+  const isAdmin = async (userId: string): Promise<boolean> => {
+    const adminRole = await prisma.userRole.findFirst({
+      where: {
+        userId,
+        role: { name: "ADMIN", isDefault: true },
+      },
+    });
+    return !!adminRole;
+  };
+
   const requirePermission = async (
     permission: string,
     entityId: string,
   ): Promise<AuthUser> => {
     const authedUser = requireAuth();
+
+    if (await isAdmin(authedUser.id)) return authedUser;
+
     const userRole = await prisma.userRole.findUnique({
       where: { userId_entityId: { userId: authedUser.id, entityId } },
       include: {

@@ -8,7 +8,7 @@ import {
   Input,
   LinkButton,
   Textarea,
-} from "@/components";
+} from "@/components/primitives";
 import { TagsInput } from "@/components/TagsInput";
 import { gqlFetch } from "@/lib/graphql";
 import { usePermissions } from "@/lib/usePermissions";
