@@ -13,7 +13,16 @@ _This list may have recurring tasks. In order to support reoccurrence, we strike
 - ~~Read through the @docs/notes/documentation-sync-registry.md and initiate a full codebase <-> docs sync analysis.~~
 - ~~Once the documentation-sync-registry.md table is updated, confirm deviations and corrections prior to sync-update.~~
   ~~- Addressing [Tester Comments](#tester-comments) below one at a time.~~
-- Addressing the next development Slice (#3 or #4) in the [Slice plan document](./notes/7_MVP_SLICE_PLAN.md).
+~~- Pursue a first full stack implementation of the Calendar spec @docs/superpowers/specs/2026-05-06-community-calendar-design.md~~
+- Polish frontend opetations via a turbo-charged rapid iteration run in parallel using @docs/misc/frontend-rapid-iteration.md approach. Targets:
+  - ~~Calendar review~~
+  - Event creation modal/popup review
+  - Announcement card and feed review
+  - Personal calendar review (subscribed community events all collated in 1 place)
+  - Exploration feed view adjustments
+  - Addition of new steward controls in places we missed! (very important!!); includes edit/delete buttons in places we don't currently have them
+- Development of an Agent testing workflow to simulate 2-3 users on the platform. Credentials will be stored in tester-creds.yaml file and added to .gitignore. They will be allowed to create up to 1 community each, subscribe to up to 2 communities including their own. I will login as either ADMIN or as LUKA to perform different levels of manual testing. Together we will integrate all feedback and proceed with an intermitten POLISH slice.
+- Addressing the next development Slice #5 in the [Slice plan document](./notes/7_MVP_SLICE_PLAN.md).
 
 ---
 
@@ -24,6 +33,14 @@ _None Currently_
 ---
 
 ## Tester Comments
+
+_A real person going into the application to test how it looks and functions. If any of these are detected as resolved, remove them from the list._
+
+_No open tester comments._
+
+---
+
+## Agent Tester Comments
 
 _A real person going into the application to test how it looks and functions. If any of these are detected as resolved, remove them from the list._
 

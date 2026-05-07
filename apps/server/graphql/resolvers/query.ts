@@ -174,6 +174,7 @@ export const Query = {
     ctx: Context,
   ) => {
     const user = ctx.requireAuth();
+    await syncRoleBackedSubscriptions(ctx, user.id);
     const subscriptions = await ctx.prisma.subscription.findMany({
       where: { userId: user.id, isActive: true },
       select: { communityId: true },
@@ -190,6 +191,7 @@ export const Query = {
           : {}),
         ...(args.toDate ? { startsAt: { lte: new Date(args.toDate) } } : {}),
       },
+      include: { community: true },
       orderBy: { startsAt: "asc" },
     });
   },

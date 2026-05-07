@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { gqlFetch } from "@/lib/graphql";
 import { useMe } from "@/lib/useMe";
 import { SiteNav } from "@/components/SiteNav";
-import { EventTile, type EventTileEvent } from "@/components/EventTile";
+import { CommunityCalendar } from "@/components/CommunityCalendar";
 import { EventPopup, type EventRow } from "@/components/EventPopup";
 
 const MY_CALENDAR = `
-  query MyCalendar($fromDate: DateTime, $toDate: DateTime) {
-    myCalendar(fromDate: $fromDate, toDate: $toDate) {
+  query MyCalendar {
+    myCalendar {
       id title subtitle description startsAt endsAt location eventType
       releaseStatus tags rsvpCount myRsvp
       community { id name }
@@ -19,27 +19,6 @@ type CalendarEvent = EventRow & {
   community: { id: string; name: string };
 };
 
-function groupByDate(events: CalendarEvent[]) {
-  const groups: { date: string; events: CalendarEvent[] }[] = [];
-  for (const ev of events) {
-    const key = ev.startsAt
-      ? new Date(ev.startsAt).toLocaleDateString("en-CA", {
-          weekday: "long",
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        })
-      : "No date";
-    const last = groups[groups.length - 1];
-    if (last?.date === key) {
-      last.events.push(ev);
-    } else {
-      groups.push({ date: key, events: [ev] });
-    }
-  }
-  return groups;
-}
-
 export default function Calendar() {
   const me = useMe();
   const [events, setEvents] = useState<CalendarEvent[]>([]);
@@ -49,12 +28,7 @@ export default function Calendar() {
 
   useEffect(() => {
     if (me.loading || !me.isAuthenticated) return;
-    const from = new Date().toISOString();
-    const to = new Date(Date.now() + 90 * 86_400_000).toISOString();
-    gqlFetch<{ myCalendar: CalendarEvent[] }>(MY_CALENDAR, {
-      fromDate: from,
-      toDate: to,
-    })
+    gqlFetch<{ myCalendar: CalendarEvent[] }>(MY_CALENDAR)
       .then((d) => setEvents(d.myCalendar))
       .catch((err) =>
         setError(err instanceof Error ? err.message : "Failed to load."),
@@ -62,10 +36,8 @@ export default function Calendar() {
       .finally(() => setLoading(false));
   }, [me.loading, me.isAuthenticated]);
 
-  const groups = groupByDate(events);
-
   return (
-    <div className="max-w-[1200px] w-full mx-auto px-8 flex-1 flex flex-col">
+    <div className="max-w-[920px] w-full mx-auto px-8 flex-1 flex flex-col">
       <SiteNav />
 
       <main className="flex-1">
@@ -74,7 +46,7 @@ export default function Calendar() {
             My calendar
           </h1>
           <p className="text-ink-muted text-lg">
-            Upcoming events from your subscriptions.
+            Upcoming events from your subscriptions and memberships.
           </p>
         </header>
 
@@ -92,27 +64,13 @@ export default function Calendar() {
             here.
           </p>
         ) : (
-          <div className="flex flex-col gap-8">
-            {groups.map((g) => (
-              <section key={g.date}>
-                <h2 className="font-display text-lg font-medium text-ink mb-3">
-                  {g.date}
-                </h2>
-                <ul className="flex flex-col gap-3">
-                  {g.events.map((ev) => (
-                    <li key={ev.id}>
-                      <EventTile
-                        event={ev}
-                        onClick={() => setPopup(ev)}
-                        showCommunityName
-                        communityName={ev.community.name}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            ))}
-          </div>
+          <CommunityCalendar
+            events={events}
+            canEdit={false}
+            onEventClick={(ev) =>
+              setPopup(events.find((e) => e.id === ev.id) ?? null)
+            }
+          />
         )}
       </main>
 

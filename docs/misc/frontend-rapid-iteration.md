@@ -66,15 +66,9 @@ export default defineConfig({
 });
 ```
 
-### 3. Add the override file to `.gitignore`
+### 3. Run Vite natively
 
 ```
-apps/web/vite.config.local.ts
-```
-
-### 4. Run Vite natively
-
-```powershell
 cd apps/web
 npx vite --config vite.config.local.ts
 ```
@@ -85,7 +79,7 @@ Or add a convenience script to `apps/web/package.json`:
 "dev:local": "vite --config vite.config.local.ts"
 ```
 
-### 5. Open browser
+### 4. Open browser
 
 Navigate to `http://localhost:5173`. Vite HMR is now instant — edit any file in `apps/web/src/` and see changes in <100ms.
 

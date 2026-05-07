@@ -1,6 +1,3 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { SiteNav } from "@/components/SiteNav";
 import {
   Alert,
   Button,
@@ -9,9 +6,12 @@ import {
   LinkButton,
   Textarea,
 } from "@/components/primitives";
+import { SiteNav } from "@/components/SiteNav";
 import { TagsInput } from "@/components/TagsInput";
 import { gqlFetch } from "@/lib/graphql";
 import { usePermissions } from "@/lib/usePermissions";
+import { useState } from "react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 const CREATE_EVENT = `
   mutation CreateEvent($input: CreateEventInput!) {

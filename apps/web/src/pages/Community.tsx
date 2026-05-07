@@ -19,6 +19,7 @@ import { TagsInput } from "@/components/TagsInput";
 import { SubscriptionPreferences } from "@/components/SubscriptionPreferences";
 import { EventPopup, type EventRow } from "@/components/EventPopup";
 import { EventTile } from "@/components/EventTile";
+import { CommunityCalendar } from "@/components/CommunityCalendar";
 import { SiteNav } from "@/components/SiteNav";
 import NotFound from "./NotFound";
 
@@ -422,7 +423,7 @@ export default function Community() {
     return (
       <div className="max-w-[1200px] w-full mx-auto px-8 flex-1 flex flex-col">
         <SiteNav />
-        <main className="max-w-4xl mx-auto w-full py-10 text-sm text-ink-muted">
+        <main className="max-w-[920px] mx-auto w-full py-10 text-sm text-ink-muted">
           Loading…
         </main>
       </div>
@@ -446,7 +447,7 @@ export default function Community() {
     <>
       <div className="max-w-[1200px] w-full mx-auto px-8 flex-1 flex flex-col">
         <SiteNav />
-        <main className="max-w-4xl mx-auto w-full py-10">
+        <main className="max-w-[920px] mx-auto w-full py-10">
           <Link
             to="/explore"
             className="text-sm text-ink-muted hover:text-ink mb-6 inline-block"
@@ -507,21 +508,33 @@ export default function Community() {
           </div>
 
           {/* Tab bar */}
-          <div className="flex gap-0 border-b border-[var(--cf-hairline)] mb-8">
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2.5 text-sm font-medium transition-colors border-b-2 -mb-px ${
-                  activeTab === tab.key
-                    ? "border-sage-deep text-sage-deep"
-                    : "border-transparent text-ink-muted hover:text-ink"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="flex items-end border-b border-[var(--cf-hairline)] mb-8">
+            <div className="flex gap-0">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`px-4 py-2.5 text-base font-medium transition-colors border-b-2 -mb-px ${
+                    activeTab === tab.key
+                      ? "border-sage-deep text-sage-deep"
+                      : "border-transparent text-ink-muted hover:text-ink"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            {can("event:create") && (
+              <div className="ml-auto pb-2">
+                <LinkButton
+                  variant="secondary"
+                  to={`/communities/${community.id}/events/new`}
+                >
+                  + Create event
+                </LinkButton>
+              </div>
+            )}
           </div>
 
           {/* Information tab */}
@@ -602,36 +615,11 @@ export default function Community() {
 
           {/* Calendar tab */}
           {activeTab === "calendar" && (
-            <div className="flex flex-col gap-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xs font-semibold text-ink-muted uppercase tracking-widest">
-                  Upcoming events
-                </h2>
-                {can("event:create") && (
-                  <LinkButton
-                    variant="secondary"
-                    to={`/communities/${community.id}/events/new`}
-                  >
-                    + New event
-                  </LinkButton>
-                )}
-              </div>
-
-              {community.events.length === 0 ? (
-                <p className="text-sm text-ink-muted">No upcoming events.</p>
-              ) : (
-                <ul className="flex flex-col gap-3">
-                  {community.events.map((event) => (
-                    <li key={event.id}>
-                      <EventTile
-                        event={event}
-                        onClick={() => setPopup(event)}
-                      />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+            <CommunityCalendar
+              events={community.events}
+              canEdit={can("event:edit")}
+              onEventClick={(event) => setPopup(event)}
+            />
           )}
 
           {/* Announcements tab */}

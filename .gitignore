@@ -49,3 +49,4 @@ logs/
 .vscode/
 .idea/
 
+apps/web/vite.config.local.ts

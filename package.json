@@ -8,6 +8,8 @@
   ],
   "scripts": {
     "dev": "concurrently -n web,server,auth,scheduler,executioner -c blue,magenta,green,yellow,cyan \"npm run dev --workspace=apps/web\" \"npm run dev --workspace=apps/server\" \"npm run dev --workspace=apps/auth\" \"npm run dev --workspace=apps/scheduler\" \"npm run dev --workspace=apps/executioner\"",
+    "build": "vite build",
+    "serve": "vite preview",
     "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {
@@ -16,5 +18,8 @@
     "tsx": "^4.19.2",
     "typescript": "^5",
     "vitest": "^2.0.0"
+  },
+  "dependencies": {
+    "typescript-language-server": "^5.1.3"
   }
 }

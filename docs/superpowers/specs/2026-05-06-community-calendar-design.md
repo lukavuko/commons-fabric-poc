@@ -128,7 +128,9 @@ Events within a cell appear as small horizontal bars stacked vertically, top to 
 - Max height: `320px` with `overflow-y: auto`
 - `z-index: 1000` for the popover, `z-index: 999` for the overlay
 
-**Header:** The full date string (e.g., "Wednesday, May 6, 2026") in `font-display text-sm font-medium text-ink`.
+**Close button:** An `×` icon button in the top-right corner of the popover. `text-ink-muted hover:text-ink text-sm cursor-pointer` with `ml-auto`. Clicking dismisses the popover (same as Escape or outside click).
+
+**Header:** The date string without year (e.g., "Wednesday, May 6") in `font-display text-sm font-medium text-ink`.
 
 **Event list:** Vertical stack of clickable event rows, each containing:
 
@@ -166,6 +168,8 @@ Events within a cell appear as small horizontal bars stacked vertically, top to 
 - Disabled (already viewing current month): `opacity-50 cursor-not-allowed`
 
 **Month/year label:** Centered above the grid (not in the navigation bar). `font-sans text-[22px] font-medium text-ink tracking-tight` with `underline underline-offset-[6px] decoration-1` and a `border-b border-[var(--cf-hairline-strong)]` below the label row for visual weight. Uses Inter (not Fraunces) to match the UI tone.
+
+**State management:** The displayed month is controlled by a `[year, month]` state tuple (e.g., `[2026, 4]` for May). Arrow buttons increment/decrement this state. The "Today" button resets to the current month. The grid, event filtering, and popover all re-render from this state — month transitions must be fully live, not just visual stubs.
 
 ---
 
@@ -211,6 +215,7 @@ The `"+ New event"` button stays in the header row above `CommunityCalendar`.
 | Click filter pill              | Toggle event type visibility on/off     |
 | Click date cell (has events)   | Open popover with that day's event list |
 | Click event in popover         | Open EventPopup (existing)              |
+| Click × button on popover      | Dismiss popover                         |
 | Click outside popover / Escape | Dismiss popover                         |
 | Click ← arrow                  | Previous month                          |
 | Click → arrow                  | Next month                              |

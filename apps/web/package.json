@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "dev:local": "vite --config vite.config.local.ts",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
